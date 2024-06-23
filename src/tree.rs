@@ -1,29 +1,37 @@
-pub struct EdgeViewIter<'a>(usize, usize, &'a mut [usize]);
-impl<'a > Iterator for EdgeViewIter<'a > {
-    type Item = usize;
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.0 >= self.1 {
-            return None;
-        }
-        self.0 += 1;
-        return Some(self.2[self.0]);
-    }
+use std::mem;
+use std::mem::{size_of, transmute};
+type Header = usize;
+
+
+
+// TODO use this
+pub struct EdgeData{
+    pub edges: Vec<usize>,
+    pub indices: Vec<usize>,
+}
+pub struct Graph<T> {
+    edge_capacity: usize,
+    pub vertices: Vec<T>,
+    pub edges: Vec<usize>,
+    pub indices: Vec<usize>,
+}
+pub enum Error{
+    NoHandle,
 }
 
-pub struct Graph<T> {
-    edge_count: usize,
-    vertices: Vec<T>,
-    edges: Vec<usize>,
-    indices: Vec<usize>,
+#[cfg_attr(release, inline(always))]
+fn header_element_offset() -> usize {
+    return size_of::<Header>() / size_of::<usize>();
 }
-// #[inline(always)]
+
+#[cfg_attr(release, inline(always))]
 fn calculate_new_edges_size<T>(graph: &Graph<T>) -> usize {
-    return graph.edges.len() + graph.edge_count
+    return graph.edges.len() + graph.edge_capacity + (header_element_offset());
 }
 impl<T> Graph<T>{
     pub fn new() -> Self {
         return Graph{
-            edge_count: 10 + 1, //10 edges per vertex + 1 for the header
+            edge_capacity: 10, //10 edges per vertex + 1 for the header
             vertices: Vec::new(),
             edges: Vec::with_capacity(0),
             indices: Vec::new(),
@@ -37,19 +45,19 @@ pub fn edges_len<T>(graph: &Graph<T>, vertex: usize) -> usize {
 pub fn edges_capacity<T>(graph: &Graph<T>) -> usize {
     return graph.edges.len();
 }
-// #[inline(always)]
+#[cfg_attr(release, inline(always))]
 pub fn connect<T>(graph: &mut Graph<T>, from: usize, to: usize) {
     add_edges(graph, from, &[to]);
 }
 
 pub fn create<T>(graph: &mut Graph<T>, val: T) -> usize {
-    let new_edge_entry_size = graph.edges.len();
+    let new_data_index = graph.edges.len();
     graph.vertices.push(val);
 
     graph.edges.resize_with(calculate_new_edges_size(graph), Default::default);
-    graph.edges[new_edge_entry_size] = 0;
+    graph.edges[new_data_index] = 0;
 
-    graph.indices.push(new_edge_entry_size); //Header of the new edge entry
+    graph.indices.push(new_data_index); //Header of the new edge entry
 
     return graph.vertices.len() - 1;
 }
@@ -59,33 +67,39 @@ pub fn create_and_connect<T>(graph: &mut Graph<T>, src_vertex: usize, val: T) ->
     connect(graph, src_vertex, new_vertex);
     return new_vertex;
 }
-// #[inline(always)]
-pub fn get<T> (graph: &Graph<T>, vertex: usize) -> &T {
-    return &graph.vertices[vertex];
+#[cfg_attr(release, inline(always))]
+pub fn value<T> (vertices: &Vec<T>, vertex: usize) -> &T {
+    return &vertices[vertex];
 }
-// #[inline(always)]
-pub fn edge<T>(graph: &Graph<T>, vertex: usize, offset: usize) -> Option<usize> {
-    let edge = graph.indices[vertex];
-    let size = graph.edges[edge];
+#[cfg_attr(release, inline(always))]
+pub fn value_mut<T> (vertices: &Vec<T>, vertex: usize) -> &mut T {
+    return &mut vertices[vertex];
+}
+
+
+pub fn edges<'a>(indices: &Vec<usize>, edges: &'a Vec<usize>, vertex: usize, offset: usize) -> Result<&'a [usize], Error> {
+    let edge = indices[vertex];
+    let size = edges[edge];
     if offset >= size {
-        return None;
+        return Err(Error::NoHandle);
     }
-    return Some(graph.edges[edge + offset + 1]);
+
+    return Ok(&edges[edge + header_element_offset() + offset..edge + size + header_element_offset() ]);
 }
 
 pub fn add_edges<T>(graph: &mut Graph<T>, vertex: usize, edge: &[usize]) {
-    let edge_data_start = graph.indices[vertex];
-    let edge_size = graph.edges[edge_data_start];
-    let edge_end = edge_size + edge_data_start;
-    if edge.len() > graph.edge_count - edge_size{
-        panic!("Edge size is greater than the allocated size")
-    }
+    let data_offset = graph.indices[vertex];
+    unsafe{
+        let head_ptr = graph.edges.as_mut_ptr().offset(data_offset as isize);
 
-    for i in 0..edge.len() {
-        graph.edges[edge_end + i + 1] = edge[i];
+        let new_data_ptr = head_ptr.offset((*head_ptr + header_element_offset()) as isize);
+        if new_data_ptr > new_data_ptr.offset(edge.len() as isize){
+            panic!("Edge size is greater than the allocated size");
+        }
+        let src_data_ptr = edge.as_ptr();
+        std::ptr::copy(src_data_ptr, new_data_ptr, edge.len());
+        *head_ptr += edge.len();
     }
-
-    graph.edges[edge_data_start] += edge.len();
 }
 
 // pub fn bfs<T>(root: *mut Tree<T>, traverse: fn(node: &Tree<T>)){
