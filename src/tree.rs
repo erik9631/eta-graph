@@ -1,26 +1,26 @@
-use std::mem::size_of;
-#[inline(always)]
-fn calculate_new_edges_size<T>(graph: &Graph<T>) -> usize {
-    return graph.edges.len() + graph.edge_count
+
+pub struct EdgeView<'a>{
+    pub edges: &'a mut [usize],
 }
 
-pub trait TreeBehavior<T>{
-    fn new(value: T) -> Box<Self>;
-    fn new_with_capacity(value: T, capacity: usize) -> Box<Self>;
-    fn new_node(&mut self, value: T) -> *mut Self;
-    fn new_node_with_capacity(&mut self, value: T, capacity: usize) -> *mut Self;
-    fn add_node(&mut self, node: *mut Self);
-    fn remove_node(&mut self, node: *mut Self) -> Option<*mut Self>;
-    fn get_root(&self) -> &Self;
-    fn get_parent(&self) -> Option<&Self>;
-    fn get_node(&self, index: u32) -> &Self;
-    fn get_value(&self) -> &T;
-    fn len(&self) -> usize;
-}
+impl <'a> EdgeView<'a> {
+    pub fn new<T>(graph: &'a mut Graph<T>, vertex: usize) -> Self {
+        let data_start = graph.indices[vertex];
+        let data_end = graph.edge_count;
+        return EdgeView{
+            edges: &mut graph.edges[data_start.. data_start + data_end],
+        }
+    }
 
-struct Edge<'a>{
-    size: usize,
-    edges: &'a [usize],
+    #[inline(always)]
+    pub fn size(&mut self) -> &mut usize {
+        return &mut self.edges[0];
+    }
+    #[inline(always)]
+    pub fn push(&mut self, vertex: usize){
+        self.edges[*self.size() + 1] = vertex; // First element is size
+        *self.size() += 1;
+    }
 }
 
 pub struct Graph<T> {
@@ -29,7 +29,10 @@ pub struct Graph<T> {
     edges: Vec<usize>,
     indices: Vec<usize>,
 }
-
+#[inline(always)]
+fn calculate_new_edges_size<T>(graph: &Graph<T>) -> usize {
+    return graph.edges.len() + graph.edge_count
+}
 impl<T> Graph<T>{
     pub fn new() -> Self {
         return Graph{
@@ -47,19 +50,10 @@ pub fn edges_len<T>(graph: &Graph<T>, vertex: usize) -> usize {
 pub fn edges_capacity<T>(graph: &Graph<T>) -> usize {
     return graph.edges.len();
 }
-
 pub fn connect<T>(graph: &mut Graph<T>, from: usize, to: usize) {
-    let index_start = graph.indices[from];
-    let from_size = &mut graph.edges[index_start];
-    if *from_size > graph.edge_count {
-        panic!("Edge count exceeded")
-    }
-
-    *from_size += 1;
-    let from_index_new = *from_size;
-    graph.edges[from_index_new] = to;
+    let mut edge_view = EdgeView::new(graph, from);
+    edge_view.push(to);
 }
-
 
 pub fn create<T>(graph: &mut Graph<T>, val: T) -> usize {
     let new_edge_entry_size = graph.edges.len();
@@ -72,23 +66,20 @@ pub fn create<T>(graph: &mut Graph<T>, val: T) -> usize {
 
     return graph.vertices.len() - 1;
 }
-pub fn create_out<T>(graph: &mut Graph<T>, src_vertex: usize, val: T) -> usize {
-    let new_edge_entry_size = graph.edges.len();
-    let new_edge_entry = new_edge_entry_size + 1;
-    graph.vertices.push(val);
 
-    graph.edges.resize_with(calculate_new_edges_size(graph), Default::default);
-    graph.edges[new_edge_entry] = src_vertex;
-    graph.edges[new_edge_entry_size] += 1; //Size of 1;
-
-    graph.indices.push(new_edge_entry_size); //Header of the new edge entry
-
-    return graph.vertices.len() - 1;
+pub fn create_and_connect<T>(graph: &mut Graph<T>, src_vertex: usize, val: T) -> usize {
+    let new_vertex = create(graph, val);
+    connect(graph, src_vertex, new_vertex);
+    return new_vertex;
 }
-
 
 pub fn get<T> (graph: &Graph<T>, vertex: usize) -> &T {
     return &graph.vertices[vertex];
+}
+
+pub fn get_connections<T> (graph: &mut Graph<T>, vertex: usize) -> EdgeView {
+    let edge_view = EdgeView::new(graph, vertex);
+    return edge_view;
 }
 
 // pub fn bfs<T>(root: *mut Tree<T>, traverse: fn(node: &Tree<T>)){
