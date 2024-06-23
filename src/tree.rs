@@ -1,25 +1,12 @@
-
-pub struct EdgeView<'a>{
-    pub edges: &'a mut [usize],
-}
-
-impl <'a> EdgeView<'a> {
-    pub fn new<T>(graph: &'a mut Graph<T>, vertex: usize) -> Self {
-        let data_start = graph.indices[vertex];
-        let data_end = graph.edge_count;
-        return EdgeView{
-            edges: &mut graph.edges[data_start.. data_start + data_end],
+pub struct EdgeViewIter<'a>(usize, usize, &'a mut [usize]);
+impl<'a > Iterator for EdgeViewIter<'a > {
+    type Item = usize;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.0 >= self.1 {
+            return None;
         }
-    }
-
-    #[inline(always)]
-    pub fn size(&mut self) -> &mut usize {
-        return &mut self.edges[0];
-    }
-    #[inline(always)]
-    pub fn push(&mut self, vertex: usize){
-        self.edges[*self.size() + 1] = vertex; // First element is size
-        *self.size() += 1;
+        self.0 += 1;
+        return Some(self.2[self.0]);
     }
 }
 
@@ -29,7 +16,7 @@ pub struct Graph<T> {
     edges: Vec<usize>,
     indices: Vec<usize>,
 }
-#[inline(always)]
+// #[inline(always)]
 fn calculate_new_edges_size<T>(graph: &Graph<T>) -> usize {
     return graph.edges.len() + graph.edge_count
 }
@@ -50,9 +37,9 @@ pub fn edges_len<T>(graph: &Graph<T>, vertex: usize) -> usize {
 pub fn edges_capacity<T>(graph: &Graph<T>) -> usize {
     return graph.edges.len();
 }
+// #[inline(always)]
 pub fn connect<T>(graph: &mut Graph<T>, from: usize, to: usize) {
-    let mut edge_view = EdgeView::new(graph, from);
-    edge_view.push(to);
+    add_edges(graph, from, &[to]);
 }
 
 pub fn create<T>(graph: &mut Graph<T>, val: T) -> usize {
@@ -72,14 +59,33 @@ pub fn create_and_connect<T>(graph: &mut Graph<T>, src_vertex: usize, val: T) ->
     connect(graph, src_vertex, new_vertex);
     return new_vertex;
 }
-
+// #[inline(always)]
 pub fn get<T> (graph: &Graph<T>, vertex: usize) -> &T {
     return &graph.vertices[vertex];
 }
+// #[inline(always)]
+pub fn edge<T>(graph: &Graph<T>, vertex: usize, offset: usize) -> Option<usize> {
+    let edge = graph.indices[vertex];
+    let size = graph.edges[edge];
+    if offset >= size {
+        return None;
+    }
+    return Some(graph.edges[edge + offset + 1]);
+}
 
-pub fn get_connections<T> (graph: &mut Graph<T>, vertex: usize) -> EdgeView {
-    let edge_view = EdgeView::new(graph, vertex);
-    return edge_view;
+pub fn add_edges<T>(graph: &mut Graph<T>, vertex: usize, edge: &[usize]) {
+    let edge_data_start = graph.indices[vertex];
+    let edge_size = graph.edges[edge_data_start];
+    let edge_end = edge_size + edge_data_start;
+    if edge.len() > graph.edge_count - edge_size{
+        panic!("Edge size is greater than the allocated size")
+    }
+
+    for i in 0..edge.len() {
+        graph.edges[edge_end + i + 1] = edge[i];
+    }
+
+    graph.edges[edge_data_start] += edge.len();
 }
 
 // pub fn bfs<T>(root: *mut Tree<T>, traverse: fn(node: &Tree<T>)){

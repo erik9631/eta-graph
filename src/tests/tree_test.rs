@@ -1,5 +1,5 @@
 use crate::tree;
-use crate::tree::{connect, create, edges_len, edges_capacity, get, create_and_connect};
+use crate::tree::{connect, create, edges_len, edges_capacity, get, create_and_connect, edge};
 
 #[test]
 pub fn graph_init_test() {
@@ -23,9 +23,9 @@ pub fn graph_relationship_test(){
     let entry = create(&mut graph, "first");
     let e1 = create_and_connect(&mut graph, entry, "1");
     let e2 = create_and_connect(&mut graph, entry, "2");
-    let e11 = create_and_connect(&mut graph, e1, "1.1");
-    let e12 = create_and_connect(&mut graph, e1, "1.2");
-    let e13 = create_and_connect(&mut graph, e1, "1.3");
+    create_and_connect(&mut graph, e1, "1.1");
+    create_and_connect(&mut graph, e1, "1.2");
+    create_and_connect(&mut graph, e1, "1.3");
 
     assert_eq!(*get(&graph, entry), "first");
     assert_eq!(edges_len(&graph, entry), 2);
@@ -35,5 +35,20 @@ pub fn graph_relationship_test(){
 
     assert_eq!(*get(&graph, e2), "2");
     assert_eq!(edges_len(&graph, e2), 0);
+
+    // Value check
+    for i in 0..edges_len(&graph, entry){
+        let edge_index = edge(&graph, entry, i);
+        if edge_index.is_none(){
+            continue;
+        }
+        let edge_index = edge_index.unwrap();
+
+        match i {
+            0 => assert_eq!(*get(&graph, edge_index), "1"),
+            1 => assert_eq!(*get(&graph, edge_index), "2"),
+            _ => panic!("Unexpected value")
+        }
+    }
 
 }
