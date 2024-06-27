@@ -53,7 +53,9 @@ pub struct Vertices<T> {
 impl <T: Send> traits::Transform<T> for Vertices<T> {
     fn transform(&mut self, transform_fn: fn(&mut T)) {
 
+        //TODO iterators are faster as no boundary checks are needed
         for i in 0..self.data.len() {
+            // Todo passing each element to the function is not efficient
             transform_fn(&mut self.data[i]);
         }
     }
@@ -65,6 +67,7 @@ impl <T: Send> traits::Transform<T> for Vertices<T> {
         for part in parts {
             std::thread::scope(|scope| {
                 scope.spawn(move || {
+                    // Todo passing each element to the function is not efficient
                     for element in part {
                         transform_fn(element);
                     }

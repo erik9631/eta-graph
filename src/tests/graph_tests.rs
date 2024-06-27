@@ -1,3 +1,4 @@
+use std::time::SystemTime;
 use crate::graph;
 use crate::traits::Transform;
 
@@ -154,13 +155,34 @@ pub fn graph_mutability_test(){
 #[test]
 pub fn graph_transform_test(){
     let mut graph = graph::Graph::new();
-    for i in 0..1000 {
+
+    for i in 0..10000000 {
         graph.create(i);
     }
-
+    let start =SystemTime::now();
     graph.vertices.transform(|val| {*val = *val * 10});
-
-    for i in 0..1000 {
+    let end = SystemTime::now();
+    for i in 0..10000000 {
         assert_eq!(graph.vertices[i], i*10);
     }
+
+    println!("Time taken: {:?}", end.duration_since(start).unwrap());
+}
+
+#[test]
+pub fn graph_transform_test_async(){
+    let mut graph = graph::Graph::new();
+    for i in 0..10000000 {
+        graph.create(i);
+    }
+    let start = SystemTime::now();
+    graph.vertices.async_transform(|val| {*val = *val * 10});
+    let end = SystemTime::now();
+    println!("Time taken: {:?}", end.duration_since(start).unwrap());
+
+    for i in 0..10000000 {
+        assert_eq!(graph.vertices[i], i*10);
+    }
+
+
 }
