@@ -1,5 +1,9 @@
+use std::cmp::min;
 use std::mem::{size_of};
 use std::ops::{Index, IndexMut};
+use std::thread::available_parallelism;
+use crate::traits;
+use crate::utils::{split_to_mut_parts};
 
 pub enum Error{
     NoHandle,
@@ -44,10 +48,32 @@ impl<T> Graph<T>{
 
 pub struct Vertices<T> {
     data: Vec<T>,
-
 }
 
+impl <T: Send> traits::Transform<T> for Vertices<T> {
+    fn transform(&mut self, transform_fn: fn(&mut T)) {
 
+        for i in 0..self.data.len() {
+            transform_fn(&mut self.data[i]);
+        }
+    }
+    fn async_transform(&mut self, transform_fn: fn(&mut T)) {
+        let max_parallelism = available_parallelism().ok().unwrap().get();
+        let parallelism_count = min(max_parallelism, self.data.len());
+        let parts = split_to_mut_parts(&mut self.data, parallelism_count);
+
+        for part in parts {
+            std::thread::scope(|scope| {
+                scope.spawn(move || {
+                    for element in part {
+                        transform_fn(element);
+                    }
+                });
+            });
+        }
+    }
+
+}
 impl <T> Vertices<T>{
     pub fn new() -> Self {
         return Vertices{
@@ -73,7 +99,6 @@ impl <T> IndexMut<usize> for Vertices<T>{
 }
 
 
-// TODO use this
 pub struct EdgeData{
     edge_capacity: usize,
     edges: Vec<usize>,

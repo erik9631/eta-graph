@@ -1,4 +1,5 @@
 use crate::graph;
+use crate::traits::Transform;
 
 #[test]
 pub fn graph_init_test() {
@@ -73,4 +74,93 @@ pub fn graph_basic_test(){
         }
     }
 
+}
+
+#[test]
+pub fn graph_default_capacity_test(){
+    let mut graph = graph::Graph::new();
+    let count = 50;
+
+
+    for i in 0..count {
+        graph.create(i);
+    }
+
+    assert_eq!(graph.vertices.len(), 50);
+    assert_eq!(graph.edges.len(), (50+1)*count);
+}
+
+#[test]
+pub fn graph_with_capacity_test(){
+    let mut graph = graph::Graph::with_capacity(10);
+    let count = 100;
+
+    for i in 0..count {
+        graph.create(i);
+    }
+
+    assert_eq!(graph.edges.len(), (10+1)*count);
+}
+
+#[test]
+#[should_panic]
+pub fn graph_edge_overflow_test(){
+    let mut graph = graph::Graph::with_capacity(3);
+    let count = 4;
+    let a = graph.create(0);
+
+    for i in 0..count {
+        graph.create_and_connect(a, i+1);
+    }
+}
+
+
+#[test]
+pub fn graph_mutability_test(){
+    let mut graph = graph::Graph::new();
+    let a = graph.create("a");
+    graph.create("b");
+    graph.create("c");
+
+    graph.create_and_connect(a, "a_a");
+    graph.create_and_connect(a, "a_b");
+    graph.create_and_connect(a, "a_c");
+
+    let result = graph.edges.edges(a);
+    assert_eq!(result.is_err(), false);
+
+    let edges = result.ok().unwrap();
+    assert_eq!(edges.len(), 3);
+
+    for edge in edges {
+        match *edge{
+            0 => {
+                graph.vertices[*edge] = "a_a_edited";
+                graph.vertices[*edge] = "a_a_edited"
+            },
+            1 => {
+                graph.vertices[*edge] = "a_b_edited";
+                graph.vertices[*edge] = "a_b_edited"
+            },
+            2 => {
+                graph.vertices[*edge] = "a_c_edited";
+                graph.vertices[*edge] = "a_c_edited"
+            },
+            _ => continue,
+        }
+    }
+}
+
+#[test]
+pub fn graph_transform_test(){
+    let mut graph = graph::Graph::new();
+    for i in 0..1000 {
+        graph.create(i);
+    }
+
+    graph.vertices.transform(|val| {*val = *val * 10});
+
+    for i in 0..1000 {
+        assert_eq!(graph.vertices[i], i*10);
+    }
 }
