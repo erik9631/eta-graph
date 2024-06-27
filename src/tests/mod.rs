@@ -1,1 +1,1 @@
-pub mod tree_test;
+pub mod graph_tests;
