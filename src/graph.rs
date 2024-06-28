@@ -1,4 +1,5 @@
 use std::cmp::min;
+use std::mem;
 use std::mem::{size_of};
 use std::ops::{Index, IndexMut};
 use std::thread::available_parallelism;
@@ -51,29 +52,23 @@ pub struct Vertices<T> {
 }
 
 impl <T: Send> traits::Transform<T> for Vertices<T> {
-    fn transform(&mut self, transform_fn: fn(&mut T)) {
-
-        //TODO iterators are faster as no boundary checks are needed
-        for i in 0..self.data.len() {
-            // Todo passing each element to the function is not efficient
-            transform_fn(&mut self.data[i]);
-        }
+    fn transform(&mut self, transform_fn: fn(&mut [T])) {
+        transform_fn(self.data.as_mut_slice());
     }
-    fn async_transform(&mut self, transform_fn: fn(&mut T)) {
+    fn async_transform(&mut self, transform_fn: fn(&mut [T])) {
         let max_parallelism = available_parallelism().ok().unwrap().get();
         let parallelism_count = min(max_parallelism, self.data.len());
         let parts = split_to_mut_parts(&mut self.data, parallelism_count);
 
-        for part in parts {
-            std::thread::scope(|scope| {
-                scope.spawn(move || {
-                    // Todo passing each element to the function is not efficient
-                    for element in part {
-                        transform_fn(element);
-                    }
+        std::thread::scope(|scope| {
+            for part in parts {
+                scope.spawn(|| {
+                    transform_fn(part);
                 });
-            });
-        }
+            }
+        });
+
+
     }
 
 }
@@ -109,6 +104,7 @@ pub struct EdgeData{
 }
 
 impl EdgeData {
+    pub const NONE: usize = usize::MAX;
 
     pub fn new() -> Self {
         return EdgeData{
@@ -142,9 +138,6 @@ impl EdgeData {
         let new_data_end = new_data_start + edges.len();
 
 
-
-
-
         self.edges[new_data_start..new_data_end].copy_from_slice(edges);
         self.edges[head_offset] = new_size;
     }
@@ -162,6 +155,25 @@ impl EdgeData {
     }
 
     #[cfg_attr(release, inline(always))]
+    pub fn disconnect(&mut self, src: usize, vertex: usize) {
+        let edge_offset = self.indices[src];
+        let (head_data, data) = self.edges.split_at_mut(edge_offset + 1);
+        let head_data = &head_data[0];
+
+        unsafe {
+            let iter = &mut self.edges[edge_offset] as *mut usize;
+            let end = iter.offset(*head_data as isize);
+            while(iter != end){
+                if *iter == vertex{
+                    *iter = end.offset(-1) as usize; // Swap the last element for the empty one
+                }
+            }
+        }
+
+
+    }
+
+    #[cfg_attr(release, inline(always))]
     pub fn edges_len<T>(&self, vertex: usize) -> usize {
         return self.edges[self.indices[vertex]];
     }
@@ -174,7 +186,6 @@ impl EdgeData {
     pub fn len(&self) -> usize {
         return self.edges.len();
     }
-
     pub fn edges(&self, vertex: usize) -> Result< &[usize], Error> {
         let edge = self.indices[vertex];
         let size = self.edges[edge];

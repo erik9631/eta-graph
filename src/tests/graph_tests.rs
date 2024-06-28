@@ -1,4 +1,5 @@
-use std::time::SystemTime;
+use std::{thread, time};
+use std::time::{Instant, SystemTime};
 use crate::graph;
 use crate::traits::Transform;
 
@@ -155,32 +156,42 @@ pub fn graph_mutability_test(){
 #[test]
 pub fn graph_transform_test(){
     let mut graph = graph::Graph::new();
+    let test_size = 10000000;
 
-    for i in 0..10000000 {
+    for i in 0..test_size {
         graph.create(i);
     }
-    let start =SystemTime::now();
-    graph.vertices.transform(|val| {*val = *val * 10});
-    let end = SystemTime::now();
-    for i in 0..10000000 {
+    let start = Instant::now();
+    graph.vertices.transform(|slice| {
+        for i in slice{
+            *i = *i * 10;
+        }
+    });
+    println!("Time taken: {:?}", start.elapsed());
+    for i in 0..test_size {
         assert_eq!(graph.vertices[i], i*10);
     }
 
-    println!("Time taken: {:?}", end.duration_since(start).unwrap());
+
 }
 
 #[test]
 pub fn graph_transform_test_async(){
     let mut graph = graph::Graph::new();
-    for i in 0..10000000 {
+    let test_size = 10000000;
+
+    for i in 0..test_size {
         graph.create(i);
     }
-    let start = SystemTime::now();
-    graph.vertices.async_transform(|val| {*val = *val * 10});
-    let end = SystemTime::now();
-    println!("Time taken: {:?}", end.duration_since(start).unwrap());
+    let start = Instant::now();
+    graph.vertices.async_transform(|slice| {
+        for i in slice{
+            *i = *i * 10;
+        }
+    });
+    println!("Time taken: {:?}", start.elapsed());
 
-    for i in 0..10000000 {
+    for i in 0..test_size {
         assert_eq!(graph.vertices[i], i*10);
     }
 
