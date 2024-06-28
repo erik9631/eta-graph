@@ -158,20 +158,32 @@ impl EdgeData {
     pub fn disconnect(&mut self, src: usize, vertex: usize) {
         let edge_offset = self.indices[src];
         let (head_data, data) = self.edges.split_at_mut(edge_offset + 1);
-        let head_data = &head_data[0];
+        let head_data = &mut head_data[0];
 
         unsafe {
-            let iter = &mut self.edges[edge_offset] as *mut usize;
+            let iter = data.as_mut_ptr();
             let end = iter.offset(*head_data as isize);
             while(iter != end){
                 if *iter == vertex{
                     *iter = end.offset(-1) as usize; // Swap the last element for the empty one
+                    *head_data -= 1;
+                    continue;
                 }
             }
         }
-
-
     }
+
+    pub fn edges_mut(&self, vertex: usize) -> Result< &mut [usize], Error>{
+        let edge = self.indices[vertex];
+        let size = self.edges[edge];
+
+        if vertex > self.edges.len() {
+            return Err(Error::NoHandle);
+        }
+
+        return Ok(&mut self.edges[edge + header_element_size()..edge + size + header_element_size() ]);
+    }
+
 
     #[cfg_attr(release, inline(always))]
     pub fn edges_len<T>(&self, vertex: usize) -> usize {

@@ -1,8 +1,28 @@
-use crate::graph;
-use crate::graph::{EdgeData, Vertices};
+use std::mem::transmute;
+use crate::graph::{EdgeData};
 struct TreeHeader {
     pub parent: usize,
-    pub children: Vec<usize>,
+    pub root: usize,
+}
+
+impl TreeHeader {
+    #[inline]
+    pub fn parse(data: &[usize]) -> &TreeHeader{
+        unsafe {
+            let header = data.as_ptr();
+            let header_struct = transmute(header);
+            return header_struct;
+        }
+    }
+    #[inline]
+    pub fn parse_mut(data: &mut [usize]) -> &mut TreeHeader{
+        unsafe {
+            let header = &*(data.as_ptr() as *mut TreeHeader);
+            let header_struct = transmute(header);
+            return header_struct;
+        }
+
+    }
 }
 
 struct TreeView<'a, T> {
@@ -15,17 +35,8 @@ impl <'a, T> TreeView<'a, T> {
             edges,
         }
     }
-    #[cfg_attr(release, inline(always))]
-    fn get_tree_header(&self, vertex: usize) -> &mut TreeHeader {
-        let parent = self.get_parent(vertex);
-        let children = self.get_children(vertex);
-        return TreeHeader{
-            parent: parent.unwrap_or(EdgeData::NONE),
-            children,
-        }
-    }
 
-    pub fn get_parent(&self, vertex: usize) -> Option<usize> {
+    pub fn header(&self, vertex: usize) -> Option<&TreeHeader> {
         let node_result = self.edges.edges(vertex);
         if node_result.is_err() {
             panic!("Vertex not found!");
@@ -36,10 +47,8 @@ impl <'a, T> TreeView<'a, T> {
             return None;
         }
 
-        if nodes[0] == EdgeData::NONE {
-            return None;
-        }
+        let header = TreeHeader::parse(nodes);
 
-        return Some(nodes[0]);
+        return Some(header);
     }
 }
