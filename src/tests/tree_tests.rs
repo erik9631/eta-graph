@@ -18,27 +18,27 @@ pub fn tree_view_test(){
     assert_eq!(tree_view.values[root.node], "root");
 
     assert_eq!(tree_view.values[child1.node], "child1");
-    assert_eq!(tree_view.values[child1.parent], "root");
-    assert_eq!(tree_view.values[child1.root], "root");
+    assert_eq!(tree_view.values[child1.header.parent], "root");
+    assert_eq!(tree_view.values[child1.header.root], "root");
 
     assert_eq!(tree_view.values[child2.node], "child2");
-    assert_eq!(tree_view.values[child2.parent], "root");
-    assert_eq!(tree_view.values[child2.root], "root");
+    assert_eq!(tree_view.values[child2.header.parent], "root");
+    assert_eq!(tree_view.values[child2.header.root], "root");
 
     assert_eq!(tree_view.values[child3.node], "child3");
-    assert_eq!(tree_view.values[child3.parent], "root");
-    assert_eq!(tree_view.values[child3.root], "root");
+    assert_eq!(tree_view.values[child3.header.parent], "root");
+    assert_eq!(tree_view.values[child3.header.root], "root");
 
     assert_eq!(tree_view.values[child1_1.node], "child1_1");
-    assert_eq!(tree_view.values[child1_1.parent], "child1");
-    assert_eq!(tree_view.values[child1_1.root], "root");
+    assert_eq!(tree_view.values[child1_1.header.parent], "child1");
+    assert_eq!(tree_view.values[child1_1.header.root], "root");
 
     assert_eq!(tree_view.values[child1_2.node], "child1_2");
-    assert_eq!(tree_view.values[child1_2.parent], "child1");
-    assert_eq!(tree_view.values[child1_2.root], "root");
+    assert_eq!(tree_view.values[child1_2.header.parent], "child1");
+    assert_eq!(tree_view.values[child1_2.header.root], "root");
 
     assert_eq!(tree_view.values[child1_2_1.node], "child1_2_1");
-    assert_eq!(tree_view.values[child1_2_1.parent], "child1_2");
-    assert_eq!(tree_view.values[child1_2_1.root], "root");
+    assert_eq!(tree_view.values[child1_2_1.header.parent], "child1_2");
+    assert_eq!(tree_view.values[child1_2_1.header.root], "root");
 
 }

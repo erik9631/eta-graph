@@ -1,10 +1,44 @@
-use std::mem::transmute;
+use std::mem::{size_of, transmute};
+use std::slice::from_raw_parts;
 use crate::graph::{EdgeData, Graph, Vertices};
 
-pub struct Node{
+pub struct TreeHeader{
     pub root: usize,
     pub parent: usize,
+}
+impl TreeHeader{
+    ///Number of elements the header takes up in the edge data
+    const ELEMENT_COUNT: usize = 2;
+}
+
+pub struct Node{
+    pub header: TreeHeader,
     pub node: usize,
+}
+
+pub struct NodeData<'a>{
+    pub edges: &'a mut EdgeData,
+}
+
+impl<'a> NodeData{
+    pub fn new(nodes: &'a mut EdgeData) -> Self {
+        return NodeData{
+            edges: nodes,
+        }
+    }
+    pub fn get_children(&self, node: &Node) -> &[usize] {
+        match self.edges.edges(node.node) {
+            Ok(children_slice) => {
+                if children_slice.len() > TreeHeader::ELEMENT_COUNT {
+                    return &children_slice[TreeHeader::ELEMENT_COUNT..]
+                }
+                return &[]
+            },
+            Err(_) => {
+                panic!("Vertex not found!");
+            }
+        }
+    }
 }
 
 impl Node{
@@ -20,8 +54,10 @@ impl Node{
         }
 
         return Some(Node{
+            header: TreeHeader{
             root: nodes[0],
             parent: nodes[1],
+        },
             node: vertex,
         });
     }
@@ -29,7 +65,7 @@ impl Node{
 }
 
 pub struct TreeView<'a, T> {
-    pub nodes: &'a mut EdgeData,
+    pub nodes: NodeData<'a>,
     pub values: &'a mut Vertices<T>,
 }
 
@@ -37,7 +73,7 @@ impl <'a, T> TreeView<'a, T> {
     #[cfg_attr(release, inline(always))]
     pub fn new(edges: &'a mut EdgeData, vertices: &'a mut Vertices<T>) -> Self {
         return TreeView{
-            nodes: edges,
+            nodes: NodeData::new(edges),
             values: vertices,
         }
     }
@@ -66,7 +102,7 @@ impl <'a, T> TreeView<'a, T> {
     pub fn create_child(&mut self, node: &Node, val: T) -> Node {
         let vertex = self.create_vertex(val);
 
-        self.nodes.connect(vertex, node.root); // root
+        self.nodes.connect(vertex, node.header.root); // root
         self.nodes.connect(vertex, node.node); // parent
         return Node::parse(self.nodes, vertex).unwrap();
     }
@@ -74,11 +110,7 @@ impl <'a, T> TreeView<'a, T> {
     #[cfg_attr(release, inline(always))]
     pub fn add_child(&mut self, node: &Node, child: usize) {
         self.nodes.connect(node.node, child);
-        self.nodes.connect(child, node.root); // root
+        self.nodes.connect(child, node.header.root); // root
         self.nodes.connect(child, node.node); // parent
     }
-
-    // pub fn get_children(&self, node: &Node) -> &[usize] {
-    //
-    // }
 }
