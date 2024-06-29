@@ -1,43 +1,15 @@
 use std::mem::transmute;
-use crate::graph::{EdgeData};
-struct TreeHeader {
-    pub parent: usize,
+use crate::graph::{EdgeData, Graph, Vertices};
+
+pub struct Node{
     pub root: usize,
+    pub parent: usize,
+    pub node: usize,
 }
 
-impl TreeHeader {
-    #[inline]
-    pub fn parse(data: &[usize]) -> &TreeHeader{
-        unsafe {
-            let header = data.as_ptr();
-            let header_struct = transmute(header);
-            return header_struct;
-        }
-    }
-    #[inline]
-    pub fn parse_mut(data: &mut [usize]) -> &mut TreeHeader{
-        unsafe {
-            let header = &*(data.as_ptr() as *mut TreeHeader);
-            let header_struct = transmute(header);
-            return header_struct;
-        }
-
-    }
-}
-
-struct TreeView<'a, T> {
-    pub edges: &'a mut EdgeData,
-}
-
-impl <'a, T> TreeView<'a, T> {
-    pub fn new(edges: &'a mut EdgeData) -> Self {
-        return TreeView{
-            edges,
-        }
-    }
-
-    pub fn header(&self, vertex: usize) -> Option<&TreeHeader> {
-        let node_result = self.edges.edges(vertex);
+impl Node{
+    pub fn parse(edges: &EdgeData, vertex: usize) -> Option<Node> {
+        let node_result = edges.edges(vertex);
         if node_result.is_err() {
             panic!("Vertex not found!");
         }
@@ -47,8 +19,63 @@ impl <'a, T> TreeView<'a, T> {
             return None;
         }
 
-        let header = TreeHeader::parse(nodes);
-
-        return Some(header);
+        return Some(Node{
+            root: nodes[0],
+            parent: nodes[1],
+            node: vertex,
+        });
     }
+
+}
+
+pub struct TreeView<'a, T> {
+    pub nodes: &'a mut EdgeData,
+    pub values: &'a mut Vertices<T>,
+}
+
+impl <'a, T> TreeView<'a, T> {
+    #[cfg_attr(release, inline(always))]
+    pub fn new(edges: &'a mut EdgeData, vertices: &'a mut Vertices<T>) -> Self {
+        return TreeView{
+            nodes: edges,
+            values: vertices,
+        }
+    }
+
+    #[cfg_attr(release, inline(always))]
+    pub fn node(&self, vertex: usize) -> Option<Node> {
+        return Node::parse(self.nodes, vertex);
+    }
+
+    pub fn create_node(&mut self, val: T) -> Node {
+        self.values.push(val);
+        self.nodes.create_vertex();
+        let vertex = self.values.len() -1;
+
+        self.nodes.connect(vertex, vertex); // root
+        self.nodes.connect(vertex, EdgeData::NONE); // parent
+
+        return Node::parse(self.nodes, vertex).unwrap();
+    }
+
+    pub fn create_child(&mut self, node: &Node, val: T) -> Node {
+        self.values.push(val);
+        self.nodes.create_vertex();
+        let vertex = self.values.len() -1;
+
+        self.nodes.connect(vertex, node.root); // root
+        self.nodes.connect(vertex, node.node); // parent
+        return Node::parse(self.nodes, vertex).unwrap();
+    }
+
+    #[cfg_attr(release, inline(always))]
+    pub fn add_child(&mut self, node: &Node, child: usize) {
+        self.nodes.connect(node.node, child);
+        self.nodes.connect(child, node.root); // root
+        self.nodes.connect(child, node.node); // parent
+    }
+
+    // pub fn get_children(&self, node: &Node) -> &[usize] {
+    //
+    // }
 }

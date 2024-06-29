@@ -7,14 +7,14 @@ use crate::traits::Transform;
 pub fn graph_init_test() {
     let mut graph = graph::Graph::new();
     assert_eq!(graph.vertices.len(), 0);
-    assert_eq!(graph.edges.len(), 0);
+    assert_eq!(graph.edges.capacity(), 0);
 
     graph.create(1);
     graph.create(2);
     graph.create(3);
 
     assert_eq!(graph.vertices.len(), 3);
-    assert_eq!(graph.edges.len(), 153);
+    assert_eq!(graph.edges.capacity(), 153);
 
 }
 
@@ -89,7 +89,7 @@ pub fn graph_default_capacity_test(){
     }
 
     assert_eq!(graph.vertices.len(), 50);
-    assert_eq!(graph.edges.len(), (50+1)*count);
+    assert_eq!(graph.edges.capacity(), (50+1)*count);
 }
 
 #[test]
@@ -101,7 +101,7 @@ pub fn graph_with_capacity_test(){
         graph.create(i);
     }
 
-    assert_eq!(graph.edges.len(), (10+1)*count);
+    assert_eq!(graph.edges.capacity(), (10+1)*count);
 }
 
 #[test]
@@ -195,5 +195,63 @@ pub fn graph_transform_test_async(){
         assert_eq!(graph.vertices[i], i*10);
     }
 
+
+}
+#[test]
+pub fn graph_disconnect_test(){
+    let mut graph = graph::Graph::new();
+    let a = graph.create("a");
+    graph.create("b");
+    graph.create("c");
+
+    graph.create_and_connect(a, "a_a");
+    let ab= graph.create_and_connect(a, "a_b");
+    graph.create_and_connect(a, "a_c");
+    let ad= graph.create_and_connect(a, "a_d");
+    graph.create_and_connect(a, "a_e");
+    let af= graph.create_and_connect(a, "a_f");
+    graph.edges.disconnect(a, af);
+
+
+    assert_eq!(graph.edges.len(a), 5);
+
+    match graph.edges.edges(a){
+        Ok(edges) => {
+            for edge in edges {
+                match *edge{
+                    3 => assert_eq!(graph.vertices[*edge], "a_a"),
+                    4 => assert_eq!(graph.vertices[*edge], "a_b"),
+                    5 => assert_eq!(graph.vertices[*edge], "a_c"),
+                    6 => assert_eq!(graph.vertices[*edge], "a_d"),
+                    7 => assert_eq!(graph.vertices[*edge], "a_e"),
+                    _ => continue,
+                }
+            }
+        },
+        Err(_) => {
+            panic!("Vertex not found!");
+        }
+    }
+
+    graph.edges.disconnect(a, ad);
+    graph.edges.disconnect(a, ab);
+
+    assert_eq!(graph.edges.len(a), 3);
+
+    match graph.edges.edges(a){
+        Ok(edges) => {
+            for edge in edges {
+                match *edge{
+                    3 => assert_eq!(graph.vertices[*edge], "a_a"),
+                    5 => assert_eq!(graph.vertices[*edge], "a_c"),
+                    7 => assert_eq!(graph.vertices[*edge], "a_e"),
+                    _ => continue,
+                }
+            }
+        },
+        Err(_) => {
+            panic!("Vertex not found!");
+        }
+    }
 
 }

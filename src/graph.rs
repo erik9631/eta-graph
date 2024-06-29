@@ -1,10 +1,10 @@
 use std::cmp::min;
-use std::mem;
 use std::mem::{size_of};
 use std::ops::{Index, IndexMut};
 use std::thread::available_parallelism;
 use crate::traits;
 use crate::utils::{split_to_mut_parts};
+use crate::views::tree::TreeView;
 
 pub enum Error{
     NoHandle,
@@ -78,6 +78,11 @@ impl <T> Vertices<T>{
             data: Vec::new(),
         }
     }
+
+    #[cfg_attr(release, inline(always))]
+    pub fn push(&mut self, val: T) {
+        self.data.push(val);
+    }
     pub fn len(&self) -> usize {
         return self.data.len();
     }
@@ -146,7 +151,7 @@ impl EdgeData {
     fn calculate_new_edges_size(&self) -> usize {
         return self.edges.len() + self.edge_capacity + (header_element_size());
     }
-    fn create_vertex(&mut self) -> usize{
+    pub fn create_vertex(&mut self) -> usize{
         let old_size = self.edges.len();
 
         self.edges.resize_with(self.calculate_new_edges_size(), Default::default);
@@ -154,26 +159,26 @@ impl EdgeData {
         return self.indices.len() - 1;
     }
 
-    #[cfg_attr(release, inline(always))]
     pub fn disconnect(&mut self, src: usize, vertex: usize) {
         let edge_offset = self.indices[src];
         let (head_data, data) = self.edges.split_at_mut(edge_offset + 1);
         let head_data = &mut head_data[0];
 
         unsafe {
-            let iter = data.as_mut_ptr();
-            let end = iter.offset(*head_data as isize);
-            while(iter != end){
+            let mut iter = data.as_mut_ptr();
+            let end = data.as_mut_ptr().offset(*head_data as isize);
+            while iter != end{
                 if *iter == vertex{
-                    *iter = end.offset(-1) as usize; // Swap the last element for the empty one
+                    *iter = *end.offset(-1); // Swap the last element for the empty one
                     *head_data -= 1;
-                    continue;
+                    break;
                 }
+                iter = iter.offset(1);
             }
         }
     }
 
-    pub fn edges_mut(&self, vertex: usize) -> Result< &mut [usize], Error>{
+    pub fn edges_mut(&mut self, vertex: usize) -> Result< &mut [usize], Error>{
         let edge = self.indices[vertex];
         let size = self.edges[edge];
 
@@ -186,7 +191,7 @@ impl EdgeData {
 
 
     #[cfg_attr(release, inline(always))]
-    pub fn edges_len<T>(&self, vertex: usize) -> usize {
+    pub fn len(&self, vertex: usize) -> usize {
         return self.edges[self.indices[vertex]];
     }
 
@@ -195,7 +200,7 @@ impl EdgeData {
         self.add_edges(from, &[to]);
     }
     #[cfg_attr(release, inline(always))]
-    pub fn len(&self) -> usize {
+    pub fn capacity(&self) -> usize {
         return self.edges.len();
     }
     pub fn edges(&self, vertex: usize) -> Result< &[usize], Error> {
