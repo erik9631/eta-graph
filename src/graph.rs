@@ -21,6 +21,10 @@ pub struct Graph<T> {
     pub edges: EdgeData,
 }
 impl<T> Graph<T>{
+
+    pub fn tree_view(&mut self) -> TreeView<T> {
+        return TreeView::new(&mut self.edges, &mut self.vertices);
+    }
     pub fn new() -> Self {
         return Graph{
             edges: EdgeData::new(),

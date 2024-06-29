@@ -4,7 +4,7 @@ use crate::views::tree::TreeView;
 #[test]
 pub fn tree_view_test(){
     let mut graph = graph::Graph::new();
-    let mut tree_view = TreeView::new(&mut graph.edges, &mut graph.vertices);
+    let mut tree_view = graph.tree_view();
 
     let root = tree_view.create_node("root");
     let child1 = tree_view.create_child(&root, "child1");

@@ -47,10 +47,15 @@ impl <'a, T> TreeView<'a, T> {
         return Node::parse(self.nodes, vertex);
     }
 
-    pub fn create_node(&mut self, val: T) -> Node {
+    fn create_vertex(&mut self, val: T) -> usize {
         self.values.push(val);
         self.nodes.create_vertex();
         let vertex = self.values.len() -1;
+        return vertex;
+    }
+
+    pub fn create_node(&mut self, val: T) -> Node {
+        let vertex = self.create_vertex(val);
 
         self.nodes.connect(vertex, vertex); // root
         self.nodes.connect(vertex, EdgeData::NONE); // parent
@@ -59,9 +64,7 @@ impl <'a, T> TreeView<'a, T> {
     }
 
     pub fn create_child(&mut self, node: &Node, val: T) -> Node {
-        self.values.push(val);
-        self.nodes.create_vertex();
-        let vertex = self.values.len() -1;
+        let vertex = self.create_vertex(val);
 
         self.nodes.connect(vertex, node.root); // root
         self.nodes.connect(vertex, node.node); // parent
