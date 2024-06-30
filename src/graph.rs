@@ -1,17 +1,22 @@
 use std::cmp::min;
+use std::mem;
 use std::mem::{size_of};
 use std::ops::{Index, IndexMut};
 use std::thread::available_parallelism;
 use crate::traits;
-use crate::utils::{split_to_mut_parts};
+use crate::utils::{extract_from_slice_mut, split_to_parts_mut};
 use crate::views::tree::TreeView;
 
 pub enum Error{
     NoHandle,
 }
 
-type Header = usize;
 
+#[repr(C)]
+struct Header{
+    size: usize,
+    visited_flag: usize,
+}
 
 pub struct Vertices<T> {
     data: Vec<T>,
@@ -25,13 +30,25 @@ pub struct Graph<T> {
 
 pub struct EdgeData{
     edge_capacity: usize,
-    edges: Vec<usize>,
+    edge_data: Vec<usize>,
     indices: Vec<usize>,
 }
 
+impl Header {
+    pub fn parse_mut (edge_slice: &mut [usize]) -> &mut Self {
+        let header_ptr = edge_slice.as_mut_ptr() as *mut Header;
+        return unsafe {mem::transmute(header_ptr)};
+    }
+
+    pub fn parse (edge_slice: & [usize]) -> & Self {
+        let header_ptr = edge_slice.as_ptr() as *mut Header;
+        return unsafe {mem::transmute(header_ptr)};
+    }
+}
+
 #[cfg_attr(release, inline(always))]
-fn header_element_size() -> usize {
-    return size_of::<Header>() / size_of::<usize>();
+pub const fn header_size_to_elements() -> usize {
+    size_of::<Header>() / size_of::<usize>()
 }
 
 
@@ -52,7 +69,7 @@ impl<T> Graph<T>{
         return Graph{
             edges: EdgeData::with_capacity(capacity),
             vertices: Vertices::new(),
-        }
+        };
     }
     pub fn create_and_connect(&mut self, src_vertex: usize, val: T) -> usize {
         let new_vertex = self.create(val);
@@ -73,7 +90,7 @@ impl <T: Send> traits::Transform<T> for Vertices<T> {
     fn async_transform(&mut self, transform_fn: fn(&mut [T])) {
         let max_parallelism = available_parallelism().ok().unwrap().get();
         let parallelism_count = min(max_parallelism, self.data.len());
-        let parts = split_to_mut_parts(&mut self.data, parallelism_count);
+        let parts = split_to_parts_mut(&mut self.data, parallelism_count);
 
         std::thread::scope(|scope| {
             for part in parts {
@@ -121,63 +138,64 @@ impl EdgeData {
     pub fn new() -> Self {
         return EdgeData{
             edge_capacity: 50,
-            edges: Vec::new(),
+            edge_data: Vec::new(),
             indices: Vec::new(),
         }
     }
     pub fn with_capacity(capacity: usize) -> Self {
         return EdgeData{
             edge_capacity: capacity,
-            edges: Vec::new(),
+            edge_data: Vec::new(),
             indices: Vec::new(),
         }
     }
-    pub fn add_edges(&mut self, vertex: usize, edges: &[usize]) {
-        let head_offset = self.indices[vertex];
-        let head_index = &self.edges[head_offset];
-        let chunk_len = *head_index;
-        let new_size = chunk_len + edges.len();
+    pub fn add_edges(&mut self, vertex: usize, new_edges: &[usize]) {
+        let data_start_index = self.indices[vertex];
+        let edges_count = self.edge_data[data_start_index];
+        let new_size = edges_count + new_edges.len();
 
         if new_size > self.edge_capacity {
             panic!("Edge array full!");
         }
 
-        if new_size > self.edges.len() {
+        if new_size > self.edge_data.len() {
             panic!("Edge size is greater than the allocated size");
         }
 
-        let new_data_start = head_offset + chunk_len + header_element_size();
-        let new_data_end = new_data_start + edges.len();
+        let new_data_start = data_start_index + edges_count + header_size_to_elements();
+        let new_data_end = new_data_start + new_edges.len();
 
 
-        self.edges[new_data_start..new_data_end].copy_from_slice(edges);
-        self.edges[head_offset] = new_size;
+        self.edge_data[new_data_start..new_data_end].copy_from_slice(new_edges);
+        self.edge_data[data_start_index] = new_size;
     }
 
     #[cfg_attr(release, inline(always))]
     fn calculate_new_edges_size(&self) -> usize {
-        return self.edges.len() + self.edge_capacity + (header_element_size());
+        return self.edge_data.len() + self.edge_capacity + (header_size_to_elements());
     }
     pub fn create_vertex(&mut self) -> usize{
-        let old_size = self.edges.len();
+        let old_size = self.edge_data.len();
 
-        self.edges.resize_with(self.calculate_new_edges_size(), Default::default);
+        self.edge_data.resize_with(self.calculate_new_edges_size(), Default::default);
         self.indices.push(old_size);
         return self.indices.len() - 1;
     }
 
+    //TODO Add checks for unsafe
+
     pub fn disconnect(&mut self, src: usize, vertex: usize) {
-        let edge_offset = self.indices[src];
-        let (head_data, data) = self.edges.split_at_mut(edge_offset + 1);
-        let head_data = &mut head_data[0];
+        let edges_index = self.indices[src];
 
         unsafe {
-            let mut iter = data.as_mut_ptr();
-            let end = data.as_mut_ptr().offset(*head_data as isize);
+            let data_start = &mut self.edge_data[edges_index] as *mut usize;
+            let size = data_start;
+            let mut iter = data_start.offset(header_size_to_elements() as isize);
+            let end = iter.offset(*size as isize);
             while iter != end{
                 if *iter == vertex{
                     *iter = *end.offset(-1); // Swap the last element for the empty one
-                    *head_data -= 1;
+                    *size -= 1;
                     break;
                 }
                 iter = iter.offset(1);
@@ -198,19 +216,19 @@ impl EdgeData {
 
     pub fn edges_mut(&mut self, vertex: usize) -> Result< &mut [usize], Error>{
         let edge = self.indices[vertex];
-        let size = self.edges[edge];
+        let size = self.edge_data[edge];
 
-        if vertex > self.edges.len() {
+        if vertex > self.edge_data.len() {
             return Err(Error::NoHandle);
         }
 
-        return Ok(&mut self.edges[edge + header_element_size()..edge + size + header_element_size() ]);
+        return Ok(&mut self.edge_data[edge + header_size_to_elements()..edge + size + header_size_to_elements() ]);
     }
 
 
     #[cfg_attr(release, inline(always))]
     pub fn len(&self, vertex: usize) -> usize {
-        return self.edges[self.indices[vertex]];
+        return self.edge_data[self.indices[vertex]];
     }
 
     #[cfg_attr(release, inline(always))]
@@ -219,7 +237,7 @@ impl EdgeData {
     }
     #[cfg_attr(release, inline(always))]
     pub fn capacity(&self) -> usize {
-        return self.edges.len();
+        return self.edge_data.len();
     }
     pub fn edges(&self, vertex: usize) -> Result< &[usize], Error> {
         if vertex > self.indices.len() {
@@ -227,8 +245,8 @@ impl EdgeData {
         }
 
         let edge = self.indices[vertex];
-        let size = self.edges[edge];
-        return Ok(&self.edges[edge + header_element_size()..edge + size + header_element_size() ]);
+        let size = self.edge_data[edge];
+        return Ok(&self.edge_data[edge + header_size_to_elements()..edge + size + header_size_to_elements() ]);
     }
 
 }

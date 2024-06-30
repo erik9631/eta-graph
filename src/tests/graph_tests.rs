@@ -1,6 +1,7 @@
 use std::{thread, time};
 use std::time::{Instant, SystemTime};
 use crate::graph;
+use crate::graph::header_size_to_elements;
 use crate::traits::Transform;
 
 #[test]
@@ -14,7 +15,7 @@ pub fn graph_init_test() {
     graph.create(3);
 
     assert_eq!(graph.vertices.len(), 3);
-    assert_eq!(graph.edges.capacity(), 153);
+    assert_eq!(graph.edges.capacity(), (50+ header_size_to_elements())*3);
 
 }
 
@@ -89,7 +90,7 @@ pub fn graph_default_capacity_test(){
     }
 
     assert_eq!(graph.vertices.len(), 50);
-    assert_eq!(graph.edges.capacity(), (50+1)*count);
+    assert_eq!(graph.edges.capacity(), (50+ header_size_to_elements())*count);
 }
 
 #[test]
@@ -101,7 +102,7 @@ pub fn graph_with_capacity_test(){
         graph.create(i);
     }
 
-    assert_eq!(graph.edges.capacity(), (10+1)*count);
+    assert_eq!(graph.edges.capacity(), (10+ header_size_to_elements())*count);
 }
 
 #[test]
