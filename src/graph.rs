@@ -206,7 +206,7 @@ impl EdgeData {
 
     // This is the safe version, but it sucks because it involves direct indexing
     // Performed measurements, the safe version is taking ~362.1235ms on 20 000 elements while the unsafe version is taking ~77.066ms
-    // TODO Optimizer ensures it is as fast as both functions...
+    // TODO Optimizer ensures it is as fast as both functions in release...
     pub fn disconnect_safe(&mut self, src: usize, vertex: usize) {
         let edges_index = self.indices[src];
         let edge_data = &mut self.edge_data[edges_index..];

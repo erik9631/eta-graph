@@ -3,8 +3,13 @@ name = "Graph"
 version = "0.1.0"
 edition = "2021"
 
+[profile.release-with-debug]
+inherits = "release"
+debug = true
+
 [dependencies]
 time = "0.3.36"
 
 [profile.test]
 inherits = "release"
+debug = true
