@@ -182,6 +182,17 @@ impl EdgeData {
         }
     }
 
+    #[cfg_attr(release, inline(always))]
+    pub fn set(&mut self, src: usize, vertex: usize, position: usize){
+        let edges = self.edges_mut(src);
+        if edges.is_err() {
+            panic!("Vertex not found!");
+        }
+        let edges = edges.ok().unwrap();
+        edges[position] = vertex;
+
+    }
+
     pub fn edges_mut(&mut self, vertex: usize) -> Result< &mut [usize], Error>{
         let edge = self.indices[vertex];
         let size = self.edges[edge];
@@ -208,13 +219,12 @@ impl EdgeData {
         return self.edges.len();
     }
     pub fn edges(&self, vertex: usize) -> Result< &[usize], Error> {
-        let edge = self.indices[vertex];
-        let size = self.edges[edge];
-
-        if vertex > self.edges.len() {
+        if vertex > self.indices.len() {
             return Err(Error::NoHandle);
         }
 
+        let edge = self.indices[vertex];
+        let size = self.edges[edge];
         return Ok(&self.edges[edge + header_element_size()..edge + size + header_element_size() ]);
     }
 

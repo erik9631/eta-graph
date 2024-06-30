@@ -20,7 +20,14 @@ pub struct NodeData<'a>{
     pub edges: &'a mut EdgeData,
 }
 
-impl<'a> NodeData{
+pub struct TreeView<'a, T> {
+    pub nodes: NodeData<'a>,
+    pub values: &'a mut Vertices<T>,
+}
+
+
+
+impl<'a> NodeData<'a>{
     pub fn new(nodes: &'a mut EdgeData) -> Self {
         return NodeData{
             edges: nodes,
@@ -39,10 +46,19 @@ impl<'a> NodeData{
             }
         }
     }
+
+
+    #[cfg_attr(release, inline(always))]
+    pub fn add_child(&mut self, node: &Node, child: Node) -> Node{
+        self.edges.connect(node.node, child.node);
+        self.edges.set(child.node, node.header.root, 0); // root
+        self.edges.set(child.node, node.node, 1); // parent
+        return Node::parse(self.edges, child.node);
+    }
 }
 
 impl Node{
-    pub fn parse(edges: &EdgeData, vertex: usize) -> Option<Node> {
+    pub fn parse(edges: &EdgeData, vertex: usize) -> Node {
         let node_result = edges.edges(vertex);
         if node_result.is_err() {
             panic!("Vertex not found!");
@@ -50,23 +66,18 @@ impl Node{
 
         let nodes = node_result.ok().unwrap();
         if nodes.len() == 0 {
-            return None;
+            panic!("Not a tree structure! Missing parent or root!");
         }
 
-        return Some(Node{
-            header: TreeHeader{
-            root: nodes[0],
-            parent: nodes[1],
-        },
+        return Node{
+                header: TreeHeader{
+                root: nodes[0],
+                parent: nodes[1],
+            },
             node: vertex,
-        });
+        };
     }
 
-}
-
-pub struct TreeView<'a, T> {
-    pub nodes: NodeData<'a>,
-    pub values: &'a mut Vertices<T>,
 }
 
 impl <'a, T> TreeView<'a, T> {
@@ -79,13 +90,13 @@ impl <'a, T> TreeView<'a, T> {
     }
 
     #[cfg_attr(release, inline(always))]
-    pub fn node(&self, vertex: usize) -> Option<Node> {
-        return Node::parse(self.nodes, vertex);
+    pub fn node(&self, vertex: usize) -> Node {
+        return Node::parse(self.nodes.edges, vertex);
     }
 
     fn create_vertex(&mut self, val: T) -> usize {
         self.values.push(val);
-        self.nodes.create_vertex();
+        self.nodes.edges.create_vertex();
         let vertex = self.values.len() -1;
         return vertex;
     }
@@ -93,24 +104,19 @@ impl <'a, T> TreeView<'a, T> {
     pub fn create_node(&mut self, val: T) -> Node {
         let vertex = self.create_vertex(val);
 
-        self.nodes.connect(vertex, vertex); // root
-        self.nodes.connect(vertex, EdgeData::NONE); // parent
+        self.nodes.edges.connect(vertex, vertex); // root
+        self.nodes.edges.connect(vertex, EdgeData::NONE); // parent
 
-        return Node::parse(self.nodes, vertex).unwrap();
+        return Node::parse(self.nodes.edges, vertex);
     }
 
     pub fn create_child(&mut self, node: &Node, val: T) -> Node {
         let vertex = self.create_vertex(val);
 
-        self.nodes.connect(vertex, node.header.root); // root
-        self.nodes.connect(vertex, node.node); // parent
-        return Node::parse(self.nodes, vertex).unwrap();
-    }
+        self.nodes.edges.connect(vertex, node.header.root); // root
+        self.nodes.edges.connect(vertex, node.node); // parent
+        self.nodes.edges.connect(node.node, vertex); // child
 
-    #[cfg_attr(release, inline(always))]
-    pub fn add_child(&mut self, node: &Node, child: usize) {
-        self.nodes.connect(node.node, child);
-        self.nodes.connect(child, node.header.root); // root
-        self.nodes.connect(child, node.node); // parent
+        return Node::parse(self.nodes.edges, vertex);
     }
 }
