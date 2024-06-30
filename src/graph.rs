@@ -11,15 +11,30 @@ pub enum Error{
 }
 
 type Header = usize;
-#[cfg_attr(release, inline(always))]
-fn header_element_size() -> usize {
-    return size_of::<Header>() / size_of::<usize>();
+
+
+pub struct Vertices<T> {
+    data: Vec<T>,
 }
 
 pub struct Graph<T> {
     pub vertices: Vertices<T>,
     pub edges: EdgeData,
 }
+
+
+pub struct EdgeData{
+    edge_capacity: usize,
+    edges: Vec<usize>,
+    indices: Vec<usize>,
+}
+
+#[cfg_attr(release, inline(always))]
+fn header_element_size() -> usize {
+    return size_of::<Header>() / size_of::<usize>();
+}
+
+
 impl<T> Graph<T>{
 
     pub fn tree_view(&mut self) -> TreeView<T> {
@@ -50,10 +65,6 @@ impl<T> Graph<T>{
     }
 }
 
-
-pub struct Vertices<T> {
-    data: Vec<T>,
-}
 
 impl <T: Send> traits::Transform<T> for Vertices<T> {
     fn transform(&mut self, transform_fn: fn(&mut [T])) {
@@ -104,14 +115,6 @@ impl <T> IndexMut<usize> for Vertices<T>{
         return &mut self.data[index];
     }
 }
-
-
-pub struct EdgeData{
-    edge_capacity: usize,
-    edges: Vec<usize>,
-    indices: Vec<usize>,
-}
-
 impl EdgeData {
     pub const NONE: usize = usize::MAX;
 
