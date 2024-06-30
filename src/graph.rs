@@ -203,6 +203,30 @@ impl EdgeData {
         }
     }
 
+
+    // This is the safe version, but it sucks because it involves direct indexing
+    // Performed measurements, the safe version is taking ~362.1235ms on 20 000 elements while the unsafe version is taking ~77.066ms
+    pub fn disconnect_safe(&mut self, src: usize, vertex: usize) {
+        let edges_index = self.indices[src];
+        let edge_data = &mut self.edge_data[edges_index..];
+        let header_size = header_size_to_elements();
+
+        if edge_data.len() <= header_size {
+            return;
+        }
+        let size = edge_data[0];
+        let data_len = size + header_size;
+        let data_range = &mut edge_data[header_size..data_len];
+
+        for i in 0..size {
+            if data_range[i] == vertex {
+                data_range[i] = *data_range.last().unwrap();
+                edge_data[0] -= 1; // Decrease the size
+                break;
+            }
+        }
+    }
+
     #[cfg_attr(release, inline(always))]
     pub fn set(&mut self, src: usize, vertex: usize, position: usize){
         let edges = self.edges_mut(src);

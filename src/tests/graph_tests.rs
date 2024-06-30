@@ -155,7 +155,7 @@ pub fn graph_mutability_test(){
 }
 
 #[test]
-pub fn graph_transform_test(){
+pub fn graph_transform_bench(){
     let mut graph = graph::Graph::new();
     let test_size = 10000000;
 
@@ -177,7 +177,7 @@ pub fn graph_transform_test(){
 }
 
 #[test]
-pub fn graph_transform_test_async(){
+pub fn graph_transform_bench_async(){
     let mut graph = graph::Graph::new();
     let test_size = 10000000;
 
@@ -255,4 +255,96 @@ pub fn graph_disconnect_test(){
         }
     }
 
+}
+
+#[test]
+pub fn graph_disconnect_safe_test(){
+    let mut graph = graph::Graph::new();
+    let a = graph.create("a");
+    graph.create("b");
+    graph.create("c");
+
+    graph.create_and_connect(a, "a_a");
+    let ab= graph.create_and_connect(a, "a_b");
+    graph.create_and_connect(a, "a_c");
+    let ad= graph.create_and_connect(a, "a_d");
+    graph.create_and_connect(a, "a_e");
+    let af= graph.create_and_connect(a, "a_f");
+    graph.edges.disconnect_safe(a, af);
+
+
+    assert_eq!(graph.edges.len(a), 5);
+
+    match graph.edges.edges(a){
+        Ok(edges) => {
+            for edge in edges {
+                match *edge{
+                    3 => assert_eq!(graph.vertices[*edge], "a_a"),
+                    4 => assert_eq!(graph.vertices[*edge], "a_b"),
+                    5 => assert_eq!(graph.vertices[*edge], "a_c"),
+                    6 => assert_eq!(graph.vertices[*edge], "a_d"),
+                    7 => assert_eq!(graph.vertices[*edge], "a_e"),
+                    _ => continue,
+                }
+            }
+        },
+        Err(_) => {
+            panic!("Vertex not found!");
+        }
+    }
+
+    graph.edges.disconnect_safe(a, ad);
+    graph.edges.disconnect_safe(a, ab);
+
+    assert_eq!(graph.edges.len(a), 3);
+
+    match graph.edges.edges(a){
+        Ok(edges) => {
+            for edge in edges {
+                match *edge{
+                    3 => assert_eq!(graph.vertices[*edge], "a_a"),
+                    5 => assert_eq!(graph.vertices[*edge], "a_c"),
+                    7 => assert_eq!(graph.vertices[*edge], "a_e"),
+                    _ => continue,
+                }
+            }
+        },
+        Err(_) => {
+            panic!("Vertex not found!");
+        }
+    }
+
+}
+#[test]
+pub fn graph_disconnect_bench(){
+    // prepare data
+    let data_size = 20000;
+    let mut graph = graph::Graph::with_capacity(data_size);
+    let root = graph.create(0);
+    for i in 0..data_size {
+        graph.create_and_connect(root, i+1);
+    }
+
+    let start = Instant::now();
+    for i in 0..data_size {
+        graph.edges.disconnect(root, i+1);
+    }
+    println!("Time taken: {:?}", start.elapsed());
+}
+
+#[test]
+pub fn graph_disconnect_safe_bench(){
+    // prepare data
+    let data_size = 20000;
+    let mut graph = graph::Graph::with_capacity(data_size);
+    let root = graph.create(0);
+    for i in 0..data_size {
+        graph.create_and_connect(root, i+1);
+    }
+
+    let start = Instant::now();
+    for i in 0..data_size {
+        graph.edges.disconnect_safe(root, i+1);
+    }
+    println!("Time taken: {:?}", start.elapsed());
 }
