@@ -1,7 +1,7 @@
 use std::{thread, time};
 use std::mem::size_of;
 use std::time::{Instant, SystemTime};
-use crate::{def_size, graph};
+use crate::{graph};
 use crate::graph::{header_size_to_elements, ISize};
 use crate::traits::Transform;
 
@@ -354,5 +354,3 @@ pub fn graph_disconnect_safe_bench(){
 pub fn default_size_test(){
     println!("Default size: {}", size_of::<ISize>());
 }
-
-def_size!(u16);

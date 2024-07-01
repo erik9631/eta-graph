@@ -2,20 +2,11 @@
 name = "Graph"
 version = "0.1.0"
 edition = "2021"
-
-[features]
-use_u8 = []
-use_u16 = []
-use_u32 = []
-use_usize = []
-default = ["use_u16"]
+build = "build.rs"
 
 [profile.release-with-debug]
 inherits = "release"
 debug = true
-
-[dependencies]
-time = "0.3.36"
 
 [profile.test]
 inherits = "release"

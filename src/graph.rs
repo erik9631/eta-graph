@@ -12,18 +12,16 @@ pub enum Error {
 
 }
 
-#[cfg(all(feature = "use_u32", feature = "use_u64"))]
-compile_error!("Features 'use_u32' and 'use_u64' are mutually exclusive");
-
-#[cfg(feature = "use_u8")]
+#[cfg(isize_type = "u8")]
 pub type ISize = u8;
-#[cfg(feature = "use_u16")]
+
+#[cfg(isize_type = "u16")]
 pub type ISize = u16;
 
-#[cfg(feature = "use_u32")]
+#[cfg(isize_type = "u32")]
 pub type ISize = u32;
 
-#[cfg(feature = "use_usize")]
+#[cfg(isize_type = "usize")]
 pub type ISize = usize;
 
 #[repr(C)]
