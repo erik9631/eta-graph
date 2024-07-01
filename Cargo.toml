@@ -10,6 +10,6 @@ debug = true
 [dependencies]
 time = "0.3.36"
 
-#[profile.test]
-#inherits = "release"
-#debug = true
+[profile.test]
+inherits = "release"
+debug = true

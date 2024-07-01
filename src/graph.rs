@@ -4,7 +4,7 @@ use std::mem::{size_of};
 use std::ops::{Index, IndexMut};
 use std::thread::available_parallelism;
 use crate::traits;
-use crate::utils::{extract_from_slice_mut, split_to_parts_mut};
+use crate::utils::{split_to_parts_mut};
 use crate::views::tree::TreeView;
 
 pub enum Error{
@@ -29,6 +29,7 @@ pub struct Graph<T> {
 
 
 pub struct EdgeData{
+    visited_val: usize, // Val used to mark whether the vertex has been visited
     edge_capacity: usize,
     edge_data: Vec<usize>,
     indices: Vec<usize>,
@@ -137,6 +138,7 @@ impl EdgeData {
 
     pub fn new() -> Self {
         return EdgeData{
+            visited_val: 1,
             edge_capacity: 50,
             edge_data: Vec::new(),
             indices: Vec::new(),
@@ -144,6 +146,7 @@ impl EdgeData {
     }
     pub fn with_capacity(capacity: usize) -> Self {
         return EdgeData{
+            visited_val: 1,
             edge_capacity: capacity,
             edge_data: Vec::new(),
             indices: Vec::new(),
@@ -205,8 +208,11 @@ impl EdgeData {
 
 
     // This is the safe version, but it sucks because it involves direct indexing
-    // Performed measurements, the safe version is taking ~362.1235ms on 20 000 elements while the unsafe version is taking ~77.066ms
-    // TODO Optimizer ensures it is as fast as both functions in release...
+    // Performed measurements, the safe version is taking ~362.1235ms on 20 000 elements while the unsafe version is taking ~77.066ms on Debug
+    // On --release for Ryzen 7900x, the safe version and unsafe version around ~18ms
+    // On --release for Core(TM) i7-1165G7 @ 2.80GHz the safe version is ~65.4733ms unsafe is 24.0857ms
+    // That is ~2x improvement in performance in unsafe. It also scales better with lower-end hardware.
+    // Fuck safe!
     pub fn disconnect_safe(&mut self, src: usize, vertex: usize) {
         let edges_index = self.indices[src];
         let edge_data = &mut self.edge_data[edges_index..];
