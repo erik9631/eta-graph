@@ -7,10 +7,24 @@ use crate::traits;
 use crate::utils::{split_to_parts_mut};
 use crate::views::tree::TreeView;
 
-pub enum Error{
+pub enum Error {
     NoHandle,
+
 }
 
+#[cfg(all(feature = "use_u32", feature = "use_u64"))]
+compile_error!("Features 'use_u32' and 'use_u64' are mutually exclusive");
+
+#[cfg(feature = "use_u8")]
+pub type ISize = u8;
+#[cfg(feature = "use_u16")]
+pub type ISize = u16;
+
+#[cfg(feature = "use_u32")]
+pub type ISize = u32;
+
+#[cfg(feature = "use_usize")]
+pub type ISize = usize;
 
 #[repr(C)]
 struct Header{
