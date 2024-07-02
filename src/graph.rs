@@ -1,7 +1,5 @@
 use std::cmp::min;
-use std::collections::VecDeque;
-use std::mem;
-use std::mem::{size_of, transmute};
+use std::mem::{size_of};
 use std::ops::{Index, IndexMut};
 use std::slice::{from_raw_parts, from_raw_parts_mut};
 use std::thread::available_parallelism;
@@ -31,7 +29,7 @@ pub type MSize = u32;
 pub type MSize = usize;
 
 #[repr(C)]
-struct Header{
+pub struct Header{
     size: MSize,
     visited_flag: MSize,
 }
@@ -109,50 +107,49 @@ impl<T> Graph<T>{
         return self.edges.create_vertex();
     }
 
-    pub fn bfs(&mut self, start: MSize, traverse: fn(g: &Self, v: MSize, val: &T) -> TraverseResult) {
-        let mut nodes: VecDeque<usize> = VecDeque::new();
-        nodes.push_back(start as usize);
-
-        while !nodes.is_empty() {
-            let node = nodes.pop_front();
-            if node.is_none() {
-                return;
-            }
-            let node = node.unwrap().clone() as MSize;
-            traverse(self, node as MSize, &self.vertices[node]);
-
-            {
-                let result = self.edges.edge_chunk_mut(node);
-                if result.is_err() {
-                    panic!("Vertex not found!");
-                }
-
-                let (header, edges) = result.ok().unwrap();
-                header.visited_flag += 1;
-            }
-
-            let edges = self.edges.edge_data(node);
-            if edges.is_err() {
-                panic!("Vertex not found!");
-            }
-
-            let edges = edges.ok().unwrap();
-
-
+    pub fn bfs(&mut self, start: MSize) -> Vec<MSize> {
+        let mut nodes: Vec<MSize> = Vec::new();
+        nodes.push(start as MSize);
+        let mut i = 0;
+        while i < nodes.len() {
+            let val = nodes[i];
+            self.edges.inc_visited_flag(val);
+            //This has to be always valid
+            let edges = self.edges.edge_data(val).ok().unwrap();
             for next in edges {
-                let result = self.edges.edge_chunk(*next);
-                if result.is_err() {
-                    panic!("Vertex not found!");
-                }
-
-                let (header, _) = result.ok().unwrap();
-                if header.visited_flag == self.edges.visited_val {
+                if self.edges.visited_flag(*next) == self.edges.visited_val {
                     continue;
                 }
-                nodes.push_back(*next as usize);
+                nodes.push(*next);
             }
+            i +=1;
         }
+        self.edges.visited_val = 0; // Reset the visited flag as we traversed the whole graph
+        return nodes;
     }
+
+    pub fn bfs_transform<F>(&mut self, start: MSize, mut transform: F)
+    where F: FnMut(&mut Self, MSize){
+        let mut nodes: Vec<MSize> = Vec::new();
+        nodes.push(start as MSize);
+        let mut i = 0;
+        while i < nodes.len() {
+            let val = nodes[i];
+            transform(self, val);
+            self.edges.inc_visited_flag(val);
+            //This has to be always valid
+            let edges = self.edges.edge_data(val).ok().unwrap();
+            for next in edges {
+                if self.edges.visited_flag(*next) == self.edges.visited_val {
+                    continue;
+                }
+                nodes.push(*next);
+            }
+            i +=1;
+        }
+        self.edges.visited_val = 0; // Reset the visited flag as we traversed the whole graph
+    }
+
 
 }
 
@@ -374,6 +371,23 @@ impl EdgeData {
         let edge_chunk_index = self.indices[uvertex] as usize;
         return Ok(Header::parse_mut(self.edges.split_at_mut(edge_chunk_index).1));
     }
+
+    #[cfg_attr(release, inline(always))]
+    fn inc_visited_flag(&mut self, vertex: MSize) {
+        let edge_chunk_index = self.indices[vertex as usize] as usize;
+        self.edges[edge_chunk_index+1] += 1; // The flag is at offset 1
+    }
+    #[cfg_attr(release, inline(always))]
+    fn set_visited_flag(&mut self, vertex: MSize, val: MSize) {
+        let edge_chunk_index = self.indices[vertex as usize] as usize;
+        self.edges[edge_chunk_index+1] = val; // The flag is at offset 1
+    }
+    #[cfg_attr(release, inline(always))]
+    fn visited_flag(&self, vertex: MSize) -> MSize {
+        let edge_chunk_index = self.indices[vertex as usize] as usize;
+        return self.edges[edge_chunk_index+1]; // The flag is at offset 1
+    }
+
 
 }
 

@@ -1,10 +1,8 @@
-use std::{thread, time};
 use std::cmp::min;
 use std::mem::size_of;
-use std::time::{Instant, SystemTime};
+use std::time::{Instant};
 use crate::{graph};
 use crate::graph::{header_size_to_elements, MSize};
-use crate::graph::TraverseResult::Continue;
 use crate::traits::Transform;
 
 #[test]
@@ -319,39 +317,6 @@ pub fn graph_disconnect_safe_test(){
 
 }
 #[test]
-pub fn graph_disconnect_bench(){
-    // prepare data
-    let data_size = 20000;
-    let mut graph = graph::Graph::with_capacity(data_size);
-    let root = graph.create(0);
-    for i in 0..data_size {
-        graph.create_and_connect(root, i+1);
-    }
-
-    let start = Instant::now();
-    for i in 0..data_size as MSize {
-        graph.edges.disconnect(root, i+1);
-    }
-    println!("Time taken: {:?}", start.elapsed());
-}
-
-#[test]
-pub fn graph_disconnect_safe_bench(){
-    // prepare data
-    let data_size = 20000;
-    let mut graph = graph::Graph::with_capacity(data_size);
-    let root = graph.create(0);
-    for i in 0..data_size {
-        graph.create_and_connect(root, i+1);
-    }
-
-    let start = Instant::now();
-    for i in 0..data_size as MSize{
-        graph.edges.disconnect_safe(root, i+1);
-    }
-    println!("Time taken: {:?}", start.elapsed());
-}
-#[test]
 pub fn grap_bfs_test(){
     let mut graph = graph::Graph::new();
     let root = graph.create("root");
@@ -368,8 +333,21 @@ pub fn grap_bfs_test(){
 
     graph.create_and_connect(b_a, "b_a_a");
 
-    graph.bfs(root, |graph, vertex, val|{
-       println!("Vertex: {} Value: {}", vertex, val);
-        return Continue;
-    });
+    // Instead of traverse, it should just save them to a memory and return the content to you. Faster than function calls and u can do iteration on your own.
+    let bfs_results = graph.bfs(root);
+    for (idx, vertex) in bfs_results.iter().enumerate(){
+        match idx {
+            0 => assert_eq!(graph.vertices[*vertex], "root"),
+            1 => assert_eq!(graph.vertices[*vertex], "a"),
+            2 => assert_eq!(graph.vertices[*vertex], "b"),
+            3 => assert_eq!(graph.vertices[*vertex], "c"),
+            4 => assert_eq!(graph.vertices[*vertex], "a_a"),
+            5 => assert_eq!(graph.vertices[*vertex], "a_b"),
+            6 => assert_eq!(graph.vertices[*vertex], "a_c"),
+            7 => assert_eq!(graph.vertices[*vertex], "b_a"),
+            8 => assert_eq!(graph.vertices[*vertex], "b_b"),
+            9 => assert_eq!(graph.vertices[*vertex], "b_a_a"),
+            _ => continue,
+        }
+    }
 }

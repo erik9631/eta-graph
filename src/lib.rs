@@ -6,3 +6,5 @@ pub mod views;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod bench;
