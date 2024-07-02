@@ -4,6 +4,7 @@ use std::mem::size_of;
 use std::time::{Instant, SystemTime};
 use crate::{graph};
 use crate::graph::{header_size_to_elements, MSize};
+use crate::graph::TraverseResult::Continue;
 use crate::traits::Transform;
 
 #[test]
@@ -37,7 +38,7 @@ pub fn graph_basic_test(){
 
    graph.create_and_connect(b_a, "b_a_a");
 
-    let a_edges_result = graph.edges.edges(a);
+    let a_edges_result = graph.edges.edge_data(a);
     assert_eq!(a_edges_result.is_err(), false);
 
     let a_edges = a_edges_result.ok().unwrap();
@@ -52,7 +53,7 @@ pub fn graph_basic_test(){
         }
     }
 
-    let b_edges_result = graph.edges.edges(b);
+    let b_edges_result = graph.edges.edge_data(b);
     assert_eq!(b_edges_result.is_err(), false);
 
     let b_edges = b_edges_result.ok().unwrap();
@@ -66,7 +67,7 @@ pub fn graph_basic_test(){
         }
     }
 
-    let b_a_a_edges_result = graph.edges.edges(b_a);
+    let b_a_a_edges_result = graph.edges.edge_data(b_a);
     assert_eq!(b_a_a_edges_result.is_err(), false);
 
     let b_a_a_edges = b_a_a_edges_result.ok().unwrap();
@@ -131,7 +132,7 @@ pub fn graph_mutability_test(){
     graph.create_and_connect(a, "a_b");
     graph.create_and_connect(a, "a_c");
 
-    let result = graph.edges.edges(a);
+    let result = graph.edges.edge_data(a);
     assert_eq!(result.is_err(), false);
 
     let edges = result.ok().unwrap();
@@ -218,7 +219,7 @@ pub fn graph_disconnect_test(){
 
     assert_eq!(graph.edges.len(a), 5);
 
-    match graph.edges.edges(a){
+    match graph.edges.edge_data(a){
         Ok(edges) => {
             for edge in edges {
                 match *edge{
@@ -241,7 +242,7 @@ pub fn graph_disconnect_test(){
 
     assert_eq!(graph.edges.len(a), 3);
 
-    match graph.edges.edges(a){
+    match graph.edges.edge_data(a){
         Ok(edges) => {
             for edge in edges {
                 match *edge{
@@ -277,7 +278,7 @@ pub fn graph_disconnect_safe_test(){
 
     assert_eq!(graph.edges.len(a), 5);
 
-    match graph.edges.edges(a){
+    match graph.edges.edge_data(a){
         Ok(edges) => {
             for edge in edges {
                 match *edge{
@@ -300,7 +301,7 @@ pub fn graph_disconnect_safe_test(){
 
     assert_eq!(graph.edges.len(a), 3);
 
-    match graph.edges.edges(a){
+    match graph.edges.edge_data(a){
         Ok(edges) => {
             for edge in edges {
                 match *edge{
@@ -349,4 +350,26 @@ pub fn graph_disconnect_safe_bench(){
         graph.edges.disconnect_safe(root, i+1);
     }
     println!("Time taken: {:?}", start.elapsed());
+}
+#[test]
+pub fn grap_bfs_test(){
+    let mut graph = graph::Graph::new();
+    let root = graph.create("root");
+    let a = graph.create_and_connect(root,"a");
+    let b = graph.create_and_connect(root,"b");
+    graph.create_and_connect(root,"c");
+
+    graph.create_and_connect(a, "a_a");
+    graph.create_and_connect(a, "a_b");
+    graph.create_and_connect(a, "a_c");
+
+    let b_a = graph.create_and_connect(b, "b_a");
+    graph.create_and_connect(b, "b_b");
+
+    graph.create_and_connect(b_a, "b_a_a");
+
+    graph.bfs(root, |graph, vertex, val|{
+       println!("Vertex: {} Value: {}", vertex, val);
+        return Continue;
+    });
 }

@@ -34,7 +34,7 @@ impl<'a> NodeData<'a>{
         }
     }
     pub fn get_children(&self, node: &Node) -> &[MSize] {
-        match self.edges.edges(node.node) {
+        match self.edges.edge_data(node.node) {
             Ok(children_slice) => {
                 if children_slice.len() > TreeHeader::ELEMENT_COUNT {
                     return &children_slice[TreeHeader::ELEMENT_COUNT..]
@@ -59,7 +59,7 @@ impl<'a> NodeData<'a>{
 
 impl Node{
     pub fn parse(edges: &EdgeData, vertex: MSize) -> Node {
-        let node_result = edges.edges(vertex);
+        let node_result = edges.edge_data(vertex);
         if node_result.is_err() {
             panic!("Vertex not found!");
         }
