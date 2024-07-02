@@ -1,10 +1,10 @@
 use std::mem::{size_of, transmute};
 use std::slice::from_raw_parts;
-use crate::graph::{EdgeData, Graph, Vertices};
+use crate::graph::{EdgeData, MSize, Vertices};
 
 pub struct TreeHeader{
-    pub root: usize,
-    pub parent: usize,
+    pub root: MSize,
+    pub parent: MSize,
 }
 impl TreeHeader{
     ///Number of elements the header takes up in the edge data
@@ -13,7 +13,7 @@ impl TreeHeader{
 
 pub struct Node{
     pub header: TreeHeader,
-    pub node: usize,
+    pub node: MSize,
 }
 
 pub struct NodeData<'a>{
@@ -33,7 +33,7 @@ impl<'a> NodeData<'a>{
             edges: nodes,
         }
     }
-    pub fn get_children(&self, node: &Node) -> &[usize] {
+    pub fn get_children(&self, node: &Node) -> &[MSize] {
         match self.edges.edges(node.node) {
             Ok(children_slice) => {
                 if children_slice.len() > TreeHeader::ELEMENT_COUNT {
@@ -58,7 +58,7 @@ impl<'a> NodeData<'a>{
 }
 
 impl Node{
-    pub fn parse(edges: &EdgeData, vertex: usize) -> Node {
+    pub fn parse(edges: &EdgeData, vertex: MSize) -> Node {
         let node_result = edges.edges(vertex);
         if node_result.is_err() {
             panic!("Vertex not found!");
@@ -90,15 +90,15 @@ impl <'a, T> TreeView<'a, T> {
     }
 
     #[cfg_attr(release, inline(always))]
-    pub fn node(&self, vertex: usize) -> Node {
+    pub fn node(&self, vertex: MSize) -> Node {
         return Node::parse(self.nodes.edges, vertex);
     }
 
-    fn create_vertex(&mut self, val: T) -> usize {
+    fn create_vertex(&mut self, val: T) -> MSize {
         self.values.push(val);
         self.nodes.edges.create_vertex();
         let vertex = self.values.len() -1;
-        return vertex;
+        return vertex as MSize;
     }
 
     pub fn create_node(&mut self, val: T) -> Node {

@@ -1,8 +1,9 @@
 use std::{thread, time};
+use std::cmp::min;
 use std::mem::size_of;
 use std::time::{Instant, SystemTime};
 use crate::{graph};
-use crate::graph::{header_size_to_elements, ISize};
+use crate::graph::{header_size_to_elements, MSize};
 use crate::traits::Transform;
 
 #[test]
@@ -158,7 +159,7 @@ pub fn graph_mutability_test(){
 #[test]
 pub fn graph_transform_bench(){
     let mut graph = graph::Graph::new();
-    let test_size = 10000000;
+    let test_size = min(size_of::<MSize>(), 10000000) as MSize;
 
     for i in 0..test_size {
         graph.create(i);
@@ -180,7 +181,7 @@ pub fn graph_transform_bench(){
 #[test]
 pub fn graph_transform_bench_async(){
     let mut graph = graph::Graph::new();
-    let test_size = 10000000;
+    let test_size = min(size_of::<MSize>(), 10000000) as MSize;
 
     for i in 0..test_size {
         graph.create(i);
@@ -327,7 +328,7 @@ pub fn graph_disconnect_bench(){
     }
 
     let start = Instant::now();
-    for i in 0..data_size {
+    for i in 0..data_size as MSize {
         graph.edges.disconnect(root, i+1);
     }
     println!("Time taken: {:?}", start.elapsed());
@@ -344,13 +345,8 @@ pub fn graph_disconnect_safe_bench(){
     }
 
     let start = Instant::now();
-    for i in 0..data_size {
+    for i in 0..data_size as MSize{
         graph.edges.disconnect_safe(root, i+1);
     }
     println!("Time taken: {:?}", start.elapsed());
-}
-
-#[test]
-pub fn default_size_test(){
-    println!("Default size: {}", size_of::<ISize>());
 }
