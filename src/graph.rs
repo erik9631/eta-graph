@@ -46,8 +46,8 @@ pub struct Graph<T> {
 
 pub struct EdgeData{
     visited_val: MSize, // Val used to mark whether the vertex has been visited
-    edge_capacity: usize,
-    edges: Vec<MSize>,
+    edges_stride: usize,
+    pub edges: Vec<MSize>,
     indices: Vec<MSize>,
 }
 
@@ -209,7 +209,7 @@ impl EdgeData {
     pub fn new() -> Self {
         return EdgeData{
             visited_val: 1,
-            edge_capacity: 50,
+            edges_stride: 50,
             edges: Vec::new(),
             indices: Vec::new(),
         }
@@ -217,7 +217,7 @@ impl EdgeData {
     pub fn with_capacity(capacity: usize) -> Self {
         return EdgeData{
             visited_val: 1,
-            edge_capacity: capacity,
+            edges_stride: capacity,
             edges: Vec::new(),
             indices: Vec::new(),
         }
@@ -227,7 +227,7 @@ impl EdgeData {
         let edges_count = self.edges[data_start_index] as usize;
         let new_size = edges_count + new_edges.len();
 
-        if new_size > self.edge_capacity {
+        if new_size > self.edges_stride {
             panic!("Edge array full!");
         }
 
@@ -245,12 +245,11 @@ impl EdgeData {
 
     #[cfg_attr(release, inline(always))]
     fn calculate_new_edges_size(&self) -> usize {
-        return self.edges.len() + self.edge_capacity + (header_size_to_elements());
+        return self.edges.len() + self.edges_stride + (header_size_to_elements());;
     }
     pub fn create_vertex(&mut self) -> MSize{
         let old_size = self.edges.len() as MSize;
-
-        self.edges.resize_with(self.calculate_new_edges_size() as usize, Default::default);
+        self.edges.resize_with(self.calculate_new_edges_size(), Default::default);
         self.indices.push(old_size);
         return (self.indices.len() - 1) as MSize;
     }

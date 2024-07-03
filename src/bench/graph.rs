@@ -1,3 +1,4 @@
+use std::io::{Read, stdin};
 use std::time::Instant;
 use crate::graph;
 use crate::graph::MSize;
@@ -92,6 +93,7 @@ pub fn bfs_transform_bench(){
     println!("Time taken: {:?}", start.elapsed());
 
     assert_eq!(counter, number_of_nodes);
+    println!("len: {:?}", graph.edges.edges.capacity());
     println!("Counter: {:?}", counter);
     println!("Number of nodes: {:?}", number_of_nodes);
 }
