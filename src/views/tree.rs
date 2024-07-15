@@ -94,7 +94,7 @@ impl <'a, T> TreeView<'a, T> {
 
     fn create_vertex(&mut self, val: T) -> MSize {
         self.values.push(val);
-        self.nodes.edges.create_vertex();
+        self.nodes.edges.create_vertex(0);
         let vertex = self.values.len() -1;
         return vertex as MSize;
     }

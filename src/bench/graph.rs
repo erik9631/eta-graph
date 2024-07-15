@@ -8,9 +8,9 @@ pub fn graph_disconnect_bench(){
     // prepare data
     let data_size = 20000;
     let mut graph = graph::Graph::with_capacity(data_size);
-    let root = graph.create(0);
+    let root = graph.create_leaf(0);
     for i in 0..data_size {
-        graph.create_and_connect(root, i+1);
+        graph.create_and_connect_leaf(root, i+1);
     }
 
     let start = Instant::now();
@@ -25,9 +25,9 @@ pub fn graph_disconnect_safe_bench(){
     // prepare data
     let data_size = 20000;
     let mut graph = graph::Graph::with_capacity(data_size);
-    let root = graph.create(0);
+    let root = graph.create_leaf(0);
     for i in 0..data_size {
-        graph.create_and_connect(root, i+1);
+        graph.create_and_connect_leaf(root, i+1);
     }
 
     let start = Instant::now();
@@ -42,13 +42,13 @@ pub fn bfs_bench(){
     // prepare data
     let data_size = 1020;
     let mut graph = graph::Graph::with_capacity(data_size);
-    let root = graph.create(0);
+    let root = graph.create_leaf(0);
     let mut number_of_nodes = 1;
     for i in 0..data_size {
-        let child = graph.create_and_connect(root, i+1);
+        let child = graph.create_and_connect_leaf(root, i+1);
         number_of_nodes += 1;
         for j in 0..data_size {
-            graph.create_and_connect(child, (j*data_size));
+            graph.create_and_connect_leaf(child, (j*data_size));
             number_of_nodes += 1;
         }
     }
@@ -73,13 +73,13 @@ pub fn bfs_transform_bench(){
     // prepare data
     let data_size = 1020;
     let mut graph = graph::Graph::with_capacity(data_size);
-    let root = graph.create(0);
+    let root = graph.create_leaf(0);
     let mut number_of_nodes = 1;
     for i in 0..data_size {
-        let child = graph.create_and_connect(root, i+1);
+        let child = graph.create_and_connect_leaf(root, i+1);
         number_of_nodes += 1;
         for j in 0..data_size {
-            graph.create_and_connect(child, (j*data_size));
+            graph.create_and_connect_leaf(child, (j*data_size));
             number_of_nodes += 1;
         }
     }

@@ -16,6 +16,10 @@ pub enum TraverseResult {
     End,
 }
 
+pub enum Commands{
+
+}
+
 #[cfg(msize_type = "u8")]
 pub type MSize = u8;
 
@@ -30,7 +34,8 @@ pub type MSize = usize;
 
 #[repr(C)]
 pub struct Header{
-    size: MSize,
+    len: MSize,
+    capacity: MSize,
     visited_flag: MSize,
 }
 
@@ -46,7 +51,7 @@ pub struct Graph<T> {
 
 pub struct EdgeData{
     visited_val: MSize, // Val used to mark whether the vertex has been visited
-    edges_stride: usize,
+    reserve: usize,
     pub edges: Vec<MSize>,
     indices: Vec<MSize>,
 }
@@ -56,7 +61,7 @@ impl Header {
         let header_ptr = edge_chunk.as_ptr() as *mut Header;
         unsafe{
             let data_ptr = edge_chunk.as_mut_ptr().offset(header_size_to_elements() as isize);
-            let data_slice = from_raw_parts_mut(data_ptr, (*header_ptr).size as usize);
+            let data_slice = from_raw_parts_mut(data_ptr, (*header_ptr).len as usize);
             return (header_ptr.as_mut().unwrap(), data_slice);
         }
     }
@@ -66,7 +71,7 @@ impl Header {
         let header_ptr = edge_chunk.as_ptr() as *const Header;
         unsafe{
             let data_ptr = edge_chunk.as_ptr().offset(header_size_to_elements() as isize);
-            let data_slice = from_raw_parts(data_ptr, (*header_ptr).size as usize);
+            let data_slice = from_raw_parts(data_ptr, (*header_ptr).len as usize);
             return (header_ptr.as_ref().unwrap(), data_slice);
         }
     }
@@ -85,7 +90,7 @@ impl<T> Graph<T>{
     }
     pub fn new() -> Self {
         return Graph{
-            edges: EdgeData::new(),
+            edges: EdgeData::new_dyn(),
             vertices: Vertices::new(),
 
         }
@@ -93,18 +98,29 @@ impl<T> Graph<T>{
 
     pub fn with_capacity(capacity: usize) -> Self {
         return Graph{
-            edges: EdgeData::with_capacity(capacity),
+            edges: EdgeData::with_reserve(capacity),
             vertices: Vertices::new(),
         };
     }
-    pub fn create_and_connect(&mut self, src_vertex: MSize, val: T) -> MSize {
-        let new_vertex = self.create(val);
+
+    pub fn create_and_connect(&mut self, src_vertex: MSize, val: T, edge_count: usize) -> MSize {
+        let new_vertex = self.create(val, edge_count);
         self.edges.connect(src_vertex, new_vertex);
         return new_vertex;
     }
-    pub fn create(&mut self, val: T) -> MSize {
-        self.vertices.data.push(val);
-        return self.edges.create_vertex();
+    pub fn create_and_connect_leaf(&mut self, src_vertex: MSize, val: T) -> MSize {
+        return self.create_and_connect(src_vertex, val, 0);
+    }
+
+    pub fn create(&mut self, val: T, edge_count: usize) -> MSize {
+        self.vertices.push(val);
+        let new_vertex = (self.vertices.len() - 1)  as MSize;
+        self.edges.create_vertex(edge_count);
+        return new_vertex;
+    }
+    #[cfg_attr(release, inline(always))]
+    pub fn create_leaf(&mut self, val: T) -> MSize {
+        return self.create(val, 0)
     }
 
     pub fn bfs(&mut self, start: MSize) -> Vec<MSize> {
@@ -206,18 +222,32 @@ impl <T> IndexMut<MSize> for Vertices<T>{
 impl EdgeData {
     pub const NONE: MSize = MSize::MAX;
 
-    pub fn new() -> Self {
+    /// Creates a new graph with the assumption that the usage will be dynamic.
+    /// It will create the graph with high reserve count of 50 to avoid reallocations.
+    pub fn new_dyn() -> Self {
         return EdgeData{
             visited_val: 1,
-            edges_stride: 50,
+            reserve: 50,
             edges: Vec::new(),
             indices: Vec::new(),
         }
     }
-    pub fn with_capacity(capacity: usize) -> Self {
+    /// Creates a new graph with a custom reserve
+    pub fn with_reserve(capacity: usize) -> Self {
         return EdgeData{
             visited_val: 1,
-            edges_stride: capacity,
+            reserve: capacity,
+            edges: Vec::new(),
+            indices: Vec::new(),
+        }
+    }
+
+    /// Creates a new graph with the assumption that the graph size is known ahead of time. Small reserve count of 5
+
+    pub fn new() -> Self {
+        return EdgeData{
+            visited_val: 1,
+            reserve: 5,
             edges: Vec::new(),
             indices: Vec::new(),
         }
@@ -227,7 +257,7 @@ impl EdgeData {
         let edges_count = self.edges[data_start_index] as usize;
         let new_size = edges_count + new_edges.len();
 
-        if new_size > self.edges_stride {
+        if new_size > self.reserve {
             panic!("Edge array full!");
         }
 
@@ -244,13 +274,18 @@ impl EdgeData {
     }
 
     #[cfg_attr(release, inline(always))]
-    fn calculate_new_edges_size(&self) -> usize {
-        return self.edges.len() + self.edges_stride + (header_size_to_elements());;
+    fn calculate_new_edges_size_abs(&self, size: usize) -> usize {
+        return self.edges.len() + self.reserve + (header_size_to_elements() + size);
     }
-    pub fn create_vertex(&mut self) -> MSize{
-        let old_size = self.edges.len() as MSize;
-        self.edges.resize_with(self.calculate_new_edges_size(), Default::default);
-        self.indices.push(old_size);
+    pub fn create_vertex(&mut self, size: usize) -> MSize{
+        let offset = self.edges.len() as MSize;
+        self.edges.resize_with(self.calculate_new_edges_size_abs(size), Default::default);
+        unsafe{
+            let header_ptr = self.edges.as_mut_ptr().add(offset as usize) as *mut Header;
+            (*header_ptr).capacity = self.reserve as MSize + size as MSize;
+
+        }
+        self.indices.push(offset);
         return (self.indices.len() - 1) as MSize;
     }
 
@@ -281,7 +316,6 @@ impl EdgeData {
     // On --release for Ryzen 7900x, the safe version and unsafe version around ~18ms
     // On --release for Core(TM) i7-1165G7 @ 2.80GHz the safe version is ~65.4733ms unsafe is 24.0857ms
     // That is ~2x improvement in performance in unsafe. It also scales better with lower-end hardware.
-    // Fuck safe!
     pub fn disconnect_safe(&mut self, src: MSize, vertex: MSize) {
         let edges_index = self.indices[src as usize];
         let edge_data = &mut self.edges[edges_index as usize..];
@@ -362,7 +396,7 @@ impl EdgeData {
         return Ok(Header::parse(self.edges.split_at(edge_chunk_index).1));
     }
 
-    fn edge_chunk_mut(&mut self, vertex: MSize) -> Result< (&mut Header, &mut [MSize]) , Error> {
+    fn  edge_chunk_mut(&mut self, vertex: MSize) -> Result< (&mut Header, &mut [MSize]) , Error> {
         let uvertex = vertex as usize;
         if uvertex > self.indices.len() {
             return Err(Error::NoHandle);

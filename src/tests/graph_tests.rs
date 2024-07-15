@@ -11,9 +11,9 @@ pub fn graph_init_test() {
     assert_eq!(graph.vertices.len(), 0);
     assert_eq!(graph.edges.capacity(), 0);
 
-    graph.create(1);
-    graph.create(2);
-    graph.create(3);
+    graph.create_leaf(1);
+    graph.create_leaf(2);
+    graph.create_leaf(3);
 
     assert_eq!(graph.vertices.len(), 3);
     assert_eq!(graph.edges.capacity(), (50+ header_size_to_elements())*3);
@@ -23,18 +23,18 @@ pub fn graph_init_test() {
 #[test]
 pub fn graph_basic_test(){
     let mut graph = graph::Graph::new();
-    let a = graph.create("a");
-    let b = graph.create("b");
-    graph.create("c");
+    let a = graph.create_leaf("a");
+    let b = graph.create_leaf("b");
+    graph.create_leaf("c");
 
-    graph.create_and_connect(a, "a_a");
-    graph.create_and_connect(a, "a_b");
-    graph.create_and_connect(a, "a_c");
+    graph.create_and_connect_leaf(a, "a_a");
+    graph.create_and_connect_leaf(a, "a_b");
+    graph.create_and_connect_leaf(a, "a_c");
 
-    let b_a = graph.create_and_connect(b, "b_a");
-    graph.create_and_connect(b, "b_b");
+    let b_a = graph.create_and_connect_leaf(b, "b_a");
+    graph.create_and_connect_leaf(b, "b_b");
 
-   graph.create_and_connect(b_a, "b_a_a");
+   graph.create_and_connect_leaf(b_a, "b_a_a");
 
     let a_edges_result = graph.edges.edge_data(a);
     assert_eq!(a_edges_result.is_err(), false);
@@ -87,7 +87,7 @@ pub fn graph_default_capacity_test(){
 
 
     for i in 0..count {
-        graph.create(i);
+        graph.create_leaf(i);
     }
 
     assert_eq!(graph.vertices.len(), 50);
@@ -100,7 +100,7 @@ pub fn graph_with_capacity_test(){
     let count = 100;
 
     for i in 0..count {
-        graph.create(i);
+        graph.create_leaf(i);
     }
 
     assert_eq!(graph.edges.capacity(), (10+ header_size_to_elements())*count);
@@ -111,10 +111,10 @@ pub fn graph_with_capacity_test(){
 pub fn graph_edge_overflow_test(){
     let mut graph = graph::Graph::with_capacity(3);
     let count = 4;
-    let a = graph.create(0);
+    let a = graph.create_leaf(0);
 
     for i in 0..count {
-        graph.create_and_connect(a, i+1);
+        graph.create_and_connect_leaf(a, i+1);
     }
 }
 
@@ -122,13 +122,13 @@ pub fn graph_edge_overflow_test(){
 #[test]
 pub fn graph_mutability_test(){
     let mut graph = graph::Graph::new();
-    let a = graph.create("a");
-    graph.create("b");
-    graph.create("c");
+    let a = graph.create_leaf("a");
+    graph.create_leaf("b");
+    graph.create_leaf("c");
 
-    graph.create_and_connect(a, "a_a");
-    graph.create_and_connect(a, "a_b");
-    graph.create_and_connect(a, "a_c");
+    graph.create_and_connect_leaf(a, "a_a");
+    graph.create_and_connect_leaf(a, "a_b");
+    graph.create_and_connect_leaf(a, "a_c");
 
     let result = graph.edges.edge_data(a);
     assert_eq!(result.is_err(), false);
@@ -161,7 +161,7 @@ pub fn graph_transform_bench(){
     let test_size = min(size_of::<MSize>(), 10000000) as MSize;
 
     for i in 0..test_size {
-        graph.create(i);
+        graph.create_leaf(i);
     }
     let start = Instant::now();
     graph.vertices.transform(|slice| {
@@ -183,7 +183,7 @@ pub fn graph_transform_bench_async(){
     let test_size = min(size_of::<MSize>(), 10000000) as MSize;
 
     for i in 0..test_size {
-        graph.create(i);
+        graph.create_leaf(i);
     }
     let start = Instant::now();
     graph.vertices.async_transform(|slice| {
@@ -202,16 +202,16 @@ pub fn graph_transform_bench_async(){
 #[test]
 pub fn graph_disconnect_test(){
     let mut graph = graph::Graph::new();
-    let a = graph.create("a");
-    graph.create("b");
-    graph.create("c");
+    let a = graph.create_leaf("a");
+    graph.create_leaf("b");
+    graph.create_leaf("c");
 
-    graph.create_and_connect(a, "a_a");
-    let ab= graph.create_and_connect(a, "a_b");
-    graph.create_and_connect(a, "a_c");
-    let ad= graph.create_and_connect(a, "a_d");
-    graph.create_and_connect(a, "a_e");
-    let af= graph.create_and_connect(a, "a_f");
+    graph.create_and_connect_leaf(a, "a_a");
+    let ab= graph.create_and_connect_leaf(a, "a_b");
+    graph.create_and_connect_leaf(a, "a_c");
+    let ad= graph.create_and_connect_leaf(a, "a_d");
+    graph.create_and_connect_leaf(a, "a_e");
+    let af= graph.create_and_connect_leaf(a, "a_f");
     graph.edges.disconnect(a, af);
 
 
@@ -261,16 +261,16 @@ pub fn graph_disconnect_test(){
 #[test]
 pub fn graph_disconnect_safe_test(){
     let mut graph = graph::Graph::new();
-    let a = graph.create("a");
-    graph.create("b");
-    graph.create("c");
+    let a = graph.create_leaf("a");
+    graph.create_leaf("b");
+    graph.create_leaf("c");
 
-    graph.create_and_connect(a, "a_a");
-    let ab= graph.create_and_connect(a, "a_b");
-    graph.create_and_connect(a, "a_c");
-    let ad= graph.create_and_connect(a, "a_d");
-    graph.create_and_connect(a, "a_e");
-    let af= graph.create_and_connect(a, "a_f");
+    graph.create_and_connect_leaf(a, "a_a");
+    let ab= graph.create_and_connect_leaf(a, "a_b");
+    graph.create_and_connect_leaf(a, "a_c");
+    let ad= graph.create_and_connect_leaf(a, "a_d");
+    graph.create_and_connect_leaf(a, "a_e");
+    let af= graph.create_and_connect_leaf(a, "a_f");
     graph.edges.disconnect_safe(a, af);
 
 
@@ -317,21 +317,21 @@ pub fn graph_disconnect_safe_test(){
 
 }
 #[test]
-pub fn grap_bfs_test(){
+pub fn graph_bfs_test(){
     let mut graph = graph::Graph::new();
-    let root = graph.create("root");
-    let a = graph.create_and_connect(root,"a");
-    let b = graph.create_and_connect(root,"b");
-    graph.create_and_connect(root,"c");
+    let root = graph.create_leaf("root");
+    let a = graph.create_and_connect_leaf(root, "a");
+    let b = graph.create_and_connect_leaf(root, "b");
+    graph.create_and_connect_leaf(root, "c");
 
-    graph.create_and_connect(a, "a_a");
-    graph.create_and_connect(a, "a_b");
-    graph.create_and_connect(a, "a_c");
+    graph.create_and_connect_leaf(a, "a_a");
+    graph.create_and_connect_leaf(a, "a_b");
+    graph.create_and_connect_leaf(a, "a_c");
 
-    let b_a = graph.create_and_connect(b, "b_a");
-    graph.create_and_connect(b, "b_b");
+    let b_a = graph.create_and_connect_leaf(b, "b_a");
+    graph.create_and_connect_leaf(b, "b_b");
 
-    graph.create_and_connect(b_a, "b_a_a");
+    graph.create_and_connect_leaf(b_a, "b_a_a");
 
     // Instead of traverse, it should just save them to a memory and return the content to you. Faster than function calls and u can do iteration on your own.
     let bfs_results = graph.bfs(root);
