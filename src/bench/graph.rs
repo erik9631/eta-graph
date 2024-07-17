@@ -7,7 +7,7 @@ use crate::graph::MSize;
 pub fn graph_disconnect_bench(){
     // prepare data
     let data_size = 20000;
-    let mut graph = graph::Graph::with_capacity(data_size);
+    let mut graph = graph::Graph::with_reserve(data_size);
     let root = graph.create_leaf(0);
     for i in 0..data_size {
         graph.create_and_connect_leaf(root, i+1);
@@ -24,7 +24,7 @@ pub fn graph_disconnect_bench(){
 pub fn graph_disconnect_safe_bench(){
     // prepare data
     let data_size = 20000;
-    let mut graph = graph::Graph::with_capacity(data_size);
+    let mut graph = graph::Graph::with_reserve(data_size);
     let root = graph.create_leaf(0);
     for i in 0..data_size {
         graph.create_and_connect_leaf(root, i+1);
@@ -41,7 +41,7 @@ pub fn graph_disconnect_safe_bench(){
 pub fn bfs_bench(){
     // prepare data
     let data_size = 1020;
-    let mut graph = graph::Graph::with_capacity(data_size);
+    let mut graph = graph::Graph::with_reserve(data_size);
     let root = graph.create_leaf(0);
     let mut number_of_nodes = 1;
     for i in 0..data_size {
@@ -72,7 +72,7 @@ pub fn bfs_bench(){
 pub fn bfs_transform_bench(){
     // prepare data
     let data_size = 1020;
-    let mut graph = graph::Graph::with_capacity(data_size);
+    let mut graph = graph::Graph::with_reserve(data_size);
     let root = graph.create_leaf(0);
     let mut number_of_nodes = 1;
     for i in 0..data_size {

@@ -1,5 +1,5 @@
 use std::cmp::min;
-use std::mem::{size_of};
+use std::mem::{size_of, transmute};
 use std::ops::{Index, IndexMut};
 use std::slice::{from_raw_parts, from_raw_parts_mut};
 use std::thread::available_parallelism;
@@ -7,6 +7,7 @@ use crate::traits;
 use crate::utils::{split_to_parts_mut};
 use crate::views::tree::TreeView;
 
+#[derive(Debug)]
 pub enum Error {
     NoHandle,
 }
@@ -35,7 +36,7 @@ pub type MSize = usize;
 #[repr(C)]
 pub struct Header{
     len: MSize,
-    capacity: MSize,
+    reserve: MSize,
     visited_flag: MSize,
 }
 
@@ -61,7 +62,7 @@ impl Header {
         let header_ptr = edge_chunk.as_ptr() as *mut Header;
         unsafe{
             let data_ptr = edge_chunk.as_mut_ptr().offset(header_size_to_elements() as isize);
-            let data_slice = from_raw_parts_mut(data_ptr, (*header_ptr).len as usize);
+            let data_slice = from_raw_parts_mut(data_ptr, (*header_ptr).reserve as usize);
             return (header_ptr.as_mut().unwrap(), data_slice);
         }
     }
@@ -88,17 +89,28 @@ impl<T> Graph<T>{
     pub fn tree_view(&mut self) -> TreeView<T> {
         return TreeView::new(&mut self.edges, &mut self.vertices);
     }
-    pub fn new() -> Self {
+
+    /// Creates a new graph with the assumption that the usage will be dynamic.
+    /// It will create the graph with high reserve count of 50 to avoid reallocations.
+    pub fn new_large() -> Self {
         return Graph{
             edges: EdgeData::new_dyn(),
             vertices: Vertices::new(),
 
         }
     }
-
-    pub fn with_capacity(capacity: usize) -> Self {
+    /// Creates a new graph with a custom reserve
+    pub fn with_reserve(reserve: usize) -> Self {
         return Graph{
-            edges: EdgeData::with_reserve(capacity),
+            edges: EdgeData::with_reserve(reserve),
+            vertices: Vertices::new(),
+        };
+    }
+
+    /// Creates a new graph with the assumption that the graph size is known ahead of time. Small reserve count of 5
+    pub fn new() -> Self {
+        return Graph{
+            edges: EdgeData::new(),
             vertices: Vertices::new(),
         };
     }
@@ -242,35 +254,26 @@ impl EdgeData {
         }
     }
 
-    /// Creates a new graph with the assumption that the graph size is known ahead of time. Small reserve count of 5
-
+    /// Creates a new graph with the assumption that the graph size is known ahead of time. No reserve.
     pub fn new() -> Self {
         return EdgeData{
             visited_val: 1,
-            reserve: 5,
+            reserve: 0,
             edges: Vec::new(),
             indices: Vec::new(),
         }
     }
     pub fn add_edges(&mut self, vertex: MSize, new_edges: &[MSize]) {
-        let data_start_index = self.indices[vertex as usize] as usize;
-        let edges_count = self.edges[data_start_index] as usize;
-        let new_size = edges_count + new_edges.len();
+        let (header, data) = self.edge_chunk_mut(vertex).expect("Vertex not found");
+        let new_size = header.len as usize + new_edges.len();
 
-        if new_size > self.reserve {
-            panic!("Edge array full!");
-        }
-
-        if new_size > self.edges.len() {
+        if new_size > header.reserve as usize {
             panic!("Edge size is greater than the allocated size");
         }
+        let new_data_end = header.len as usize + new_edges.len();
 
-        let new_data_start = data_start_index + edges_count + header_size_to_elements();
-        let new_data_end = new_data_start + new_edges.len();
-
-
-        self.edges[new_data_start..new_data_end].copy_from_slice(new_edges);
-        self.edges[data_start_index] = new_size as MSize;
+        data[header.len as usize..new_data_end].copy_from_slice(new_edges);
+        header.len = new_size as MSize;
     }
 
     #[cfg_attr(release, inline(always))]
@@ -282,7 +285,7 @@ impl EdgeData {
         self.edges.resize_with(self.calculate_new_edges_size_abs(size), Default::default);
         unsafe{
             let header_ptr = self.edges.as_mut_ptr().add(offset as usize) as *mut Header;
-            (*header_ptr).capacity = self.reserve as MSize + size as MSize;
+            (*header_ptr).reserve = self.reserve as MSize + size as MSize;
 
         }
         self.indices.push(offset);
@@ -375,6 +378,15 @@ impl EdgeData {
         return self.edges.len();
     }
 
+    pub fn reserve(&mut self, vertex: MSize) -> MSize {
+        unsafe {
+            let header = &self.edges[self.indices[vertex as usize] as usize] as *const MSize;
+            let header_ptr: *const Header = transmute(header);
+            let reserve = (*header_ptr).reserve;
+            return reserve;
+        }
+    }
+
     //TODO Change to tuple of header + edges
     pub fn edge_data(&self, vertex: MSize) -> Result< &[MSize], Error> {
         let uvertex = vertex as usize;
@@ -396,6 +408,7 @@ impl EdgeData {
         return Ok(Header::parse(self.edges.split_at(edge_chunk_index).1));
     }
 
+    // TODO remove. Use your own splitting in the Header::parse
     fn  edge_chunk_mut(&mut self, vertex: MSize) -> Result< (&mut Header, &mut [MSize]) , Error> {
         let uvertex = vertex as usize;
         if uvertex > self.indices.len() {

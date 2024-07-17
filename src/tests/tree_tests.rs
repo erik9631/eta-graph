@@ -4,7 +4,7 @@ use crate::graph;
 
 #[test]
 pub fn tree_view_create_child_test(){
-    let mut graph = graph::Graph::new();
+    let mut graph = graph::Graph::new_large();
     let mut tree_view = graph.tree_view();
 
     let root = tree_view.create_node("root");
@@ -46,7 +46,7 @@ pub fn tree_view_create_child_test(){
 
 #[test]
 pub fn node_test(){
-    let mut graph = graph::Graph::new();
+    let mut graph = graph::Graph::new_large();
     let mut tree_view = graph.tree_view();
 
     let root = tree_view.create_node("root");
@@ -64,7 +64,7 @@ pub fn node_test(){
 #[should_panic(expected = "Vertex not found!")]
 #[test]
 pub fn node_test_fail(){
-    let mut graph = graph::Graph::new();
+    let mut graph = graph::Graph::new_large();
     let mut tree_view = graph.tree_view();
 
     let root = tree_view.create_node("root");
@@ -79,7 +79,7 @@ pub fn node_test_fail(){
 
 #[test]
 pub fn tree_view_add_child_test() {
-    let mut graph = graph::Graph::new();
+    let mut graph = graph::Graph::new_large();
     let mut tree_view = graph.tree_view();
 
     let root = tree_view.create_node("root");
@@ -127,7 +127,7 @@ pub fn tree_view_add_child_test() {
 }
 #[test]
 pub fn get_children_test(){
-    let mut graph = graph::Graph::new();
+    let mut graph = graph::Graph::new_large();
     let mut tree_view = graph.tree_view();
 
     let root = tree_view.create_node("root");

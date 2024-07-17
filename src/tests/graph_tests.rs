@@ -2,12 +2,12 @@ use std::cmp::min;
 use std::mem::size_of;
 use std::time::{Instant};
 use crate::{graph};
-use crate::graph::{header_size_to_elements, MSize};
+use crate::graph::{Graph, header_size_to_elements, MSize};
 use crate::traits::Transform;
 
 #[test]
 pub fn graph_init_test() {
-    let mut graph = graph::Graph::new();
+    let mut graph = Graph::new_large();
     assert_eq!(graph.vertices.len(), 0);
     assert_eq!(graph.edges.capacity(), 0);
 
@@ -22,7 +22,7 @@ pub fn graph_init_test() {
 
 #[test]
 pub fn graph_basic_test(){
-    let mut graph = graph::Graph::new();
+    let mut graph = Graph::new_large();
     let a = graph.create_leaf("a");
     let b = graph.create_leaf("b");
     graph.create_leaf("c");
@@ -82,7 +82,7 @@ pub fn graph_basic_test(){
 
 #[test]
 pub fn graph_default_capacity_test(){
-    let mut graph = graph::Graph::new();
+    let mut graph = Graph::new_large();
     let count = 50;
 
 
@@ -96,7 +96,7 @@ pub fn graph_default_capacity_test(){
 
 #[test]
 pub fn graph_with_capacity_test(){
-    let mut graph = graph::Graph::with_capacity(10);
+    let mut graph = graph::Graph::with_reserve(10);
     let count = 100;
 
     for i in 0..count {
@@ -109,7 +109,7 @@ pub fn graph_with_capacity_test(){
 #[test]
 #[should_panic]
 pub fn graph_edge_overflow_test(){
-    let mut graph = graph::Graph::with_capacity(3);
+    let mut graph = graph::Graph::with_reserve(3);
     let count = 4;
     let a = graph.create_leaf(0);
 
@@ -121,7 +121,7 @@ pub fn graph_edge_overflow_test(){
 
 #[test]
 pub fn graph_mutability_test(){
-    let mut graph = graph::Graph::new();
+    let mut graph = graph::Graph::new_large();
     let a = graph.create_leaf("a");
     graph.create_leaf("b");
     graph.create_leaf("c");
@@ -157,7 +157,7 @@ pub fn graph_mutability_test(){
 
 #[test]
 pub fn graph_transform_bench(){
-    let mut graph = graph::Graph::new();
+    let mut graph = Graph::new_large();
     let test_size = min(size_of::<MSize>(), 10000000) as MSize;
 
     for i in 0..test_size {
@@ -179,7 +179,7 @@ pub fn graph_transform_bench(){
 
 #[test]
 pub fn graph_transform_bench_async(){
-    let mut graph = graph::Graph::new();
+    let mut graph = Graph::new_large();
     let test_size = min(size_of::<MSize>(), 10000000) as MSize;
 
     for i in 0..test_size {
@@ -201,7 +201,7 @@ pub fn graph_transform_bench_async(){
 }
 #[test]
 pub fn graph_disconnect_test(){
-    let mut graph = graph::Graph::new();
+    let mut graph = Graph::new_large();
     let a = graph.create_leaf("a");
     graph.create_leaf("b");
     graph.create_leaf("c");
@@ -260,7 +260,7 @@ pub fn graph_disconnect_test(){
 
 #[test]
 pub fn graph_disconnect_safe_test(){
-    let mut graph = graph::Graph::new();
+    let mut graph = Graph::new_large();
     let a = graph.create_leaf("a");
     graph.create_leaf("b");
     graph.create_leaf("c");
@@ -318,7 +318,7 @@ pub fn graph_disconnect_safe_test(){
 }
 #[test]
 pub fn graph_bfs_test(){
-    let mut graph = graph::Graph::new();
+    let mut graph = Graph::new_large();
     let root = graph.create_leaf("root");
     let a = graph.create_and_connect_leaf(root, "a");
     let b = graph.create_and_connect_leaf(root, "b");
@@ -350,4 +350,72 @@ pub fn graph_bfs_test(){
             _ => continue,
         }
     }
+}
+
+#[test]
+pub fn graph_static_test(){
+    let mut graph = Graph::new();
+    let root = graph.create("root", 5);
+    let a = graph.create_and_connect(root,"a", 1);
+    assert_eq!(graph.edges.reserve(root), 5);
+    let b = graph.create_and_connect(root, "b", 0);
+    assert_eq!(graph.edges.reserve(root), 5);
+    let c = graph.create_and_connect(root,"c", 0);
+    assert_eq!(graph.edges.reserve(root), 5);
+    let d = graph.create_and_connect(root, "d", 1);
+    assert_eq!(graph.edges.reserve(root), 5);
+    let e = graph.create_and_connect(root, "e", 1);
+    assert_eq!(graph.edges.reserve(root), 5);
+
+    graph.create_and_connect(a, "a_a", 0);
+    assert_eq!(graph.edges.reserve(root), 5);
+    graph.create_and_connect(d, "a_d", 0);
+    assert_eq!(graph.edges.reserve(root), 5);
+    graph.create_and_connect(e, "a_e", 0);
+    assert_eq!(graph.edges.reserve(root), 5);
+
+    let vertices = graph.bfs(root);
+    assert_eq!(graph.edges.reserve(root), 5);
+    // for vertex in graph.bfs(root){
+    //     match graph.vertices[vertex]{
+    //         "root" => {
+    //             assert_eq!(graph.edges.len(vertex), 5);
+    //             assert_eq!(graph.edges.reserve(vertex), 5);
+    //         },
+    //         "a" => {
+    //             assert_eq!(graph.edges.len(vertex), 1);
+    //             assert_eq!(graph.edges.reserve(vertex), 1);
+    //         },
+    //         "b" => {
+    //             assert_eq!(graph.edges.len(vertex), 0);
+    //             assert_eq!(graph.edges.reserve(vertex), 0);
+    //         },
+    //         "c" => {
+    //             assert_eq!(graph.edges.len(vertex), 0);
+    //             assert_eq!(graph.edges.reserve(vertex), 0);
+    //         },
+    //         "d" => {
+    //             assert_eq!(graph.edges.len(vertex), 1);
+    //             assert_eq!(graph.edges.reserve(vertex), 1);
+    //         },
+    //         "e" => {
+    //             assert_eq!(graph.edges.len(vertex), 1);
+    //             assert_eq!(graph.edges.reserve(vertex), 1);
+    //         },
+    //         "a_a" => {
+    //             assert_eq!(graph.edges.len(vertex), 0);
+    //             assert_eq!(graph.edges.reserve(vertex), 0);
+    //         },
+    //         "a_d" => {
+    //             assert_eq!(graph.edges.len(vertex), 0);
+    //             assert_eq!(graph.edges.reserve(vertex), 0);
+    //         },
+    //         "a_e" => {
+    //             assert_eq!(graph.edges.len(vertex), 0);
+    //             assert_eq!(graph.edges.reserve(vertex), 0);
+    //         },
+    //         _ => continue,
+    //     }
+    // }
+
 }
