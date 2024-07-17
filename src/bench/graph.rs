@@ -32,7 +32,7 @@ pub fn graph_disconnect_safe_bench(){
 
     let start = Instant::now();
     for i in 0..data_size as MSize{
-        graph.edges.disconnect_safe(root, i+1);
+        graph.edges.disconnect(root, i+1);
     }
     println!("Time taken: {:?}", start.elapsed());
 }

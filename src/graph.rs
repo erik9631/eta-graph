@@ -1,6 +1,7 @@
 use std::cmp::min;
 use std::mem::{size_of, transmute};
 use std::ops::{Index, IndexMut};
+use std::ptr::slice_from_raw_parts_mut;
 use std::slice::{from_raw_parts, from_raw_parts_mut};
 use std::thread::available_parallelism;
 use crate::traits;
@@ -58,22 +59,54 @@ pub struct EdgeData{
 }
 
 impl Header {
-    pub fn parse_mut (edge_chunk: &mut [MSize]) -> (&mut Self, &mut [MSize]) {
-        let header_ptr = edge_chunk.as_ptr() as *mut Header;
+    pub fn parse_ptr_mut (edges: &mut Vec<MSize>, index: usize) -> (*mut Self, *mut MSize) {
+        let header_size = header_size_to_elements();
+        let edges_ptr = edges.as_mut_ptr();
         unsafe{
-            let data_ptr = edge_chunk.as_mut_ptr().offset(header_size_to_elements() as isize);
-            let data_slice = from_raw_parts_mut(data_ptr, (*header_ptr).reserve as usize);
-            return (header_ptr.as_mut().unwrap(), data_slice);
+            let header_ptr = edges_ptr.add(index) as *mut Header;
+            let data_ptr = edges_ptr.add(index + header_size) as *mut MSize;
+            return (header_ptr, data_ptr);
         }
     }
 
-    //TODO Add safety checks
-    pub fn parse (edge_chunk: & [MSize]) -> (&Self, &[MSize]) {
-        let header_ptr = edge_chunk.as_ptr() as *const Header;
+    pub fn parse_ptr (edges: &Vec<MSize>, index: usize) -> (*const Self, *const MSize) {
+        let edges_ptr = edges.as_ptr();
+        let header_size = header_size_to_elements();
         unsafe{
-            let data_ptr = edge_chunk.as_ptr().offset(header_size_to_elements() as isize);
-            let data_slice = from_raw_parts(data_ptr, (*header_ptr).len as usize);
-            return (header_ptr.as_ref().unwrap(), data_slice);
+            let header_ptr = edges_ptr.add(index) as *const Header;
+            let data_ptr = edges_ptr.add(index + header_size) as *const MSize;
+            return (header_ptr, data_ptr);
+        }
+    }
+    pub fn parse_mut (edges: &mut Vec<MSize>, index: usize) -> (&mut Self, &mut [MSize]) {
+        let header_size = header_size_to_elements();
+        let edges_ptr = edges.as_mut_ptr();
+
+        // Return as Result instead of panic
+        if index >= edges.len() {
+            panic!("Index out of bounds");
+        }
+
+        unsafe{
+            let header_ptr = edges_ptr.add(index) as *mut Header;
+            let data_ptr = edges_ptr.add(index + header_size) as *mut MSize;
+            let data = from_raw_parts_mut(data_ptr, (*header_ptr).reserve as usize);
+            return (header_ptr.as_mut().unwrap(), data);
+        }
+    }
+    pub fn parse (edges: &Vec<MSize>, index: usize) -> (&Self, &[MSize]) {
+        // Return as Result instead of panic
+        let header_size = header_size_to_elements();
+        let edges_ptr = edges.as_ptr();
+
+        if index >= edges.len() {
+            panic!("Index out of bounds");
+        }
+        unsafe{
+            let header_ptr = edges_ptr.add(index) as *const Header;
+            let data_ptr = edges_ptr.add(index + header_size) as *const MSize;
+            let data = from_raw_parts(data_ptr, (*header_ptr).len as usize);
+            return (header_ptr.as_ref().unwrap(), data);
         }
     }
 }
@@ -264,9 +297,10 @@ impl EdgeData {
         }
     }
     pub fn add_edges(&mut self, vertex: MSize, new_edges: &[MSize]) {
-        let (header, data) = self.edge_chunk_mut(vertex).expect("Vertex not found");
+        let (header, data) = Header::parse_mut(&mut self.edges, self.indices[vertex as usize] as usize);
         let new_size = header.len as usize + new_edges.len();
 
+        // TODO return as Result instead of panic!
         if new_size > header.reserve as usize {
             panic!("Edge size is greater than the allocated size");
         }
@@ -296,46 +330,18 @@ impl EdgeData {
 
     pub fn disconnect(&mut self, src: MSize, vertex: MSize) {
         let edges_index = self.indices[src as usize] as usize;
+        let (header, data) = Header::parse_ptr_mut(&mut self.edges, edges_index);
 
         unsafe {
-            let data_start = &mut self.edges[edges_index] as *mut MSize;
-            let size = data_start;
-            let mut iter = data_start.offset(header_size_to_elements() as isize);
-            let end = iter.offset(*size as isize);
-            while iter != end{
+            let mut iter = data;
+            let end = iter.add((*header).len as usize);
+             while iter != end{
                 if *iter == vertex{
-                    *iter = *end.offset(-1); // Swap the last element for the empty one
-                    *size -= 1;
+                    *iter = *end.offset(-1 ); // Swap the last element for the empty one
+                    (*header).len -= 1;
                     break;
                 }
                 iter = iter.offset(1);
-            }
-        }
-    }
-
-
-    // This is the safe version, but it sucks because it involves direct indexing
-    // Performed measurements, the safe version is taking ~362.1235ms on 20 000 elements while the unsafe version is taking ~77.066ms on Debug
-    // On --release for Ryzen 7900x, the safe version and unsafe version around ~18ms
-    // On --release for Core(TM) i7-1165G7 @ 2.80GHz the safe version is ~65.4733ms unsafe is 24.0857ms
-    // That is ~2x improvement in performance in unsafe. It also scales better with lower-end hardware.
-    pub fn disconnect_safe(&mut self, src: MSize, vertex: MSize) {
-        let edges_index = self.indices[src as usize];
-        let edge_data = &mut self.edges[edges_index as usize..];
-        let header_size = header_size_to_elements();
-
-        if edge_data.len() <= header_size {
-            return;
-        }
-        let size = edge_data[0] as usize;
-        let data_len = size + header_size;
-        let data_range = &mut edge_data[header_size..data_len];
-
-        for i in 0..size {
-            if data_range[i] == vertex {
-                data_range[i] = *data_range.last().unwrap();
-                edge_data[0] -= 1; // Decrease the size
-                break;
             }
         }
     }
@@ -366,7 +372,8 @@ impl EdgeData {
 
     #[cfg_attr(release, inline(always))]
     pub fn len(&self, vertex: MSize) -> MSize {
-        return self.edges[self.indices[vertex as usize] as usize];
+        let (header, _) = Header::parse(&self.edges, self.indices[vertex as usize] as usize);
+        return header.len;
     }
 
     #[cfg_attr(release, inline(always))]
@@ -393,47 +400,28 @@ impl EdgeData {
         if uvertex > self.indices.len() {
             return Err(Error::NoHandle);
         }
-
-        let edge = self.indices[uvertex] as usize;
-        let size = self.edges[edge] as usize;
-        return Ok(&self.edges[edge + header_size_to_elements()..edge + size + header_size_to_elements() ]);
-    }
-
-    pub fn edge_chunk(&self, vertex: MSize) -> Result< (&Header, &[MSize]) , Error> {
-        let uvertex = vertex as usize;
-        if uvertex > self.indices.len() {
-            return Err(Error::NoHandle);
-        }
-        let edge_chunk_index = self.indices[uvertex] as usize;
-        return Ok(Header::parse(self.edges.split_at(edge_chunk_index).1));
-    }
-
-    // TODO remove. Use your own splitting in the Header::parse
-    fn  edge_chunk_mut(&mut self, vertex: MSize) -> Result< (&mut Header, &mut [MSize]) , Error> {
-        let uvertex = vertex as usize;
-        if uvertex > self.indices.len() {
-            return Err(Error::NoHandle);
-        }
-        let edge_chunk_index = self.indices[uvertex] as usize;
-        return Ok(Header::parse_mut(self.edges.split_at_mut(edge_chunk_index).1));
+        let (_, data) = Header::parse(&self.edges, self.indices[uvertex] as usize);
+        return Ok(data);
     }
 
     #[cfg_attr(release, inline(always))]
     fn inc_visited_flag(&mut self, vertex: MSize) {
         let edge_chunk_index = self.indices[vertex as usize] as usize;
-        self.edges[edge_chunk_index+1] += 1; // The flag is at offset 1
+        let header = Header::parse_mut(&mut self.edges, edge_chunk_index).0;
+        header.visited_flag += 1;
     }
     #[cfg_attr(release, inline(always))]
     fn set_visited_flag(&mut self, vertex: MSize, val: MSize) {
         let edge_chunk_index = self.indices[vertex as usize] as usize;
-        self.edges[edge_chunk_index+1] = val; // The flag is at offset 1
+        let header = Header::parse_mut(&mut self.edges, edge_chunk_index).0;
+        header.visited_flag = val;
     }
     #[cfg_attr(release, inline(always))]
     fn visited_flag(&self, vertex: MSize) -> MSize {
         let edge_chunk_index = self.indices[vertex as usize] as usize;
-        return self.edges[edge_chunk_index+1]; // The flag is at offset 1
+        let header = Header::parse(&self.edges, edge_chunk_index).0;
+        return header.visited_flag;
     }
-
 
 }
 
