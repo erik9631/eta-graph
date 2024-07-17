@@ -18,10 +18,6 @@ pub enum TraverseResult {
     End,
 }
 
-pub enum Commands{
-
-}
-
 #[cfg(msize_type = "u8")]
 pub type MSize = u8;
 
@@ -33,6 +29,8 @@ pub type MSize = u32;
 
 #[cfg(msize_type = "usize")]
 pub type MSize = usize;
+
+const MSIZE_ALIGN_MASK: usize = size_of::<MSize>() - 1;
 
 #[repr(C)]
 pub struct Header{
@@ -60,26 +58,23 @@ pub struct EdgeData{
 
 impl Header {
     pub fn parse_ptr_mut (edges: &mut Vec<MSize>, index: usize) -> (*mut Self, *mut MSize) {
-        let header_size = header_size_to_elements();
         let edges_ptr = edges.as_mut_ptr();
         unsafe{
             let header_ptr = edges_ptr.add(index) as *mut Header;
-            let data_ptr = edges_ptr.add(index + header_size) as *mut MSize;
+            let data_ptr = edges_ptr.byte_add(size_of::<Header>()).add(index) as *mut MSize;
             return (header_ptr, data_ptr);
         }
     }
 
     pub fn parse_ptr (edges: &Vec<MSize>, index: usize) -> (*const Self, *const MSize) {
         let edges_ptr = edges.as_ptr();
-        let header_size = header_size_to_elements();
         unsafe{
             let header_ptr = edges_ptr.add(index) as *const Header;
-            let data_ptr = edges_ptr.add(index + header_size) as *const MSize;
+            let data_ptr = edges_ptr.byte_add(size_of::<Header>()).add(index) as *const MSize;
             return (header_ptr, data_ptr);
         }
     }
     pub fn parse_mut (edges: &mut Vec<MSize>, index: usize) -> (&mut Self, &mut [MSize]) {
-        let header_size = header_size_to_elements();
         let edges_ptr = edges.as_mut_ptr();
 
         // Return as Result instead of panic
@@ -89,14 +84,13 @@ impl Header {
 
         unsafe{
             let header_ptr = edges_ptr.add(index) as *mut Header;
-            let data_ptr = edges_ptr.add(index + header_size) as *mut MSize;
+            let data_ptr = edges_ptr.byte_add(size_of::<Header>()).add(index) as *mut MSize;
             let data = from_raw_parts_mut(data_ptr, (*header_ptr).reserve as usize);
             return (header_ptr.as_mut().unwrap(), data);
         }
     }
     pub fn parse (edges: &Vec<MSize>, index: usize) -> (&Self, &[MSize]) {
         // Return as Result instead of panic
-        let header_size = header_size_to_elements();
         let edges_ptr = edges.as_ptr();
 
         if index >= edges.len() {
@@ -104,19 +98,12 @@ impl Header {
         }
         unsafe{
             let header_ptr = edges_ptr.add(index) as *const Header;
-            let data_ptr = edges_ptr.add(index + header_size) as *const MSize;
+            let data_ptr = edges_ptr.byte_add(size_of::<Header>()).add(index) as *const MSize;
             let data = from_raw_parts(data_ptr, (*header_ptr).len as usize);
             return (header_ptr.as_ref().unwrap(), data);
         }
     }
 }
-
-#[cfg_attr(release, inline(always))]
-pub const fn header_size_to_elements() -> usize {
-    size_of::<Header>() / size_of::<MSize>()
-}
-
-
 impl<T> Graph<T>{
 
     pub fn tree_view(&mut self) -> TreeView<T> {
@@ -266,6 +253,7 @@ impl <T> IndexMut<MSize> for Vertices<T>{
 }
 impl EdgeData {
     pub const NONE: MSize = MSize::MAX;
+    const MSIZE_ALIGN_MASK: usize = size_of::<MSize>() - 1;
 
     /// Creates a new graph with the assumption that the usage will be dynamic.
     /// It will create the graph with high reserve count of 50 to avoid reallocations.
@@ -312,7 +300,7 @@ impl EdgeData {
 
     #[cfg_attr(release, inline(always))]
     fn calculate_new_edges_size_abs(&self, size: usize) -> usize {
-        return self.edges.len() + self.reserve + (header_size_to_elements() + size);
+        return self.edges.len() + self.reserve + (header_size_in_msize_units() + size);
     }
     pub fn create_vertex(&mut self, size: usize) -> MSize{
         let offset = self.edges.len() as MSize;
@@ -327,7 +315,6 @@ impl EdgeData {
     }
 
     //TODO Add checks for unsafe
-
     pub fn disconnect(&mut self, src: MSize, vertex: MSize) {
         let edges_index = self.indices[src as usize] as usize;
         let (header, data) = Header::parse_ptr_mut(&mut self.edges, edges_index);
@@ -354,7 +341,6 @@ impl EdgeData {
         }
         let edges = edges.ok().unwrap();
         edges[position] = vertex;
-
     }
 
     pub fn edges_mut(&mut self, vertex: MSize) -> Result< &mut [MSize], Error>{
@@ -366,7 +352,7 @@ impl EdgeData {
             return Err(Error::NoHandle);
         }
 
-        return Ok(&mut self.edges[edge + header_size_to_elements()..edge + size + header_size_to_elements() ]);
+        return Ok(&mut self.edges[edge + header_size_in_msize_units()..edge + size + header_size_in_msize_units() ]);
     }
 
 
@@ -424,6 +410,14 @@ impl EdgeData {
     }
 
 }
+
+
+#[cfg_attr(release, inline(always))]
+pub fn header_size_in_msize_units() -> usize {
+    let raw_size = size_of::<Header>();
+    (raw_size + MSIZE_ALIGN_MASK) & !MSIZE_ALIGN_MASK
+}
+
 
 // pub fn dfs<T>(root: &Tree<T>, traverse: fn(node: &Tree<T>)){
 //     let mut stack: Vec<(&Tree<T>, Iter<*mut Tree<T>>)> = Vec::new();

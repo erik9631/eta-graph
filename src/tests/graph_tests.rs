@@ -2,7 +2,7 @@ use std::cmp::min;
 use std::mem::size_of;
 use std::time::{Instant};
 use crate::{graph};
-use crate::graph::{Graph, header_size_to_elements, MSize};
+use crate::graph::{Graph, header_size_in_msize_units, MSize};
 use crate::traits::Transform;
 
 #[test]
@@ -16,7 +16,7 @@ pub fn graph_init_test() {
     graph.create_leaf(3);
 
     assert_eq!(graph.vertices.len(), 3);
-    assert_eq!(graph.edges.capacity(), (50+ header_size_to_elements())*3);
+    assert_eq!(graph.edges.capacity(), (50+ header_size_in_msize_units())*3);
 
 }
 
@@ -91,7 +91,7 @@ pub fn graph_default_capacity_test(){
     }
 
     assert_eq!(graph.vertices.len(), 50);
-    assert_eq!(graph.edges.capacity(), (50+ header_size_to_elements())*count);
+    assert_eq!(graph.edges.capacity(), (50+ header_size_in_msize_units())*count);
 }
 
 #[test]
@@ -103,7 +103,7 @@ pub fn graph_with_capacity_test(){
         graph.create_leaf(i);
     }
 
-    assert_eq!(graph.edges.capacity(), (10+ header_size_to_elements())*count);
+    assert_eq!(graph.edges.capacity(), (10+ header_size_in_msize_units())*count);
 }
 
 #[test]
