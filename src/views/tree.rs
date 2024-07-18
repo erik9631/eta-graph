@@ -1,27 +1,13 @@
 use crate::graph::{EdgeData, Header, MSize, Vertices};
 
 #[repr(C)]
-
-pub struct TreeHeader{
-    pub root: MSize,
-    pub parent: MSize,
-}
 impl TreeHeader{
     ///Number of elements the header takes up in the edge data
     const ELEMENT_COUNT: usize = 2;
 }
 
-pub struct Node{
-    pub header: TreeHeader,
-    pub node: MSize,
-}
-
-pub struct NodeData<'a>{
-    pub edges: &'a mut EdgeData,
-}
-
 pub struct TreeView<'a, T> {
-    pub nodes: NodeData<'a>,
+    pub nodes: &'a mut EdgeData,
     pub values: &'a mut Vertices<T>,
 }
 
@@ -97,26 +83,28 @@ impl <'a, T> TreeView<'a, T> {
 
     fn create_vertex(&mut self, val: T) -> MSize {
         self.values.push(val);
-        self.nodes.edges.create_vertex(0);
+        self.nodes.create_vertex(0);
         let vertex = self.values.len() -1;
         return vertex as MSize;
     }
 
-    pub fn create_node(&mut self, val: T) -> Node {
+    pub fn get_root()
+
+    pub fn create_node(&mut self, val: T) -> MSize {
         let vertex = self.create_vertex(val);
 
-        self.nodes.edges.connect(vertex, vertex); // root
-        self.nodes.edges.connect(vertex, EdgeData::NONE); // parent
+        self.nodes.connect(vertex, vertex); // root
+        self.nodes.connect(vertex, EdgeData::NONE); // parent
 
-        return Node::parse(self.nodes.edges, vertex);
+        return vertex;
     }
 
-    pub fn create_child(&mut self, node: &Node, val: T) -> Node {
+    pub fn create_child(&mut self, node: MSize, val: T) -> Node {
         let vertex = self.create_vertex(val);
 
-        self.nodes.edges.connect(vertex, node.header.root); // root
-        self.nodes.edges.connect(vertex, node.node); // parent
-        self.nodes.edges.connect(node.node, vertex); // child
+        self.nodes.connect(vertex, node.header.root); // root
+        self.nodes.connect(vertex, node.node); // parent
+        self.nodes.connect(node.node, vertex); // child
 
         return Node::parse(self.nodes.edges, vertex);
     }
