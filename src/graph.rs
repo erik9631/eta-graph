@@ -52,7 +52,7 @@ pub struct Graph<T> {
 pub struct EdgeData{
     visited_val: MSize, // Val used to mark whether the vertex has been visited
     reserve: usize,
-    pub edges: Vec<MSize>,
+    edges: Vec<MSize>,
     indices: Vec<MSize>,
 }
 

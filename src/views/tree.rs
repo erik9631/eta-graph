@@ -88,7 +88,13 @@ impl <'a, T> TreeView<'a, T> {
         return vertex as MSize;
     }
 
-    pub fn get_root()
+    pub fn get_root(&self, vertex: MSize) -> MSize{
+        return self.nodes.edges[self.nodes.edges]
+    }
+
+    pub fn get_parent(&self, vertex: MSize) -> MSize{
+        return self.nodes[vertex];
+    }
 
     pub fn create_node(&mut self, val: T) -> MSize {
         let vertex = self.create_vertex(val);
@@ -99,7 +105,7 @@ impl <'a, T> TreeView<'a, T> {
         return vertex;
     }
 
-    pub fn create_child(&mut self, node: MSize, val: T) -> Node {
+    pub fn create_child(&mut self, node: MSize, val: T) -> MSize {
         let vertex = self.create_vertex(val);
 
         self.nodes.connect(vertex, node.header.root); // root
