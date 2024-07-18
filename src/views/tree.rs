@@ -1,4 +1,6 @@
-use crate::graph::{EdgeData, MSize, Vertices};
+use crate::graph::{EdgeData, Header, MSize, Vertices};
+
+#[repr(C)]
 
 pub struct TreeHeader{
     pub root: MSize,
@@ -32,7 +34,7 @@ impl<'a> NodeData<'a>{
         }
     }
     pub fn get_children(&self, node: &Node) -> &[MSize] {
-        match self.edges.edge_data(node.node) {
+        match self.edges.edges(node.node) {
             Ok(children_slice) => {
                 if children_slice.len() > TreeHeader::ELEMENT_COUNT {
                     return &children_slice[TreeHeader::ELEMENT_COUNT..]
@@ -56,8 +58,9 @@ impl<'a> NodeData<'a>{
 }
 
 impl Node{
+    // TODO Reiterate error handling
     pub fn parse(edges: &EdgeData, vertex: MSize) -> Node {
-        let node_result = edges.edge_data(vertex);
+        let node_result = edges.edges(vertex);
         if node_result.is_err() {
             panic!("Vertex not found!");
         }

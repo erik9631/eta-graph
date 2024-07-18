@@ -36,7 +36,7 @@ pub fn graph_basic_test(){
 
    graph.create_and_connect_leaf(b_a, "b_a_a");
 
-    let a_edges_result = graph.edges.edge_data(a);
+    let a_edges_result = graph.edges.edges(a);
     assert_eq!(a_edges_result.is_err(), false);
 
     let a_edges = a_edges_result.ok().unwrap();
@@ -51,7 +51,7 @@ pub fn graph_basic_test(){
         }
     }
 
-    let b_edges_result = graph.edges.edge_data(b);
+    let b_edges_result = graph.edges.edges(b);
     assert_eq!(b_edges_result.is_err(), false);
 
     let b_edges = b_edges_result.ok().unwrap();
@@ -65,7 +65,7 @@ pub fn graph_basic_test(){
         }
     }
 
-    let b_a_a_edges_result = graph.edges.edge_data(b_a);
+    let b_a_a_edges_result = graph.edges.edges(b_a);
     assert_eq!(b_a_a_edges_result.is_err(), false);
 
     let b_a_a_edges = b_a_a_edges_result.ok().unwrap();
@@ -130,7 +130,7 @@ pub fn graph_mutability_test(){
     graph.create_and_connect_leaf(a, "a_b");
     graph.create_and_connect_leaf(a, "a_c");
 
-    let result = graph.edges.edge_data(a);
+    let result = graph.edges.edges(a);
     assert_eq!(result.is_err(), false);
 
     let edges = result.ok().unwrap();
@@ -217,7 +217,7 @@ pub fn graph_disconnect_test(){
 
     assert_eq!(graph.edges.len(a), 5);
 
-    match graph.edges.edge_data(a){
+    match graph.edges.edges(a){
         Ok(edges) => {
             for edge in edges {
                 match *edge{
@@ -240,7 +240,7 @@ pub fn graph_disconnect_test(){
 
     assert_eq!(graph.edges.len(a), 3);
 
-    match graph.edges.edge_data(a){
+    match graph.edges.edges(a){
         Ok(edges) => {
             for edge in edges {
                 match *edge{

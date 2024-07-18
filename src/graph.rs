@@ -163,7 +163,7 @@ impl<T> Graph<T>{
             let val = nodes[i];
             self.edges.inc_visited_flag(val);
             //This has to be always valid
-            let edges = self.edges.edge_data(val).ok().unwrap();
+            let edges = self.edges.edges(val).ok().unwrap();
             for next in edges {
                 if self.edges.visited_flag(*next) == self.edges.visited_val {
                     continue;
@@ -186,7 +186,7 @@ impl<T> Graph<T>{
             transform(self, val);
             self.edges.inc_visited_flag(val);
             //This has to be always valid
-            let edges = self.edges.edge_data(val).ok().unwrap();
+            let edges = self.edges.edges(val).ok().unwrap();
             for next in edges {
                 if self.edges.visited_flag(*next) == self.edges.visited_val {
                     continue;
@@ -343,18 +343,6 @@ impl EdgeData {
         edges[position] = vertex;
     }
 
-    pub fn edges_mut(&mut self, vertex: MSize) -> Result< &mut [MSize], Error>{
-        let uvertex = vertex as usize;
-        let edge = self.indices[uvertex] as usize;
-        let size = self.edges[edge] as usize;
-
-        if uvertex > self.edges.len() {
-            return Err(Error::NoHandle);
-        }
-
-        return Ok(&mut self.edges[edge + header_size_in_msize_units()..edge + size + header_size_in_msize_units() ]);
-    }
-
 
     #[cfg_attr(release, inline(always))]
     pub fn len(&self, vertex: MSize) -> MSize {
@@ -380,13 +368,21 @@ impl EdgeData {
         }
     }
 
-    //TODO Change to tuple of header + edges
-    pub fn edge_data(&self, vertex: MSize) -> Result< &[MSize], Error> {
+    pub fn edges(&self, vertex: MSize) -> Result< &[MSize], Error> {
         let uvertex = vertex as usize;
         if uvertex > self.indices.len() {
             return Err(Error::NoHandle);
         }
         let (_, data) = Header::parse(&self.edges, self.indices[uvertex] as usize);
+        return Ok(data);
+    }
+
+    pub fn edges_mut(&mut self, vertex: MSize) -> Result< &mut [MSize], Error>{
+        let uvertex = vertex as usize;
+        if uvertex > self.indices.len() {
+            return Err(Error::NoHandle);
+        }
+        let (_, data) = Header::parse_mut(&mut self.edges, self.indices[uvertex] as usize);
         return Ok(data);
     }
 
