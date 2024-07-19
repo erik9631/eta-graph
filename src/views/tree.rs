@@ -1,8 +1,11 @@
+use std::slice::from_raw_parts;
 use crate::graph::{EdgeData, Header, MSize, Vertices};
 pub struct TreeView<'a, T> {
     pub nodes: &'a mut EdgeData,
     pub values: &'a mut Vertices<T>,
 }
+
+const TREE_HEADER_ELEMENTS: MSize = 2;
 
 
 
@@ -13,6 +16,13 @@ impl <'a, T> TreeView<'a, T> {
             nodes: edges,
             values: vertices,
         }
+    }
+
+    pub fn get_children(&self, parent: MSize) -> &[MSize] {
+        let index = self.nodes.indices[parent as usize]; // Skip root and parent
+        let (header, data) = Header::parse_ptr(&self.nodes.edges, index as usize);
+        let size = unsafe {(*header).len - TREE_HEADER_ELEMENTS} as usize; // Parent and root is not a child
+        return unsafe {from_raw_parts(data.add(TREE_HEADER_ELEMENTS as usize), size)};
     }
 
     #[cfg_attr(release, inline(always))]
@@ -29,7 +39,6 @@ impl <'a, T> TreeView<'a, T> {
         return vertex as MSize;
     }
     #[cfg_attr(release, inline(always))]
-
     pub fn get_root(&self, vertex: MSize) -> MSize{
         return self.nodes.get(vertex, 0);
     }
@@ -49,9 +58,8 @@ impl <'a, T> TreeView<'a, T> {
     }
 
     #[cfg_attr(release, inline(always))]
-
     pub fn create_child(&mut self, parent: MSize, val: T) -> MSize {
-        let child = self.create_vertex(val);
+        let child = self.create_node(val);
         self.add_child(parent, child);
         return child;
     }

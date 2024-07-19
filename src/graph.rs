@@ -34,9 +34,9 @@ const MSIZE_ALIGN_MASK: usize = size_of::<MSize>() - 1;
 
 #[repr(C)]
 pub struct Header{
-    len: MSize,
-    reserve: MSize,
-    visited_flag: MSize,
+    pub len: MSize,
+    pub reserve: MSize,
+    pub visited_flag: MSize,
 }
 
 pub struct Vertices<T> {
@@ -52,11 +52,12 @@ pub struct Graph<T> {
 pub struct EdgeData{
     visited_val: MSize, // Val used to mark whether the vertex has been visited
     reserve: usize,
-    edges: Vec<MSize>,
-    indices: Vec<MSize>,
+    pub edges: Vec<MSize>,
+    pub indices: Vec<MSize>,
 }
 
 impl Header {
+    #[cfg_attr(release, inline(always))]
     pub fn parse_ptr_mut (edges: &mut Vec<MSize>, index: usize) -> (*mut Self, *mut MSize) {
         let edges_ptr = edges.as_mut_ptr();
         unsafe{
@@ -65,6 +66,7 @@ impl Header {
             return (header_ptr, data_ptr);
         }
     }
+    #[cfg_attr(release, inline(always))]
 
     pub fn parse_ptr (edges: &Vec<MSize>, index: usize) -> (*const Self, *const MSize) {
         let edges_ptr = edges.as_ptr();
@@ -301,11 +303,13 @@ impl EdgeData {
 
     #[cfg_attr(release, inline(always))]
     fn calculate_new_edges_size_abs(&self, size: usize) -> usize {
-        return self.edges.len() + self.reserve + (header_size_in_msize_units() + size);
+        let header_size = header_size_in_msize_units();
+        return self.edges.len() + self.reserve + header_size + size;
     }
     pub fn create_vertex(&mut self, size: usize) -> MSize{
         let offset = self.edges.len() as MSize;
-        self.edges.resize_with(self.calculate_new_edges_size_abs(size), Default::default);
+        let val = self.calculate_new_edges_size_abs(size);
+        self.edges.resize_with(val, Default::default);
         unsafe{
             let header_ptr = self.edges.as_mut_ptr().add(offset as usize) as *mut Header;
             (*header_ptr).reserve = self.reserve as MSize + size as MSize;
@@ -336,17 +340,13 @@ impl EdgeData {
 
     #[cfg_attr(release, inline(always))]
     pub fn set(&mut self, src: MSize, val: MSize, edge: usize){
-        let edges = self.edges_mut(src);
-        if edges.is_err() {
-            panic!("Vertex not found!");
-        }
-        let edges = edges.ok().unwrap();
+        let edges = self.edges_mut(src).expect("Vertex not found");
         edges[edge] = val;
     }
 
     #[cfg_attr(release, inline(always))]
     pub fn get(&self, vertex: MSize, edge: usize) -> MSize{
-        return self.edges[self.indices[vertex] + edge];
+        return self.edges[self.indices[vertex as usize] as usize + edge + header_size_in_msize_units()];
     }
 
 
@@ -417,7 +417,7 @@ impl EdgeData {
 #[cfg_attr(release, inline(always))]
 pub fn header_size_in_msize_units() -> usize {
     let raw_size = size_of::<Header>();
-    (raw_size + MSIZE_ALIGN_MASK) & !MSIZE_ALIGN_MASK
+    ((raw_size + MSIZE_ALIGN_MASK) & !MSIZE_ALIGN_MASK) / size_of::<MSize>()
 }
 
 
