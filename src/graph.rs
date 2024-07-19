@@ -284,6 +284,7 @@ impl EdgeData {
             indices: Vec::new(),
         }
     }
+
     pub fn add_edges(&mut self, vertex: MSize, new_edges: &[MSize]) {
         let (header, data) = Header::parse_mut(&mut self.edges, self.indices[vertex as usize] as usize);
         let new_size = header.len as usize + new_edges.len();
@@ -334,13 +335,18 @@ impl EdgeData {
     }
 
     #[cfg_attr(release, inline(always))]
-    pub fn set(&mut self, src: MSize, vertex: MSize, position: usize){
+    pub fn set(&mut self, src: MSize, val: MSize, edge: usize){
         let edges = self.edges_mut(src);
         if edges.is_err() {
             panic!("Vertex not found!");
         }
         let edges = edges.ok().unwrap();
-        edges[position] = vertex;
+        edges[edge] = val;
+    }
+
+    #[cfg_attr(release, inline(always))]
+    pub fn get(&self, vertex: MSize, edge: usize) -> MSize{
+        return self.edges[self.indices[vertex] + edge];
     }
 
 

@@ -8,21 +8,21 @@ pub fn tree_view_create_child_test(){
     let mut tree_view = graph.tree_view();
 
     let root = tree_view.create_node("root");
-    let child1 = tree_view.create_child(&root, "child1");
-    let child2 = tree_view.create_child(&root, "child2");
-    let child3 = tree_view.create_child(&root, "child3");
-    let child1_1 = tree_view.create_child(&child1, "child1_1");
-    let child1_2 = tree_view.create_child(&child1, "child1_2");
+    let child1 = tree_view.create_child(root, "child1");
+    let child2 = tree_view.create_child(root, "child2");
+    let child3 = tree_view.create_child(root, "child3");
+    let child1_1 = tree_view.create_child(child1, "child1_1");
+    let child1_2 = tree_view.create_child(child1, "child1_2");
 
-    let child1_2_1 = tree_view.create_child(&child1_2, "child1_2_1");
+    let child1_2_1 = tree_view.create_child(child1_2, "child1_2_1");
 
-    assert_eq!(tree_view.values[root.node], "root");
+    assert_eq!(tree_view.values[root], "root");
 
-    assert_eq!(tree_view.values[child1.node], "child1");
-    assert_eq!(tree_view.values[child1.header.parent], "root");
-    assert_eq!(tree_view.values[child1.header.root], "root");
+    assert_eq!(tree_view.values[child1], "child1");
+    assert_eq!(tree_view.values[tree_view.get_parent(child1)], "root");
+    assert_eq!(tree_view.values[tree_view.get_root(child1)], "root");
 
-    assert_eq!(tree_view.values[child2.node], "child2");
+    assert_eq!(tree_view.values[child2], "child2");
     assert_eq!(tree_view.values[child2.header.parent], "root");
     assert_eq!(tree_view.values[child2.header.root], "root");
 
