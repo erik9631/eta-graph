@@ -9,13 +9,15 @@ pub fn graph_disconnect_bench(){
     let data_size = 200000;
     let mut graph = graph::Graph::new();
     let root = graph.create(0, data_size);
+    let mut handles = Vec::with_capacity(data_size);
     for i in 0..data_size {
-        graph.create_and_connect_leaf(root, i+1);
+        handles.push(graph.create_and_connect_leaf(root, i+1));
     }
 
     let start = Instant::now();
-    for i in 0..data_size as MSize {
-        graph.edges.disconnect(root, i+1);
+    while handles.len() > 0 {
+        let handle = handles.pop().unwrap();
+        graph.edges.disconnect(root, handle);
     }
     println!("Time taken: {:?}", start.elapsed());
 }
