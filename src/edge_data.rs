@@ -16,7 +16,7 @@ pub struct Header{
     pub capacity: MSize,
 }
 
-pub struct EdgeData{
+pub struct EdgeStorage {
     pub (in crate) global_visited_flag: MSize, // Val used to mark whether the vertex has been visited
     pub(in crate) vertex_capacity: usize,
     pub edges: Vec<MSize>,
@@ -79,13 +79,13 @@ impl Header {
 }
 
 
-impl EdgeData {
+impl EdgeStorage {
     pub const NONE: MSize = MSize::MAX;
 
     /// Creates a new graph with the assumption that the usage will be dynamic.
     /// It will create the graph with high reserve count of 50 to avoid reallocations.
     pub fn new_dyn() -> Self {
-        return EdgeData{
+        return EdgeStorage {
             global_visited_flag: 1,
             vertex_capacity: 50,
             edges: Vec::new(),
@@ -94,7 +94,7 @@ impl EdgeData {
     }
     /// Creates a new graph with a custom reserve
     pub fn with_reserve(capacity: usize) -> Self {
-        return EdgeData{
+        return EdgeStorage {
             global_visited_flag: 1,
             vertex_capacity: capacity,
             edges: Vec::new(),
@@ -104,7 +104,7 @@ impl EdgeData {
 
     /// Creates a new graph with the assumption that the graph size is known ahead of time. No reserve.
     pub fn new() -> Self {
-        return EdgeData{
+        return EdgeStorage {
             global_visited_flag: 1,
             vertex_capacity: 0,
             edges: Vec::new(),
@@ -215,7 +215,7 @@ impl EdgeData {
     }
 }
 
-impl TraverseMarker for EdgeData{
+impl TraverseMarker for EdgeStorage {
     fn global_visited_flag(&self) -> MSize {
         return self.global_visited_flag;
     }
@@ -251,7 +251,7 @@ impl TraverseMarker for EdgeData{
     }
 }
 
-impl GraphAccessor for EdgeData{
+impl GraphAccessor for EdgeStorage {
     fn edges_offset(&self, vertex: MSize, offset: usize) -> &[MSize]{
         profile_method!(edges_from_offset);
         let edge_chunk_index = self.indices[vertex as usize] as usize;
@@ -287,7 +287,7 @@ impl GraphAccessor for EdgeData{
         return self.edges[self.indices[handle as usize] as usize + CAPACITY_OFFSET];
     }
 }
-impl GraphAccessorMut for EdgeData{
+impl GraphAccessorMut for EdgeStorage {
     fn edges_mut_offset(&mut self, vertex: MSize, offset: usize) -> &mut [MSize]{
         profile_method!(edges_mut_from_offset);
         let edge_chunk_index = self.indices[vertex as usize] as usize;

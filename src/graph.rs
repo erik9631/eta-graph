@@ -1,7 +1,7 @@
 use std::cmp::min;
 use std::ops::{Index, IndexMut};
 use std::thread::available_parallelism;
-use crate::edge_data::{EdgeData};
+use crate::edge_data::{EdgeStorage};
 use crate::size::MSize;
 use crate::traits;
 use crate::utils::{split_to_parts_mut};
@@ -25,7 +25,7 @@ pub struct Vertices<T> {
 
 pub struct Graph<T> {
     pub vertices: Vertices<T>,
-    pub edges: EdgeData,
+    pub edges: EdgeStorage,
 }
 
 
@@ -39,7 +39,7 @@ impl<T> Graph<T>{
     /// It will create the graph with high reserve count of 50 to avoid reallocations.
     pub fn new_large() -> Self {
         return Graph{
-            edges: EdgeData::new_dyn(),
+            edges: EdgeStorage::new_dyn(),
             vertices: Vertices::new(),
 
         }
@@ -47,7 +47,7 @@ impl<T> Graph<T>{
     /// Creates a new graph with a custom reserve
     pub fn with_reserve(reserve: usize) -> Self {
         return Graph{
-            edges: EdgeData::with_reserve(reserve),
+            edges: EdgeStorage::with_reserve(reserve),
             vertices: Vertices::new(),
         };
     }
@@ -55,7 +55,7 @@ impl<T> Graph<T>{
     /// Creates a new graph with the assumption that the graph size is known ahead of time. Small reserve count of 5
     pub fn new() -> Self {
         return Graph{
-            edges: EdgeData::new(),
+            edges: EdgeStorage::new(),
             vertices: Vertices::new(),
         };
     }

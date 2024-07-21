@@ -1,10 +1,10 @@
-use crate::edge_data::{EdgeData};
+use crate::edge_data::{EdgeStorage};
 use crate::graph::{Vertices};
 use crate::size::MSize;
 use crate::traits::GraphAccessor;
 
 pub struct TreeView<'a, T> {
-    pub nodes: &'a mut EdgeData,
+    pub nodes: &'a mut EdgeStorage,
     pub values: &'a mut Vertices<T>,
 }
 
@@ -16,7 +16,7 @@ const PARENT_OFFSET: usize = 1;
 
 impl <'a, T> TreeView<'a, T> {
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn new(edges: &'a mut EdgeData, vertices: &'a mut Vertices<T>) -> Self {
+    pub fn new(edges: &'a mut EdgeStorage, vertices: &'a mut Vertices<T>) -> Self {
         return TreeView{
             nodes: edges,
             values: vertices,
@@ -53,7 +53,7 @@ impl <'a, T> TreeView<'a, T> {
         let vertex = self.create_vertex(val);
 
         self.nodes.connect(vertex, vertex); // root
-        self.nodes.connect(vertex, EdgeData::NONE); // parent
+        self.nodes.connect(vertex, EdgeStorage::NONE); // parent
 
         return vertex;
     }
