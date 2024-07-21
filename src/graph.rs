@@ -1,10 +1,13 @@
+use std::alloc::{alloc, Layout};
 use std::cmp::min;
 use std::mem::{size_of, transmute};
 use std::ops::{Index, IndexMut};
 use std::ptr::slice_from_raw_parts_mut;
+use std::slice;
 use std::slice::{from_raw_parts, from_raw_parts_mut};
 use std::thread::available_parallelism;
 use firestorm::{profile_fn, profile_method, profile_section};
+use crate::graph::TraverseResult::End;
 use crate::traits;
 use crate::utils::{split_to_parts_mut};
 use crate::views::tree::TreeView;
@@ -14,6 +17,7 @@ pub enum Error {
     NoHandle,
 }
 
+#[derive(Eq, PartialEq)]
 pub enum TraverseResult {
     Continue,
     End,
@@ -186,29 +190,32 @@ impl<T> Graph<T>{
     }
 
     pub fn bfs<F>(&mut self, start: MSize, mut transform: F)
-    where F: FnMut(&mut Self, MSize){
+    where F: FnMut(&mut Self, MSize) -> TraverseResult{
         profile_method!(bfs);
         profile_section!(before_loop);
-        let mut nodes: Vec<MSize> = Vec::with_capacity(self.vertices.len());
-        nodes.push(start as MSize);
+        let layout = Layout::array::<MSize>(self.vertices.len()).expect("Failed to create layout"); // Around ~50% faster than vec
+        let to_visit = unsafe {from_raw_parts_mut(alloc(layout) as *mut MSize, self.vertices.len())};
+        let mut end = 1;
+        to_visit[0] = start;
         let mut i = 0;
         drop(before_loop);
-        profile_section!(loop_start);
-        while i < nodes.len() {
-            profile_section!(loop_before_inner);
-            let val = unsafe {*nodes.get_unchecked(i)};
-            transform(self, val);
-            self.edges.inc_visited_flag(val);
-
-            //This has to be always valid
-            let edges = self.edges.edges(val);
-            drop(loop_before_inner);
+        profile_section!(loop_outer);
+        while i != end {
+            let handle = to_visit[i];
+            if transform(self, handle) == End{
+                self.edges.visited_val += 1;
+                break;
+            }
+            self.edges.inc_visited_flag(handle);
+            
+            let edges = self.edges.edges(handle);
             profile_section!(loop_inner);
             for next in edges {
                 if self.edges.visited_flag(*next) == self.edges.visited_val {
                     continue;
                 }
-                nodes.push(*next);
+                to_visit[end] = *next;
+                end += 1;
             }
             drop(loop_inner);
             profile_section!(increment_i);
