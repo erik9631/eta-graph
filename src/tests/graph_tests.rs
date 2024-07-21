@@ -1,5 +1,4 @@
 use std::cmp::min;
-use std::collections::HashMap;
 use std::mem::size_of;
 use std::time::{Instant};
 use crate::{graph};
@@ -269,7 +268,7 @@ pub fn graph_bfs_test(){
         "root".to_string(),
     ];
 
-    bfs(&mut graph.edges, root, graph.vertices.len(), |edges, handle|{
+    bfs(&mut graph.edges, root, graph.vertices.len(), |_edges, handle|{
         assert_eq!(graph.vertices[handle], snap.pop().unwrap());
         Continue
     });
@@ -281,9 +280,9 @@ pub fn graph_static_test(){
     let root = graph.create("root", 5);
     let a = graph.create_and_connect(root,"a", 1);
     assert_eq!(graph.edges.vertex_capacity(root), 5);
-    let b = graph.create_and_connect(root, "b", 0);
+    graph.create_and_connect(root, "b", 0);
     assert_eq!(graph.edges.vertex_capacity(root), 5);
-    let c = graph.create_and_connect(root,"c", 0);
+    graph.create_and_connect(root,"c", 0);
     assert_eq!(graph.edges.vertex_capacity(root), 5);
     let d = graph.create_and_connect(root, "d", 1);
     assert_eq!(graph.edges.vertex_capacity(root), 5);
@@ -297,5 +296,4 @@ pub fn graph_static_test(){
     graph.create_and_connect(e, "a_e", 0);
     assert_eq!(graph.edges.vertex_capacity(root), 5);
     assert_eq!(graph.edges.vertex_capacity(root), 5);
-
 }

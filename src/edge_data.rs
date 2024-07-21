@@ -25,6 +25,7 @@ pub struct EdgeData{
 
 
 impl Header {
+    #[allow(unused)]
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn parse_ptr_mut (edges: &mut Vec<MSize>, index: usize) -> (*mut Self, *mut MSize) {
         let edges_ptr = edges.as_mut_ptr();
@@ -34,8 +35,8 @@ impl Header {
             return (header_ptr, data_ptr);
         }
     }
+    #[allow(unused)]
     #[cfg_attr(not(debug_assertions), inline(always))]
-
     pub fn parse_ptr (edges: &Vec<MSize>, index: usize) -> (*const Self, *const MSize) {
         let edges_ptr = edges.as_ptr();
         unsafe{
@@ -80,7 +81,6 @@ impl Header {
 
 impl EdgeData {
     pub const NONE: MSize = MSize::MAX;
-    const MSIZE_ALIGN_MASK: usize = size_of::<MSize>() - 1;
 
     /// Creates a new graph with the assumption that the usage will be dynamic.
     /// It will create the graph with high reserve count of 50 to avoid reallocations.
@@ -116,6 +116,7 @@ impl EdgeData {
         return &mut self.edges[self.indices[vertex as usize] as usize + LEN_OFFSET];
     }
 
+    #[allow(unused)]
     fn reserve_mut(&mut self, vertex: MSize) -> &mut MSize {
         let edge_chunk_index = self.indices[vertex as usize] as usize;
         return &mut self.edges[edge_chunk_index + CAPACITY_OFFSET];

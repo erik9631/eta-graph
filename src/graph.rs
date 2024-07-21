@@ -1,14 +1,9 @@
-use std::alloc::{alloc, Layout};
 use std::cmp::min;
 use std::ops::{Index, IndexMut};
-use std::slice::{from_raw_parts_mut};
 use std::thread::available_parallelism;
-use firestorm::{profile_method};
 use crate::edge_data::{EdgeData};
-use crate::graph::TraverseResult::End;
 use crate::size::MSize;
 use crate::traits;
-use crate::traits::{GraphAccessor, TraverseMarker};
 use crate::utils::{split_to_parts_mut};
 use crate::views::tree::TreeView;
 

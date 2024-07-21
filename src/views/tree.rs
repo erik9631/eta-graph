@@ -1,5 +1,4 @@
-use std::slice::from_raw_parts;
-use crate::edge_data::{EdgeData, Header};
+use crate::edge_data::{EdgeData};
 use crate::graph::{Vertices};
 use crate::size::MSize;
 use crate::traits::GraphAccessor;
@@ -10,8 +9,8 @@ pub struct TreeView<'a, T> {
 }
 
 const TREE_HEADER_ELEMENTS: MSize = 2;
-const ROOT_OFFSET: MSize = 0;
-const PARENT_OFFSET: MSize = 1;
+const ROOT_OFFSET: usize = 0;
+const PARENT_OFFSET: usize = 1;
 
 
 
@@ -31,8 +30,8 @@ impl <'a, T> TreeView<'a, T> {
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn add_child(&mut self, parent: MSize, child: MSize){
         self.nodes.connect(parent, child);
-        self.nodes.set(child, parent, 1);
-        self.nodes.set(child, self.get_root(parent), 0);
+        self.nodes.set(child, parent, PARENT_OFFSET);
+        self.nodes.set(child, self.get_root(parent), ROOT_OFFSET);
     }
 
     fn create_vertex(&mut self, val: T) -> MSize {
