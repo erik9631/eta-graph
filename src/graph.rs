@@ -4,6 +4,7 @@ use std::ops::{Index, IndexMut};
 use std::ptr::slice_from_raw_parts_mut;
 use std::slice::{from_raw_parts, from_raw_parts_mut};
 use std::thread::available_parallelism;
+use firestorm::{profile_fn, profile_method, profile_section};
 use crate::traits;
 use crate::utils::{split_to_parts_mut};
 use crate::views::tree::TreeView;
@@ -32,11 +33,15 @@ pub type MSize = usize;
 
 const MSIZE_ALIGN_MASK: usize = size_of::<MSize>() - 1;
 
+const FLAG_OFFSET: usize = 0;
+const LEN_OFFSET: usize = 1;
+const RESERVE_OFFSET: usize = 2;
+const DATA_START_OFFSET: usize = 3;
 #[repr(C)]
 pub struct Header{
+    pub visited_flag: MSize,
     pub len: MSize,
     pub reserve: MSize,
-    pub visited_flag: MSize,
 }
 
 pub struct Vertices<T> {
@@ -77,6 +82,7 @@ impl Header {
         }
     }
     pub fn parse_mut (edges: &mut Vec<MSize>, index: usize) -> (&mut Self, &mut [MSize]) {
+        profile_method!(parse_mut);
         let edges_ptr = edges.as_mut_ptr();
 
         // Return as Result instead of panic
@@ -92,6 +98,7 @@ impl Header {
         }
     }
     pub fn parse (edges: &Vec<MSize>, index: usize) -> (&Self, &[MSize]) {
+        profile_method!(parse);
         // Return as Result instead of panic
         let edges_ptr = edges.as_ptr();
 
@@ -157,7 +164,7 @@ impl<T> Graph<T>{
         return self.create(val, 0)
     }
 
-    pub fn bfs(&mut self, start: MSize) -> Vec<MSize> {
+    pub fn bfs_vec(&mut self, start: MSize) -> Vec<MSize> {
         let mut nodes: Vec<MSize> = Vec::new();
         nodes.push(start as MSize);
         let mut i = 0;
@@ -165,7 +172,7 @@ impl<T> Graph<T>{
             let val = nodes[i];
             self.edges.inc_visited_flag(val);
             //This has to be always valid
-            let edges = self.edges.edges(val).ok().unwrap();
+            let edges = self.edges.edges(val);
             for next in edges {
                 if self.edges.visited_flag(*next) == self.edges.visited_val {
                     continue;
@@ -178,29 +185,37 @@ impl<T> Graph<T>{
         return nodes;
     }
 
-    pub fn bfs_transform<F>(&mut self, start: MSize, mut transform: F)
+    pub fn bfs<F>(&mut self, start: MSize, mut transform: F)
     where F: FnMut(&mut Self, MSize){
-        let mut nodes: Vec<MSize> = Vec::new();
+        profile_method!(bfs);
+        profile_section!(before_loop);
+        let mut nodes: Vec<MSize> = Vec::with_capacity(self.vertices.len());
         nodes.push(start as MSize);
         let mut i = 0;
+        drop(before_loop);
+        profile_section!(loop_start);
         while i < nodes.len() {
-            let val = nodes[i];
+            profile_section!(loop_before_inner);
+            let val = unsafe {*nodes.get_unchecked(i)};
             transform(self, val);
             self.edges.inc_visited_flag(val);
+
             //This has to be always valid
-            let edges = self.edges.edges(val).ok().unwrap();
+            let edges = self.edges.edges(val);
+            drop(loop_before_inner);
+            profile_section!(loop_inner);
             for next in edges {
                 if self.edges.visited_flag(*next) == self.edges.visited_val {
                     continue;
                 }
                 nodes.push(*next);
             }
+            drop(loop_inner);
+            profile_section!(increment_i);
             i +=1;
         }
         self.edges.visited_val = 0; // Reset the visited flag as we traversed the whole graph
     }
-
-
 }
 
 
@@ -340,7 +355,7 @@ impl EdgeData {
 
     #[cfg_attr(release, inline(always))]
     pub fn set(&mut self, src: MSize, val: MSize, edge: usize){
-        let edges = self.edges_mut(src).expect("Vertex not found");
+        let edges = self.edges_mut(src);
         edges[edge] = val;
     }
 
@@ -373,17 +388,47 @@ impl EdgeData {
             return reserve;
         }
     }
+    #[cfg_attr(release, inline(always))]
+    pub fn visited_flag(&self, vertex: MSize) -> MSize {
+        profile_method!(visited_flag_fast);
+        let edge_chunk_index = self.indices[vertex as usize] as usize;
+        return self.edges[edge_chunk_index + FLAG_OFFSET];
+    }
 
-    pub fn edges(&self, vertex: MSize) -> Result< &[MSize], Error> {
+    #[cfg_attr(release, inline(always))]
+    pub fn inc_visited_flag(&mut self, vertex: MSize) {
+        profile_method!(inc_visited_flag_fast);
+        let edge_chunk_index = self.indices[vertex as usize] as usize;
+        self.edges[edge_chunk_index + FLAG_OFFSET] += 1;
+    }
+
+    #[cfg_attr(release, inline(always))]
+    pub fn set_visited_flag(&mut self, vertex: MSize, val: MSize) {
+        profile_method!(inc_visited_flag_fast);
+        let edge_chunk_index = self.indices[vertex as usize] as usize;
+        self.edges[edge_chunk_index + FLAG_OFFSET] = val;
+    }
+    pub fn edges_header(&self, vertex: MSize) -> Result< &[MSize], Error> {
+        profile_method!(edges);
+        profile_section!(before_parse);
         let uvertex = vertex as usize;
         if uvertex > self.indices.len() {
             return Err(Error::NoHandle);
         }
+        drop(before_parse);
+        profile_section!( nd_return);
         let (_, data) = Header::parse(&self.edges, self.indices[uvertex] as usize);
         return Ok(data);
     }
+    pub fn edges(&self, vertex: MSize) -> &[MSize] {
+        profile_method!(edges_fast);
+        let edge_chunk_index = self.indices[vertex as usize] as usize;
+        let len = self.edges[edge_chunk_index + LEN_OFFSET] as usize;
+        let data = &self.edges[edge_chunk_index + DATA_START_OFFSET..edge_chunk_index + DATA_START_OFFSET + len];
+        return data;
+    }
 
-    pub fn edges_mut(&mut self, vertex: MSize) -> Result< &mut [MSize], Error>{
+    pub fn edges_header_mut(&mut self, vertex: MSize) -> Result< &mut [MSize], Error>{
         let uvertex = vertex as usize;
         if uvertex > self.indices.len() {
             return Err(Error::NoHandle);
@@ -392,25 +437,13 @@ impl EdgeData {
         return Ok(data);
     }
 
-    #[cfg_attr(release, inline(always))]
-    fn inc_visited_flag(&mut self, vertex: MSize) {
+    pub fn edges_mut(&mut self, vertex: MSize) -> &mut [MSize] {
+        profile_method!(edges_fast);
         let edge_chunk_index = self.indices[vertex as usize] as usize;
-        let header = Header::parse_mut(&mut self.edges, edge_chunk_index).0;
-        header.visited_flag += 1;
+        let len = self.edges[edge_chunk_index + LEN_OFFSET] as usize;
+        let data = &mut self.edges[edge_chunk_index + DATA_START_OFFSET..edge_chunk_index + DATA_START_OFFSET + len];
+        return data;
     }
-    #[cfg_attr(release, inline(always))]
-    fn set_visited_flag(&mut self, vertex: MSize, val: MSize) {
-        let edge_chunk_index = self.indices[vertex as usize] as usize;
-        let header = Header::parse_mut(&mut self.edges, edge_chunk_index).0;
-        header.visited_flag = val;
-    }
-    #[cfg_attr(release, inline(always))]
-    fn visited_flag(&self, vertex: MSize) -> MSize {
-        let edge_chunk_index = self.indices[vertex as usize] as usize;
-        let header = Header::parse(&self.edges, edge_chunk_index).0;
-        return header.visited_flag;
-    }
-
 }
 
 

@@ -8,3 +8,4 @@ pub mod views;
 mod tests;
 #[cfg(test)]
 mod bench;
+mod prelude;

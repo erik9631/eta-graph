@@ -36,10 +36,7 @@ pub fn graph_basic_test(){
 
    graph.create_and_connect_leaf(b_a, "b_a_a");
 
-    let a_edges_result = graph.edges.edges(a);
-    assert_eq!(a_edges_result.is_err(), false);
-
-    let a_edges = a_edges_result.ok().unwrap();
+    let a_edges = graph.edges.edges(a);
     assert_eq!(a_edges.len(), 3);
 
     for edge in a_edges {
@@ -51,10 +48,7 @@ pub fn graph_basic_test(){
         }
     }
 
-    let b_edges_result = graph.edges.edges(b);
-    assert_eq!(b_edges_result.is_err(), false);
-
-    let b_edges = b_edges_result.ok().unwrap();
+    let b_edges = graph.edges.edges(b);
     assert_eq!(b_edges.len(), 2);
 
     for edge in b_edges {
@@ -65,10 +59,7 @@ pub fn graph_basic_test(){
         }
     }
 
-    let b_a_a_edges_result = graph.edges.edges(b_a);
-    assert_eq!(b_a_a_edges_result.is_err(), false);
-
-    let b_a_a_edges = b_a_a_edges_result.ok().unwrap();
+    let b_a_a_edges = graph.edges.edges(b_a);
     assert_eq!(b_a_a_edges.len(), 1);
 
     for edge in b_a_a_edges {
@@ -130,10 +121,8 @@ pub fn graph_mutability_test(){
     graph.create_and_connect_leaf(a, "a_b");
     graph.create_and_connect_leaf(a, "a_c");
 
-    let result = graph.edges.edges(a);
-    assert_eq!(result.is_err(), false);
 
-    let edges = result.ok().unwrap();
+    let edges = graph.edges.edges(a);
     assert_eq!(edges.len(), 3);
 
     for edge in edges {
@@ -216,22 +205,16 @@ pub fn graph_disconnect_test(){
 
 
     assert_eq!(graph.edges.len(a), 5);
+    let edges = graph.edges.edges(a);
 
-    match graph.edges.edges(a){
-        Ok(edges) => {
-            for edge in edges {
-                match *edge{
-                    3 => assert_eq!(graph.vertices[*edge], "a_a"),
-                    4 => assert_eq!(graph.vertices[*edge], "a_b"),
-                    5 => assert_eq!(graph.vertices[*edge], "a_c"),
-                    6 => assert_eq!(graph.vertices[*edge], "a_d"),
-                    7 => assert_eq!(graph.vertices[*edge], "a_e"),
-                    _ => continue,
-                }
-            }
-        },
-        Err(_) => {
-            panic!("Vertex not found!");
+    for edge in edges {
+        match *edge{
+            3 => assert_eq!(graph.vertices[*edge], "a_a"),
+            4 => assert_eq!(graph.vertices[*edge], "a_b"),
+            5 => assert_eq!(graph.vertices[*edge], "a_c"),
+            6 => assert_eq!(graph.vertices[*edge], "a_d"),
+            7 => assert_eq!(graph.vertices[*edge], "a_e"),
+            _ => continue,
         }
     }
 
@@ -240,19 +223,13 @@ pub fn graph_disconnect_test(){
 
     assert_eq!(graph.edges.len(a), 3);
 
-    match graph.edges.edges(a){
-        Ok(edges) => {
-            for edge in edges {
-                match *edge{
-                    3 => assert_eq!(graph.vertices[*edge], "a_a"),
-                    5 => assert_eq!(graph.vertices[*edge], "a_c"),
-                    7 => assert_eq!(graph.vertices[*edge], "a_e"),
-                    _ => continue,
-                }
-            }
-        },
-        Err(_) => {
-            panic!("Vertex not found!");
+    let edges = graph.edges.edges(a);
+    for edge in edges {
+        match *edge{
+            3 => assert_eq!(graph.vertices[*edge], "a_a"),
+            5 => assert_eq!(graph.vertices[*edge], "a_c"),
+            7 => assert_eq!(graph.vertices[*edge], "a_e"),
+            _ => continue,
         }
     }
 
@@ -275,7 +252,7 @@ pub fn graph_bfs_test(){
     graph.create_and_connect_leaf(b_a, "b_a_a");
 
     // Instead of traverse, it should just save them to a memory and return the content to you. Faster than function calls and u can do iteration on your own.
-    let bfs_results = graph.bfs(root);
+    let bfs_results = graph.bfs_vec(root);
     for (idx, vertex) in bfs_results.iter().enumerate(){
         match idx {
             0 => assert_eq!(graph.vertices[*vertex], "root"),
@@ -315,7 +292,7 @@ pub fn graph_static_test(){
     graph.create_and_connect(e, "a_e", 0);
     assert_eq!(graph.edges.reserve(root), 5);
 
-    let vertices = graph.bfs(root);
+    let vertices = graph.bfs_vec(root);
     assert_eq!(graph.edges.reserve(root), 5);
     // for vertex in graph.bfs(root){
     //     match graph.vertices[vertex]{
