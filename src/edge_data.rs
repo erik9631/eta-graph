@@ -172,6 +172,10 @@ impl EdgeData {
             }
         }
     }
+    #[cfg_attr(not(debug_assertions), inline(always))]
+    pub fn connect(&mut self, from: MSize, to: MSize) {
+        self.add_edges(from, &[to]);
+    }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn set(&mut self, src_handle: MSize, val: MSize, offset: usize){
@@ -183,11 +187,6 @@ impl EdgeData {
     pub fn get(&self, handle: MSize, offset: usize) -> MSize{
         let index = self.indices[handle as usize] as usize;
         return self.edges[index + DATA_START_OFFSET + offset];
-    }
-
-    #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn connect(&mut self, from: MSize, to: MSize) {
-        self.add_edges(from, &[to]);
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn capacity(&self) -> usize {
