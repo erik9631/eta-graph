@@ -1,32 +1,34 @@
 use std::slice::from_raw_parts;
-use crate::edge_data::{EdgeData, Header, MSize};
+use crate::edge_data::{EdgeData, Header};
 use crate::graph::{Vertices};
+use crate::size::MSize;
+use crate::traits::GraphAccessor;
+
 pub struct TreeView<'a, T> {
     pub nodes: &'a mut EdgeData,
     pub values: &'a mut Vertices<T>,
 }
 
 const TREE_HEADER_ELEMENTS: MSize = 2;
+const ROOT_OFFSET: MSize = 0;
+const PARENT_OFFSET: MSize = 1;
 
 
 
 impl <'a, T> TreeView<'a, T> {
-    #[cfg_attr(release, inline(always))]
+    #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn new(edges: &'a mut EdgeData, vertices: &'a mut Vertices<T>) -> Self {
         return TreeView{
             nodes: edges,
             values: vertices,
         }
     }
-
+    #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn get_children(&self, parent: MSize) -> &[MSize] {
-        let index = self.nodes.indices[parent as usize]; // Skip root and parent
-        let (header, data) = Header::parse_ptr(&self.nodes.edges, index as usize);
-        let size = unsafe {(*header).len - TREE_HEADER_ELEMENTS} as usize; // Parent and root is not a child
-        return unsafe {from_raw_parts(data.add(TREE_HEADER_ELEMENTS as usize), size)};
+        return self.nodes.edges_offset(parent, TREE_HEADER_ELEMENTS as usize);
     }
 
-    #[cfg_attr(release, inline(always))]
+    #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn add_child(&mut self, parent: MSize, child: MSize){
         self.nodes.connect(parent, child);
         self.nodes.set(child, parent, 1);
@@ -39,12 +41,11 @@ impl <'a, T> TreeView<'a, T> {
         let vertex = self.values.len() -1;
         return vertex as MSize;
     }
-    #[cfg_attr(release, inline(always))]
+    #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn get_root(&self, vertex: MSize) -> MSize{
         return self.nodes.get(vertex, 0);
     }
-    #[cfg_attr(release, inline(always))]
-
+    #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn get_parent(&self, vertex: MSize) -> MSize{
         return self.nodes.get(vertex, 1);
     }
@@ -58,7 +59,7 @@ impl <'a, T> TreeView<'a, T> {
         return vertex;
     }
 
-    #[cfg_attr(release, inline(always))]
+    #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn create_child(&mut self, parent: MSize, val: T) -> MSize {
         let child = self.create_node(val);
         self.add_child(parent, child);

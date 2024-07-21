@@ -10,3 +10,5 @@ mod tests;
 mod bench;
 mod prelude;
 mod edge_data;
+mod algorithms;
+mod size;

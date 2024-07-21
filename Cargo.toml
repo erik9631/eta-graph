@@ -9,7 +9,8 @@ build = "build.rs"
 #debug = true
 
 [profile.test]
-#inherits = "release"
+inherits = "release"
+debug = true
 
 [dependencies]
 firestorm = '0.5.1'

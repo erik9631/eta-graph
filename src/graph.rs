@@ -4,9 +4,11 @@ use std::ops::{Index, IndexMut};
 use std::slice::{from_raw_parts_mut};
 use std::thread::available_parallelism;
 use firestorm::{profile_method};
-use crate::edge_data::{EdgeData, MSize};
+use crate::edge_data::{EdgeData};
 use crate::graph::TraverseResult::End;
+use crate::size::MSize;
 use crate::traits;
+use crate::traits::{GraphAccessor, TraverseMarker};
 use crate::utils::{split_to_parts_mut};
 use crate::views::tree::TreeView;
 
@@ -78,59 +80,9 @@ impl<T> Graph<T>{
         self.edges.create_vertex(edge_count);
         return new_vertex;
     }
-    #[cfg_attr(release, inline(always))]
+    #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn create_leaf(&mut self, val: T) -> MSize {
         return self.create(val, 0)
-    }
-
-    pub fn bfs_vec(&mut self, start: MSize) -> Vec<MSize> {
-        let mut nodes: Vec<MSize> = Vec::new();
-        nodes.push(start as MSize);
-        let mut i = 0;
-        while i < nodes.len() {
-            let val = nodes[i];
-            self.edges.inc_visited_flag(val);
-            //This has to be always valid
-            let edges = self.edges.edges(val);
-            for next in edges {
-                if self.edges.visited_flag(*next) == self.edges.visited_val {
-                    continue;
-                }
-                nodes.push(*next);
-            }
-            i +=1;
-        }
-        self.edges.visited_val = 0; // Reset the visited flag as we traversed the whole graph
-        return nodes;
-    }
-
-    pub fn bfs<F>(&mut self, start: MSize, mut transform: F)
-    where F: FnMut(&mut Self, MSize) -> TraverseResult{
-        profile_method!(bfs);
-        let layout = Layout::array::<MSize>(self.vertices.len()).expect("Failed to create layout"); // Around ~50% faster than vec
-        let to_visit = unsafe {from_raw_parts_mut(alloc(layout) as *mut MSize, self.vertices.len())};
-        let mut end = 1;
-        to_visit[0] = start;
-        let mut i = 0;
-        while i != end {
-            let handle = to_visit[i];
-            if transform(self, handle) == End{
-                self.edges.visited_val += 1;
-                break;
-            }
-            self.edges.inc_visited_flag(handle);
-            
-            let edges = self.edges.edges(handle);
-            for next in edges {
-                if self.edges.visited_flag(*next) == self.edges.visited_val {
-                    continue;
-                }
-                to_visit[end] = *next;
-                end += 1;
-            }
-            i +=1;
-        }
-        self.edges.visited_val = 0; // Reset the visited flag as we traversed the whole graph
     }
 }
 
@@ -163,7 +115,7 @@ impl <T> Vertices<T>{
         }
     }
 
-    #[cfg_attr(release, inline(always))]
+    #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn push(&mut self, val: T) {
         self.data.push(val);
     }
