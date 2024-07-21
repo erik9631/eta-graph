@@ -3,7 +3,7 @@ use std::mem::size_of;
 use std::time::{Instant};
 use crate::{graph};
 use crate::algorithms::bfs;
-use crate::edge_data::{header_size_in_msize_units};
+use crate::edge_storage::{header_size_in_msize_units};
 use crate::graph::{Graph};
 use crate::graph::TraverseResult::Continue;
 use crate::size::MSize;

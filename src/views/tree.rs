@@ -1,4 +1,4 @@
-use crate::edge_data::{EdgeStorage};
+use crate::edge_storage::{EdgeStorage};
 use crate::graph::{Vertices};
 use crate::size::MSize;
 use crate::traits::GraphAccessor;

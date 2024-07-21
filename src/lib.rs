@@ -9,6 +9,7 @@ mod tests;
 #[cfg(test)]
 mod bench;
 mod prelude;
-mod edge_data;
+mod edge_storage;
 mod algorithms;
 mod size;
+mod weighted_edge_storage;

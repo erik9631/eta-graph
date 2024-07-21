@@ -1,7 +1,7 @@
 use std::cmp::min;
 use std::ops::{Index, IndexMut};
 use std::thread::available_parallelism;
-use crate::edge_data::{EdgeStorage};
+use crate::edge_storage::{EdgeStorage};
 use crate::size::MSize;
 use crate::traits;
 use crate::utils::{split_to_parts_mut};
