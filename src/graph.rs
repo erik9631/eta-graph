@@ -192,14 +192,11 @@ impl<T> Graph<T>{
     pub fn bfs<F>(&mut self, start: MSize, mut transform: F)
     where F: FnMut(&mut Self, MSize) -> TraverseResult{
         profile_method!(bfs);
-        profile_section!(before_loop);
         let layout = Layout::array::<MSize>(self.vertices.len()).expect("Failed to create layout"); // Around ~50% faster than vec
         let to_visit = unsafe {from_raw_parts_mut(alloc(layout) as *mut MSize, self.vertices.len())};
         let mut end = 1;
         to_visit[0] = start;
         let mut i = 0;
-        drop(before_loop);
-        profile_section!(loop_outer);
         while i != end {
             let handle = to_visit[i];
             if transform(self, handle) == End{
@@ -209,7 +206,6 @@ impl<T> Graph<T>{
             self.edges.inc_visited_flag(handle);
             
             let edges = self.edges.edges(handle);
-            profile_section!(loop_inner);
             for next in edges {
                 if self.edges.visited_flag(*next) == self.edges.visited_val {
                     continue;
@@ -217,8 +213,6 @@ impl<T> Graph<T>{
                 to_visit[end] = *next;
                 end += 1;
             }
-            drop(loop_inner);
-            profile_section!(increment_i);
             i +=1;
         }
         self.edges.visited_val = 0; // Reset the visited flag as we traversed the whole graph
@@ -310,17 +304,17 @@ impl EdgeData {
     }
 
     pub fn add_edges(&mut self, vertex: MSize, new_edges: &[MSize]) {
-        let (header, data) = Header::parse_mut(&mut self.edges, self.indices[vertex as usize] as usize);
-        let new_size = header.len as usize + new_edges.len();
+        let len = self.len(vertex) as usize;
+        let new_size = len + new_edges.len();
 
         // TODO return as Result instead of panic!
-        if new_size > header.reserve as usize {
+        if new_size > self.reserve(vertex) as usize {
             panic!("Edge size is greater than the allocated size");
         }
-        let new_data_end = header.len as usize + new_edges.len();
 
-        data[header.len as usize..new_data_end].copy_from_slice(new_edges);
-        header.len = new_size as MSize;
+        let data = self.edges_mut(vertex);
+        data[len..new_size].copy_from_slice(new_edges);
+        *self.len_mut(vertex) = new_size as MSize;
     }
 
     #[cfg_attr(release, inline(always))]
@@ -370,12 +364,21 @@ impl EdgeData {
     pub fn get(&self, vertex: MSize, edge: usize) -> MSize{
         return self.edges[self.indices[vertex as usize] as usize + edge + header_size_in_msize_units()];
     }
+    #[cfg_attr(release, inline(always))]
+    fn len_mut(&mut self, vertex: MSize) -> &mut MSize {
+        let edge_chunk_index = self.indices[vertex as usize] as usize;
+        return &mut self.edges[edge_chunk_index + LEN_OFFSET];
+    }
+
+    fn reserve_mut(&mut self, vertex: MSize) -> &mut MSize {
+        let edge_chunk_index = self.indices[vertex as usize] as usize;
+        return &mut self.edges[edge_chunk_index + RESERVE_OFFSET];
+    }
 
 
     #[cfg_attr(release, inline(always))]
     pub fn len(&self, vertex: MSize) -> MSize {
-        let (header, _) = Header::parse(&self.edges, self.indices[vertex as usize] as usize);
-        return header.len;
+        return self.edges[self.indices[vertex as usize] as usize + LEN_OFFSET];
     }
 
     #[cfg_attr(release, inline(always))]
@@ -386,14 +389,9 @@ impl EdgeData {
     pub fn capacity(&self) -> usize {
         return self.edges.len();
     }
-
-    pub fn reserve(&mut self, vertex: MSize) -> MSize {
-        unsafe {
-            let header = &self.edges[self.indices[vertex as usize] as usize] as *const MSize;
-            let header_ptr: *const Header = transmute(header);
-            let reserve = (*header_ptr).reserve;
-            return reserve;
-        }
+    #[cfg_attr(release, inline(always))]
+    pub fn reserve(&self, vertex: MSize) -> MSize {
+        return self.edges[self.indices[vertex as usize] as usize + RESERVE_OFFSET];
     }
     #[cfg_attr(release, inline(always))]
     pub fn visited_flag(&self, vertex: MSize) -> MSize {
@@ -427,14 +425,6 @@ impl EdgeData {
         let (_, data) = Header::parse(&self.edges, self.indices[uvertex] as usize);
         return Ok(data);
     }
-    pub fn edges(&self, vertex: MSize) -> &[MSize] {
-        profile_method!(edges_fast);
-        let edge_chunk_index = self.indices[vertex as usize] as usize;
-        let len = self.edges[edge_chunk_index + LEN_OFFSET] as usize;
-        let data = &self.edges[edge_chunk_index + DATA_START_OFFSET..edge_chunk_index + DATA_START_OFFSET + len];
-        return data;
-    }
-
     pub fn edges_header_mut(&mut self, vertex: MSize) -> Result< &mut [MSize], Error>{
         let uvertex = vertex as usize;
         if uvertex > self.indices.len() {
@@ -444,11 +434,20 @@ impl EdgeData {
         return Ok(data);
     }
 
-    pub fn edges_mut(&mut self, vertex: MSize) -> &mut [MSize] {
+    pub fn edges(&self, vertex: MSize) -> &[MSize] {
         profile_method!(edges_fast);
         let edge_chunk_index = self.indices[vertex as usize] as usize;
         let len = self.edges[edge_chunk_index + LEN_OFFSET] as usize;
-        let data = &mut self.edges[edge_chunk_index + DATA_START_OFFSET..edge_chunk_index + DATA_START_OFFSET + len];
+        let data = &self.edges[edge_chunk_index + DATA_START_OFFSET..edge_chunk_index + DATA_START_OFFSET + len];
+        return data;
+    }
+
+
+    pub fn edges_mut(&mut self, vertex: MSize) -> &mut [MSize] {
+        profile_method!(edges_fast);
+        let edge_chunk_index = self.indices[vertex as usize] as usize;
+        let reserve = self.edges[edge_chunk_index + RESERVE_OFFSET] as usize;
+        let data = &mut self.edges[edge_chunk_index + DATA_START_OFFSET..edge_chunk_index + DATA_START_OFFSET + reserve];
         return data;
     }
 }
