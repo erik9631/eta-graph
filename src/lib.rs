@@ -9,3 +9,4 @@ mod tests;
 #[cfg(test)]
 mod bench;
 mod prelude;
+mod edge_data;

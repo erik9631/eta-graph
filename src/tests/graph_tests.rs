@@ -2,7 +2,8 @@ use std::cmp::min;
 use std::mem::size_of;
 use std::time::{Instant};
 use crate::{graph};
-use crate::graph::{Graph, header_size_in_msize_units, MSize};
+use crate::edge_data::{header_size_in_msize_units, MSize};
+use crate::graph::{Graph};
 use crate::traits::Transform;
 
 #[test]

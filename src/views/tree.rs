@@ -1,5 +1,6 @@
 use std::slice::from_raw_parts;
-use crate::graph::{EdgeData, Header, MSize, Vertices};
+use crate::edge_data::{EdgeData, Header, MSize};
+use crate::graph::{Vertices};
 pub struct TreeView<'a, T> {
     pub nodes: &'a mut EdgeData,
     pub values: &'a mut Vertices<T>,

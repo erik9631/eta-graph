@@ -1,10 +1,8 @@
-use std::io::{Read, stdin};
 use std::time::Instant;
 use firestorm::profile_fn;
+use crate::edge_data::MSize;
 use crate::graph;
-use crate::graph::MSize;
 use crate::graph::TraverseResult::Continue;
-use crate::prelude::profile_method;
 
 #[test]
 pub fn graph_disconnect_bench(){
