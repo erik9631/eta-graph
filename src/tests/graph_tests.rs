@@ -6,8 +6,8 @@ use crate::algorithms::bfs;
 use crate::edge_storage::{header_size_in_msize_units};
 use crate::graph::{Graph};
 use crate::graph::TraverseResult::Continue;
-use crate::size::MSize;
-use crate::traits::{GraphAccessor, Transform};
+use crate::size::VHandle;
+use crate::traits::{EdgeOperator, EdgeStore, Transformer};
 
 #[test]
 pub fn graph_init_test() {
@@ -151,7 +151,7 @@ pub fn graph_mutability_test(){
 #[test]
 pub fn graph_transform_bench(){
     let mut graph = Graph::new_large();
-    let test_size = min(size_of::<MSize>(), 10000000) as MSize;
+    let test_size = min(size_of::<VHandle>(), 10000000) as VHandle;
 
     for i in 0..test_size {
         graph.create_leaf(i);
@@ -173,7 +173,7 @@ pub fn graph_transform_bench(){
 #[test]
 pub fn graph_transform_bench_async(){
     let mut graph = Graph::new_large();
-    let test_size = min(size_of::<MSize>(), 10000000) as MSize;
+    let test_size = min(size_of::<VHandle>(), 10000000) as VHandle;
 
     for i in 0..test_size {
         graph.create_leaf(i);
@@ -279,21 +279,21 @@ pub fn graph_static_test(){
     let mut graph = Graph::new();
     let root = graph.create("root", 5);
     let a = graph.create_and_connect(root,"a", 1);
-    assert_eq!(graph.edges.vertex_capacity(root), 5);
+    assert_eq!(graph.edges.edge_block_capacity(root), 5);
     graph.create_and_connect(root, "b", 0);
-    assert_eq!(graph.edges.vertex_capacity(root), 5);
+    assert_eq!(graph.edges.edge_block_capacity(root), 5);
     graph.create_and_connect(root,"c", 0);
-    assert_eq!(graph.edges.vertex_capacity(root), 5);
+    assert_eq!(graph.edges.edge_block_capacity(root), 5);
     let d = graph.create_and_connect(root, "d", 1);
-    assert_eq!(graph.edges.vertex_capacity(root), 5);
+    assert_eq!(graph.edges.edge_block_capacity(root), 5);
     let e = graph.create_and_connect(root, "e", 1);
-    assert_eq!(graph.edges.vertex_capacity(root), 5);
+    assert_eq!(graph.edges.edge_block_capacity(root), 5);
 
     graph.create_and_connect(a, "a_a", 0);
-    assert_eq!(graph.edges.vertex_capacity(root), 5);
+    assert_eq!(graph.edges.edge_block_capacity(root), 5);
     graph.create_and_connect(d, "a_d", 0);
-    assert_eq!(graph.edges.vertex_capacity(root), 5);
+    assert_eq!(graph.edges.edge_block_capacity(root), 5);
     graph.create_and_connect(e, "a_e", 0);
-    assert_eq!(graph.edges.vertex_capacity(root), 5);
-    assert_eq!(graph.edges.vertex_capacity(root), 5);
+    assert_eq!(graph.edges.edge_block_capacity(root), 5);
+    assert_eq!(graph.edges.edge_block_capacity(root), 5);
 }

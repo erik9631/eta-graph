@@ -1,8 +1,12 @@
 use crate::edge_storage::EdgeStorage;
-use crate::size::MSize;
+use crate::size::VHandle;
 
 pub struct WeightedEdgeStorage {
     pub edge_storage: EdgeStorage,
-    pub weight_indices: Vec<MSize>,
-    pub weights: Vec<MSize>,
+    pub weight_indices: Vec<VHandle>,
+    pub weights: Vec<VHandle>,
+}
+
+impl WeightedEdgeStorage {
+
 }

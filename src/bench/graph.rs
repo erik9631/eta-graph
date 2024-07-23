@@ -3,7 +3,8 @@ use firestorm::profile_fn;
 use crate::algorithms::bfs;
 use crate::graph;
 use crate::graph::TraverseResult::Continue;
-use crate::size::MSize;
+use crate::size::VHandle;
+use crate::traits::EdgeOperator;
 
 #[test]
 pub fn graph_disconnect_bench(){
@@ -35,7 +36,7 @@ pub fn graph_disconnect_safe_bench(){
     }
 
     let start = Instant::now();
-    for i in 0..data_size as MSize{
+    for i in 0..data_size as VHandle {
         graph.edges.disconnect(root, i+1);
     }
     println!("Time taken: {:?}", start.elapsed());

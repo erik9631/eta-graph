@@ -7,9 +7,8 @@ pub type MSize = u8;
 pub type MSize = u16;
 
 #[cfg(msize_type = "u32")]
-pub type MSize = u32;
+pub type VHandle = u32;
 
 #[cfg(msize_type = "usize")]
 pub type MSize = usize;
-
-pub(crate) const MSIZE_ALIGN_MASK: usize = size_of::<MSize>() - 1;
+pub(crate) const MSIZE_ALIGN_MASK: usize = size_of::<VHandle>() - 1;

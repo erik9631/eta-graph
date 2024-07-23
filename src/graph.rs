@@ -2,8 +2,9 @@ use std::cmp::min;
 use std::ops::{Index, IndexMut};
 use std::thread::available_parallelism;
 use crate::edge_storage::{EdgeStorage};
-use crate::size::MSize;
+use crate::size::VHandle;
 use crate::traits;
+use crate::traits::EdgeOperator;
 use crate::utils::{split_to_parts_mut};
 use crate::views::tree::TreeView;
 
@@ -60,29 +61,29 @@ impl<T> Graph<T>{
         };
     }
 
-    pub fn create_and_connect(&mut self, src_vertex: MSize, val: T, edge_count: usize) -> MSize {
+    pub fn create_and_connect(&mut self, src_vertex: VHandle, val: T, edge_count: usize) -> VHandle {
         let new_vertex = self.create(val, edge_count);
         self.edges.connect(src_vertex, new_vertex);
         return new_vertex;
     }
-    pub fn create_and_connect_leaf(&mut self, src_vertex: MSize, val: T) -> MSize {
+    pub fn create_and_connect_leaf(&mut self, src_vertex: VHandle, val: T) -> VHandle {
         return self.create_and_connect(src_vertex, val, 0);
     }
 
-    pub fn create(&mut self, val: T, edge_count: usize) -> MSize {
+    pub fn create(&mut self, val: T, edge_count: usize) -> VHandle {
         self.vertices.push(val);
-        let new_vertex = (self.vertices.len() - 1)  as MSize;
-        self.edges.create_vertex(edge_count);
+        let new_vertex = (self.vertices.len() - 1)  as VHandle;
+        self.edges.extend_edge_storage(edge_count);
         return new_vertex;
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn create_leaf(&mut self, val: T) -> MSize {
+    pub fn create_leaf(&mut self, val: T) -> VHandle {
         return self.create(val, 0)
     }
 }
 
 
-impl <T: Send> traits::Transform<T> for Vertices<T> {
+impl <T: Send> traits::Transformer<T> for Vertices<T> {
     fn transform(&mut self, transform_fn: fn(&mut [T])) {
         transform_fn(self.data.as_mut_slice());
     }
@@ -119,15 +120,15 @@ impl <T> Vertices<T>{
     }
 }
 
-impl <T> Index<MSize> for Vertices<T>{
+impl <T> Index<VHandle> for Vertices<T>{
     type Output = T;
-    fn index(&self, index: MSize) -> &Self::Output {
+    fn index(&self, index: VHandle) -> &Self::Output {
         return &self.data[index as usize];
     }
 }
 
-impl <T> IndexMut<MSize> for Vertices<T>{
-    fn index_mut(&mut self, index: MSize) -> &mut Self::Output {
+impl <T> IndexMut<VHandle> for Vertices<T>{
+    fn index_mut(&mut self, index: VHandle) -> &mut Self::Output {
         return &mut self.data[index as usize];
     }
 }

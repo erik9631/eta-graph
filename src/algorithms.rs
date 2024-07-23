@@ -3,15 +3,15 @@ use std::slice::from_raw_parts_mut;
 use firestorm::profile_method;
 use crate::graph::TraverseResult;
 use crate::graph::TraverseResult::End;
-use crate::size::MSize;
-use crate::traits::{GraphAccessor, TraverseMarker};
+use crate::size::VHandle;
+use crate::traits::{EdgeStore, TraverseMarker};
 
-pub fn bfs<TraverseFunc, GraphType>(graph: &mut GraphType, start: MSize, vertices_count: usize, mut transform: TraverseFunc) where
-        TraverseFunc: FnMut(&mut GraphType, MSize) -> TraverseResult,
-        GraphType: GraphAccessor + TraverseMarker{
+pub fn bfs<TraverseFunc, GraphType>(graph: &mut GraphType, start: VHandle, vertices_count: usize, mut transform: TraverseFunc) where
+        TraverseFunc: FnMut(&mut GraphType, VHandle) -> TraverseResult,
+        GraphType: EdgeStore + TraverseMarker{
     profile_method!(bfs);
-    let layout = Layout::array::<MSize>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
-    let to_visit = unsafe {from_raw_parts_mut(alloc(layout) as *mut MSize, vertices_count)};
+    let layout = Layout::array::<VHandle>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
+    let to_visit = unsafe {from_raw_parts_mut(alloc(layout) as *mut VHandle, vertices_count)};
     let mut end = 1;
     to_visit[0] = start;
     let mut i = 0;
