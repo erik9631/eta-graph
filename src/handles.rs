@@ -55,7 +55,7 @@ pub fn weight(handle: VHandle) -> Weight {
 pub fn create_handle(node_id: VertId, weight: Weight) -> VHandle {
     (node_id as VHandle) | ((weight as VHandle) << SHIFT)
 }
-
+#[inline(always)]
 pub fn set_weight(handle: VHandle, weight: Weight) -> VHandle {
     (handle & (MASK as VHandle)) | (weight as VHandle) << SHIFT
 }
