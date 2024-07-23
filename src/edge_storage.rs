@@ -3,7 +3,7 @@ use std::slice::{from_raw_parts, from_raw_parts_mut};
 use firestorm::{profile_method, profile_section};
 use crate::graph::{Error};
 use crate::handles::{MSIZE_ALIGN_MASK};
-use crate::handles::types::{VertId, VHandle, Weight};
+use crate::handles::types::{Vid, VHandle, Weight};
 use crate::traits::{EdgeOperator, EdgeStore, EdgeStoreMut, TraverseMarker, WeightedEdgeOperator};
 
 const FLAG_OFFSET: usize = 0;
@@ -208,7 +208,7 @@ impl EdgeOperator for EdgeStorage {
 
 impl WeightedEdgeOperator for EdgeStorage{
     fn connect_weighted(&mut self, from: VHandle, to: VHandle, weight: Weight) {
-        let combined: VHandle = to | ( (weight as VHandle) << size_of::<VertId>());
+        let combined: VHandle = to | ( (weight as VHandle) << size_of::<Vid>());
         self.add_edges(from, &[combined]);
     }
 }

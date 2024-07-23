@@ -1,6 +1,6 @@
 use std::mem::size_of;
 use std::ops::AddAssign;
-use crate::handles::types::{MASK, SHIFT, VertId, VHandle, Weight};
+use crate::handles::types::{MASK, SHIFT, Vid, VHandle, Weight};
 
 #[cfg(msize_type = "u8")]
 pub mod types{
@@ -23,7 +23,7 @@ pub mod types{
 pub mod types{
     pub type VHandle = u32;
     pub type Weight = i16;
-    pub type VertId = u16;
+    pub type Vid = u16;
     pub(in crate::handles) const SHIFT: usize = 16;
 
     pub(in crate::handles) const MASK: u16 = 0xFFFF;
@@ -42,25 +42,25 @@ pub mod types {
 }
 
 #[inline(always)]
-pub fn vert_id(handle: VHandle) -> VertId {
-    handle as VertId
+pub fn vid(handle: VHandle) -> Vid {
+    handle as Vid
 }
 
 #[inline(always)]
-pub fn weight(handle: VHandle) -> Weight {
+pub fn wgt(handle: VHandle) -> Weight {
     (handle >> SHIFT) as Weight
 }
 
 #[inline(always)]
-pub fn create_handle(node_id: VertId, weight: Weight) -> VHandle {
+pub fn pack(node_id: Vid, weight: Weight) -> VHandle {
     (node_id as VHandle) | ((weight as VHandle) << SHIFT)
 }
 #[inline(always)]
-pub fn set_weight(handle: VHandle, weight: Weight) -> VHandle {
+pub fn set_wgt(handle: VHandle, weight: Weight) -> VHandle {
     (handle & (MASK as VHandle)) | ((weight as VHandle) << SHIFT)
 }
 #[inline(always)]
-pub fn set_vert_id(handle: VHandle, vert_id: VertId) -> VHandle {
+pub fn set_vid(handle: VHandle, vert_id: Vid) -> VHandle {
     (handle & !(MASK as VHandle)) | (vert_id as VHandle)
 }
 pub(crate) const MSIZE_ALIGN_MASK: usize = size_of::<VHandle>() - 1;
