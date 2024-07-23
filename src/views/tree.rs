@@ -1,6 +1,6 @@
 use crate::edge_storage::{EdgeStorage};
 use crate::graph::{Vertices};
-use crate::size::VHandle;
+use crate::handles::types::VHandle;
 use crate::traits::{EdgeOperator, EdgeStore, EdgeStoreMut};
 
 pub struct TreeView<'a, T> {

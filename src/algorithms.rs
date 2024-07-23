@@ -3,7 +3,7 @@ use std::slice::from_raw_parts_mut;
 use firestorm::profile_method;
 use crate::graph::TraverseResult;
 use crate::graph::TraverseResult::End;
-use crate::size::VHandle;
+use crate::handles::types::VHandle;
 use crate::traits::{EdgeStore, TraverseMarker};
 
 pub fn bfs<TraverseFunc, GraphType>(graph: &mut GraphType, start: VHandle, vertices_count: usize, mut transform: TraverseFunc) where

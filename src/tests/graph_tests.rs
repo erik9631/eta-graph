@@ -6,7 +6,7 @@ use crate::algorithms::bfs;
 use crate::edge_storage::{header_size_in_msize_units};
 use crate::graph::{Graph};
 use crate::graph::TraverseResult::Continue;
-use crate::size::VHandle;
+use crate::handles::types::VHandle;
 use crate::traits::{EdgeOperator, EdgeStore, Transformer};
 
 #[test]

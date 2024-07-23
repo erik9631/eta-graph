@@ -2,8 +2,9 @@ use std::mem::size_of;
 use std::slice::{from_raw_parts, from_raw_parts_mut};
 use firestorm::{profile_method, profile_section};
 use crate::graph::{Error};
-use crate::size::{MSIZE_ALIGN_MASK, VHandle};
-use crate::traits::{EdgeOperator, EdgeStore, EdgeStoreMut, TraverseMarker};
+use crate::handles::{MSIZE_ALIGN_MASK};
+use crate::handles::types::{VertId, VHandle, Weight};
+use crate::traits::{EdgeOperator, EdgeStore, EdgeStoreMut, TraverseMarker, WeightedEdgeOperator};
 
 const FLAG_OFFSET: usize = 0;
 const LEN_OFFSET: usize = 1;
@@ -160,7 +161,6 @@ impl EdgeStorage {
 }
 
 impl EdgeOperator for EdgeStorage {
-
     fn add_edges(&mut self, handle: VHandle, handle_list: &[VHandle]) {
         let len = self.len(handle) as usize;
         let new_size = len + handle_list.len();
@@ -203,6 +203,13 @@ impl EdgeOperator for EdgeStorage {
     #[cfg_attr(not(debug_assertions), inline(always))]
     fn connect(&mut self, src: VHandle, target: VHandle) {
         self.add_edges(src, &[target]);
+    }
+}
+
+impl WeightedEdgeOperator for EdgeStorage{
+    fn connect_weighted(&mut self, from: VHandle, to: VHandle, weight: Weight) {
+        let combined: VHandle = to | ( (weight as VHandle) << size_of::<VertId>());
+        self.add_edges(from, &[combined]);
     }
 }
 

@@ -3,7 +3,7 @@ use firestorm::profile_fn;
 use crate::algorithms::bfs;
 use crate::graph;
 use crate::graph::TraverseResult::Continue;
-use crate::size::VHandle;
+use crate::handles::types::VHandle;
 use crate::traits::EdgeOperator;
 
 #[test]

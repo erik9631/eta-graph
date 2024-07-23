@@ -1,4 +1,4 @@
-use crate::size::{VHandle};
+use crate::handles::types::{VHandle, Weight};
 
 pub trait Transformer<T>{
     fn transform(&mut self, transform_fn: fn(&mut [T]));
@@ -10,6 +10,10 @@ pub trait EdgeOperator {
     fn extend_edge_storage(&mut self, size: usize) -> VHandle;
     fn disconnect(&mut self, src_handle: VHandle, handle: VHandle);
     fn connect(&mut self, from: VHandle, to: VHandle);
+}
+
+pub trait WeightedEdgeOperator {
+    fn connect_weighted(&mut self, from: VHandle, to: VHandle, weight: Weight);
 }
 
 pub trait TraverseMarker {
