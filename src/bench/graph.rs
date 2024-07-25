@@ -9,10 +9,10 @@ use crate::traits::EdgeOperator;
 #[test]
 pub fn graph_disconnect_bench(){
     // prepare data
-    let data_size = 200000;
+    let data_size = 64000;
     let mut graph = graph::Graph::new();
     let root = graph.create(0, data_size);
-    let mut handles = Vec::with_capacity(data_size);
+    let mut handles = Vec::with_capacity(data_size as usize);
     for i in 0..data_size {
         handles.push(graph.create_and_connect_leaf(root, i+1));
     }

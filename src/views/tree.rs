@@ -1,6 +1,7 @@
 use crate::edge_storage::{EdgeStorage};
 use crate::graph::{Vertices};
-use crate::handles::types::VHandle;
+use crate::handles::{Slot, vh, vh_pack};
+use crate::handles::types::{PackedEdge, VHandle};
 use crate::traits::{EdgeOperator, EdgeStore, EdgeStoreMut};
 
 pub struct TreeView<'a, T> {
@@ -8,9 +9,9 @@ pub struct TreeView<'a, T> {
     pub values: &'a mut Vertices<T>,
 }
 
-const TREE_HEADER_ELEMENTS: VHandle = 2;
-const ROOT_OFFSET: usize = 0;
-const PARENT_OFFSET: usize = 1;
+const TREE_HEADER_ELEMENTS: Slot = 2;
+const ROOT_OFFSET: Slot = 0;
+const PARENT_OFFSET: Slot = 1;
 
 
 
@@ -23,15 +24,15 @@ impl <'a, T> TreeView<'a, T> {
         }
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn get_children(&self, parent: VHandle) -> &[VHandle] {
-        return self.nodes.edges_offset(parent, TREE_HEADER_ELEMENTS as usize);
+    pub fn get_children(&self, parent: VHandle) -> &[PackedEdge] {
+        return self.nodes.edges_offset(parent, TREE_HEADER_ELEMENTS);
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn add_child(&mut self, parent: VHandle, child: VHandle){
         self.nodes.connect(parent, child);
-        self.nodes.set(child, parent, PARENT_OFFSET);
-        self.nodes.set(child, self.get_root(parent), ROOT_OFFSET);
+        self.nodes.set(child, vh_pack(parent), PARENT_OFFSET);
+        self.nodes.set(child, vh_pack(self.get_root(parent)), ROOT_OFFSET);
     }
 
     fn create_vertex(&mut self, val: T) -> VHandle {
@@ -42,11 +43,11 @@ impl <'a, T> TreeView<'a, T> {
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn get_root(&self, vertex: VHandle) -> VHandle {
-        return self.nodes.get(vertex, 0);
+        return vh(self.nodes.get(vertex, 0));
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn get_parent(&self, vertex: VHandle) -> VHandle {
-        return self.nodes.get(vertex, 1);
+        return vh(self.nodes.get(vertex, 1));
     }
 
     pub fn create_node(&mut self, val: T) -> VHandle {

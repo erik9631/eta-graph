@@ -2,9 +2,10 @@ use std::cmp::min;
 use std::ops::{Index, IndexMut};
 use std::thread::available_parallelism;
 use crate::edge_storage::{EdgeStorage};
-use crate::handles::types::VHandle;
+use crate::handles::Slot;
+use crate::handles::types::{VHandle, Weight};
 use crate::traits;
-use crate::traits::EdgeOperator;
+use crate::traits::{EdgeOperator, WeightedEdgeOperator};
 use crate::utils::{split_to_parts_mut};
 use crate::views::tree::TreeView;
 
@@ -46,7 +47,7 @@ impl<T> Graph<T>{
         }
     }
     /// Creates a new graph with a custom reserve
-    pub fn with_reserve(reserve: usize) -> Self {
+    pub fn with_reserve(reserve: Slot) -> Self {
         return Graph{
             edges: EdgeStorage::with_reserve(reserve),
             vertices: Vertices::new(),
@@ -61,16 +62,26 @@ impl<T> Graph<T>{
         };
     }
 
-    pub fn create_and_connect(&mut self, src_vertex: VHandle, val: T, edge_count: usize) -> VHandle {
+    pub fn create_and_connect(&mut self, src_vertex: VHandle, val: T, edge_count: Slot) -> VHandle {
         let new_vertex = self.create(val, edge_count);
         self.edges.connect(src_vertex, new_vertex);
         return new_vertex;
+    }
+
+    pub fn create_and_connect_weighted(&mut self, src_vertex: VHandle, val: T, weight: Weight, edge_count: Slot) -> VHandle {
+        let new_vertex = self.create(val, edge_count);
+        self.edges.connect_weighted(src_vertex, new_vertex, weight);
+        return new_vertex;
+    }
+
+    pub fn create_and_connect_leaf_weighted(&mut self, src_vertex: VHandle, val: T, weight: Weight) -> VHandle {
+        return self.create_and_connect_weighted(src_vertex, val, weight, 0);
     }
     pub fn create_and_connect_leaf(&mut self, src_vertex: VHandle, val: T) -> VHandle {
         return self.create_and_connect(src_vertex, val, 0);
     }
 
-    pub fn create(&mut self, val: T, edge_count: usize) -> VHandle {
+    pub fn create(&mut self, val: T, edge_count: Slot) -> VHandle {
         self.vertices.push(val);
         let new_vertex = (self.vertices.len() - 1)  as VHandle;
         self.edges.extend_edge_storage(edge_count);

@@ -4,6 +4,7 @@ use firestorm::profile_method;
 use crate::graph::TraverseResult;
 use crate::graph::TraverseResult::End;
 use crate::handles::types::VHandle;
+use crate::handles::vh;
 use crate::traits::{EdgeStore, TraverseMarker};
 
 pub fn bfs<TraverseFunc, GraphType>(graph: &mut GraphType, start: VHandle, vertices_count: usize, mut transform: TraverseFunc) where
@@ -25,10 +26,10 @@ pub fn bfs<TraverseFunc, GraphType>(graph: &mut GraphType, start: VHandle, verti
 
         let edges = graph.edges(handle);
         for next in edges {
-            if graph.visited_flag(*next) == graph.global_visited_flag() {
+            if graph.visited_flag(vh(*next)) == graph.global_visited_flag() {
                 continue;
             }
-            to_visit[end] = *next;
+            to_visit[end] = vh(*next);
             end += 1;
         }
         i +=1;

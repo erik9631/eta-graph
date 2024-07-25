@@ -1,5 +1,6 @@
 use crate::edge_storage::EdgeStorage;
-use crate::handles::types::VHandle;
+use crate::handles::Slot;
+use crate::handles::types::{PackedEdge, VHandle};
 use crate::traits::EdgeOperator;
 
 pub struct WeightedEdgeStorage {
@@ -9,11 +10,11 @@ pub struct WeightedEdgeStorage {
 }
 
 impl EdgeOperator for WeightedEdgeStorage {
-    fn add_edges(&mut self, src: VHandle, targets: &[VHandle]) {
+    fn add_edges(&mut self, src: VHandle, targets: &[PackedEdge]) {
 
     }
 
-    fn extend_edge_storage(&mut self, size: usize) -> VHandle {
+    fn extend_edge_storage(&mut self, size: Slot) -> Slot {
         todo!()
     }
 
