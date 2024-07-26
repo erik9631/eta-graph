@@ -21,17 +21,17 @@ pub fn bfs<TraverseFunc, GraphType>(graph: &mut GraphType, start: VHandle, verti
         let handle = to_visit[i];
         if transform(graph, handle) == End{
             graph.inc_global_visited_flag();
-            unsafe {dealloc(memory_ptr, layout)};
             break;
         }
         graph.inc_visited_flag(handle);
 
         let edges = graph.edges(handle);
         for next in edges {
-            if graph.visited_flag(vh(*next)) == graph.global_visited_flag() {
+            let handle = vh(*next);
+            if graph.visited_flag(handle) == graph.global_visited_flag() {
                 continue;
             }
-            to_visit[end] = vh(*next);
+            to_visit[end] = handle;
             end += 1;
         }
         i +=1;
@@ -64,9 +64,6 @@ pub fn dfs<TraverseFunc, GraphType>(graph: &mut GraphType, start: VHandle, verti
             continue;
         }
         let current_handle = vh(unsafe{*ptr});
-        if current_handle == 1041420{
-            println!("Found it");
-        }
         if graph.visited_flag(current_handle) == graph.global_visited_flag() {
             continue;
         }
@@ -74,8 +71,7 @@ pub fn dfs<TraverseFunc, GraphType>(graph: &mut GraphType, start: VHandle, verti
         graph.inc_visited_flag(current_handle);
         if transform(graph, current_handle) == End{
             graph.inc_global_visited_flag();
-            unsafe {dealloc(memory_ptr, layout)};
-            return;
+            break;
         }
         unsafe {
             *to_visit.offset(top + 1) = (graph.edges_ptr(current_handle), graph.edges_ptr(current_handle).add(graph.len(current_handle) as usize));

@@ -51,7 +51,7 @@ pub fn bfs_bench_firestorm(){
 #[test]
 pub fn bfs_bench(){
     // prepare data
-    let data_size = 1020;
+    let data_size = 2000;
     let mut graph = graph::Graph::new();
     let root = graph.create(0, data_size);
     let mut number_of_nodes = 1;
@@ -83,7 +83,7 @@ pub fn bfs_bench(){
 #[test]
 pub fn dfs_bench(){
     // prepare data
-    let data_size = 1020;
+    let data_size = 2000;
     let mut graph = graph::Graph::new();
     let root = graph.create(0, data_size);
     let mut number_of_nodes = 1;
