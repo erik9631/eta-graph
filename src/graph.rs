@@ -143,26 +143,3 @@ impl <T> IndexMut<VHandle> for Vertices<T>{
         return &mut self.data[index as usize];
     }
 }
-
-
-// pub fn dfs<T>(root: &Tree<T>, traverse: fn(node: &Tree<T>)){
-//     let mut stack: Vec<(&Tree<T>, Iter<*mut Tree<T>>)> = Vec::new();
-//     stack.push( (root, root.children.iter()));
-//
-//     while !stack.is_empty() {
-//         let current_node = stack.last_mut().unwrap();
-//
-//         let child_node = current_node.1.next();
-//         let parent_node = current_node.0;
-//         match child_node {
-//             None => {
-//                 stack.pop();
-//                 traverse(parent_node);
-//             },
-//             Some(child_node) => {
-//                 stack.push( (child_node, child_node.children.iter()) );
-//             }
-//         }
-//     }
-// }
-
