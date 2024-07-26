@@ -58,7 +58,7 @@ pub fn dfs<TraverseFunc, GraphType>(graph: &mut GraphType, start: VHandle, verti
         *to_visit.offset(top) = (start.as_ptr(), start.as_ptr().add(1));
     }
     while top >= 0{
-        profile_section!(bfs_loop);
+        profile_section!(dfs_loop);
         let (ptr, end) = unsafe{*to_visit.offset(top)};
         unsafe {
             *to_visit.offset(top) = (ptr.add(1), end);
