@@ -1,6 +1,6 @@
 use std::time::Instant;
 use firestorm::profile_fn;
-use crate::algorithms::bfs;
+use crate::algorithms::{bfs, dfs};
 use crate::graph;
 use crate::graph::TraverseResult::Continue;
 use crate::handles::types::VHandle;
@@ -68,6 +68,38 @@ pub fn bfs_bench(){
     let mut counter = 0;
     bfs(&mut graph.edges, root, number_of_nodes, |_edges, vertex|{
         profile_fn!("bfs_transform");
+        graph.vertices[vertex] = 0;
+        counter += 1;
+        return Continue;
+    });
+
+    println!("Time taken: {:?}", start.elapsed());
+    assert_eq!(counter, number_of_nodes);
+    println!("Counter: {:?}", counter);
+    println!("Number of nodes: {:?}", number_of_nodes);
+}
+
+
+#[test]
+pub fn dfs_bench(){
+    // prepare data
+    let data_size = 1020;
+    let mut graph = graph::Graph::new();
+    let root = graph.create(0, data_size);
+    let mut number_of_nodes = 1;
+    for i in 0..data_size {
+        let child = graph.create_and_connect(root, i+1, data_size);
+        number_of_nodes += 1;
+        for j in 0..data_size {
+            graph.create_and_connect_leaf(child, j*data_size);
+            number_of_nodes += 1;
+        }
+    }
+
+    let start = Instant::now();
+    let mut counter = 0;
+    dfs(&mut graph.edges, root, number_of_nodes, |_edges, vertex|{
+        profile_fn!("dfs_transform");
         graph.vertices[vertex] = 0;
         counter += 1;
         return Continue;

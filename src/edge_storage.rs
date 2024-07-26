@@ -238,8 +238,7 @@ impl EdgeStore for EdgeStorage {
     fn edges_ptr_offset(&self, vertex: VHandle, offset: Slot) -> *const PackedEdge {
         profile_method!(edges_ptr_offset);
         let edge_chunk_index = self.indices[vertex as usize];
-        let data = &self.edges[ (offset + edge_chunk_index + HEADER_SIZE) as usize];
-        return data;
+        return unsafe {self.edges.as_ptr().add((offset + edge_chunk_index + HEADER_SIZE) as usize)}
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]

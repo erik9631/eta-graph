@@ -64,7 +64,9 @@ pub fn dfs<TraverseFunc, GraphType>(graph: &mut GraphType, start: VHandle, verti
             continue;
         }
         let current_handle = vh(unsafe{*ptr});
-
+        if current_handle == 1041420{
+            println!("Found it");
+        }
         if graph.visited_flag(current_handle) == graph.global_visited_flag() {
             continue;
         }

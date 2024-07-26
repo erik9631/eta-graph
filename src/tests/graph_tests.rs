@@ -241,21 +241,20 @@ pub fn graph_disconnect_test(){
 }
 #[test]
 pub fn graph_bfs_test(){
-    let mut graph = Graph::new_large();
-    let root = graph.create_leaf("root");
-    let a = graph.create_and_connect_leaf(root, "a");
-    let b = graph.create_and_connect_leaf(root, "b");
+    let mut graph = Graph::new();
+    let root = graph.create("root", 3);
+    let a = graph.create_and_connect(root, "a", 3);
+    let b = graph.create_and_connect(root, "b", 2);
     graph.create_and_connect_leaf(root, "c");
 
     graph.create_and_connect_leaf(a, "a_a");
     graph.create_and_connect_leaf(a, "a_b");
     graph.create_and_connect_leaf(a, "a_c");
 
-    let b_a = graph.create_and_connect_leaf(b, "b_a");
+    let b_a = graph.create_and_connect(b, "b_a", 1);
     graph.create_and_connect_leaf(b, "b_b");
 
     graph.create_and_connect_leaf(b_a, "b_a_a");
-
     let mut snap = vec![
         "b_a_a".to_string(),
         "b_b".to_string(),
@@ -276,17 +275,17 @@ pub fn graph_bfs_test(){
 }
 #[test]
 pub fn graph_dfs_test(){
-    let mut graph = Graph::new_large();
-    let root = graph.create_leaf("root");
-    let a = graph.create_and_connect_leaf(root, "a");
-    let b = graph.create_and_connect_leaf(root, "b");
+    let mut graph = Graph::new();
+    let root = graph.create("root", 3);
+    let a = graph.create_and_connect(root, "a", 3);
+    let b = graph.create_and_connect(root, "b", 2);
     graph.create_and_connect_leaf(root, "c");
 
     graph.create_and_connect_leaf(a, "a_a");
     graph.create_and_connect_leaf(a, "a_b");
     graph.create_and_connect_leaf(a, "a_c");
 
-    let b_a = graph.create_and_connect_leaf(b, "b_a");
+    let b_a = graph.create_and_connect(b, "b_a", 1);
     graph.create_and_connect_leaf(b, "b_b");
 
     graph.create_and_connect_leaf(b_a, "b_a_a");
