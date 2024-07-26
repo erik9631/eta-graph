@@ -44,9 +44,17 @@ pub fn graph_disconnect_safe_bench(){
 #[test]
 pub fn bfs_bench_firestorm(){
     if firestorm::enabled() {
-        firestorm::bench("./flames/", bfs_bench).unwrap();
+        firestorm::bench("./flames/bfs", bfs_bench).unwrap();
     }
 }
+
+#[test]
+pub fn dfs_bench_firestorm(){
+    if firestorm::enabled() {
+        firestorm::bench("./flames/dfs", dfs_bench).unwrap();
+    }
+}
+
 
 #[test]
 pub fn bfs_bench(){

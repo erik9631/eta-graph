@@ -13,5 +13,5 @@ inherits = "release"
 debug = true
 
 [dependencies]
-firestorm = '0.5.1'
-#firestorm = { version = "0.5.1", features=["enable_system_time"] }
+#firestorm = '0.5.1'
+firestorm = { version = "0.5.1", features=["enable_system_time"] }
