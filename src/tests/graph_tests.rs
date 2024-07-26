@@ -2,7 +2,7 @@ use std::cmp::min;
 use std::mem::size_of;
 use std::time::{Instant};
 use crate::{graph};
-use crate::algorithms::bfs;
+use crate::algorithms::{bfs, dfs};
 use crate::edge_storage::{HEADER_SIZE};
 use crate::graph::{Graph};
 use crate::graph::TraverseResult::Continue;
@@ -273,6 +273,42 @@ pub fn graph_bfs_test(){
         assert_eq!(graph.vertices[handle], snap.pop().unwrap());
         Continue
     });
+}
+#[test]
+pub fn graph_dfs_test(){
+    let mut graph = Graph::new_large();
+    let root = graph.create_leaf("root");
+    let a = graph.create_and_connect_leaf(root, "a");
+    let b = graph.create_and_connect_leaf(root, "b");
+    graph.create_and_connect_leaf(root, "c");
+
+    graph.create_and_connect_leaf(a, "a_a");
+    graph.create_and_connect_leaf(a, "a_b");
+    graph.create_and_connect_leaf(a, "a_c");
+
+    let b_a = graph.create_and_connect_leaf(b, "b_a");
+    graph.create_and_connect_leaf(b, "b_b");
+
+    graph.create_and_connect_leaf(b_a, "b_a_a");
+
+    let mut snap = vec![
+        "c".to_string(),
+        "b_b".to_string(),
+        "b_a_a".to_string(),
+        "b_a".to_string(),
+        "b".to_string(),
+        "a_c".to_string(),
+        "a_b".to_string(),
+        "a_a".to_string(),
+        "a".to_string(),
+        "root".to_string(),
+    ];
+
+    dfs(&mut graph.edges, root, graph.vertices.len(), |_edges, handle|{
+        assert_eq!(graph.vertices[handle], snap.pop().unwrap());
+        Continue
+    });
+
 }
 
 #[test]
