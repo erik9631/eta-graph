@@ -9,6 +9,7 @@ use crate::graph::{Graph};
 use crate::handles::types::{VHandle, Weight};
 use crate::handles::{vh, wgt};
 use crate::traits::{EdgeOperator, EdgeStore, Transformer};
+use crate::weighted_graph::WeightedGraph;
 
 #[test]
 pub fn graph_init_test() {
@@ -352,17 +353,17 @@ pub fn graph_static_test(){
 
 #[test]
 pub fn graph_weight_test(){
-    let mut graph = Graph::new();
-    let root = graph.create("root", 5);
-    graph.create_and_connect_weighted(root,"a", 5, 0);
-    graph.create_and_connect_weighted(root,"b", 7, 0);
-    graph.create_and_connect_weighted(root,"c", 1052, 0);
-    graph.create_and_connect_weighted(root,"d", Weight::MAX, 0);
-    graph.create_and_connect_weighted(root,"e", -Weight::MAX, 0);
+    let mut wgraph = WeightedGraph::new();
+    let root = wgraph.graph.create("root", 5);
+    wgraph.create_and_connect_weighted(root, "a", 5, 0);
+    wgraph.create_and_connect_weighted(root, "b", 7, 0);
+    wgraph.create_and_connect_weighted(root, "c", 1052, 0);
+    wgraph.create_and_connect_weighted(root, "d", Weight::MAX, 0);
+    wgraph.create_and_connect_weighted(root, "e", -Weight::MAX, 0);
 
-    assert_eq!(graph.edges.len(root), 5);
+    assert_eq!(wgraph.graph.edges.len(root), 5);
 
-    for edge in graph.edges.edges(root){
+    for edge in wgraph.graph.edges.edges(root){
         match *edge{
             0 => {
                 assert_eq!(wgt(*edge), 5);

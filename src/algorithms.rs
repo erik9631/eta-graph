@@ -12,9 +12,8 @@ pub enum ControlFlow {
 }
 
 
-pub fn bfs<PreOrderFunc, Edges>(edge_storage: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order: PreOrderFunc) where
-    PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow,
-    Edges: EdgeStore + TraverseMarker{
+pub fn bfs<PreOrderFunc, Edges>(edge_storage: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order: PreOrderFunc)
+where PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow, Edges: EdgeStore + TraverseMarker{
     profile_fn!(bfs);
     let layout = Layout::array::<VHandle>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
     let memory_ptr = unsafe {alloc(layout)};
@@ -55,10 +54,9 @@ pub fn bfs<PreOrderFunc, Edges>(edge_storage: &mut Edges, start: VHandle, vertic
     edge_storage.reset_global_visited_flag(); // Reset the visited flag as we traversed the whole graph
     unsafe {dealloc(memory_ptr, layout)};
 }
-pub fn dfs<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order_func: PreOrderFunc, mut post_order_func: PostOrderFunc) where
-    PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow,
-    PostOrderFunc: FnMut(&mut Edges, VHandle),
-    Edges: EdgeStore + TraverseMarker{
+pub fn dfs<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order_func: PreOrderFunc,
+                                               mut post_order_func: PostOrderFunc)
+where PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow, PostOrderFunc: FnMut(&mut Edges, VHandle), Edges: EdgeStore + TraverseMarker{
     profile_fn!(dfs);
     let layout = Layout::array::<(*const Slot, *const Slot, VHandle)>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
 

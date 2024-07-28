@@ -12,3 +12,4 @@ mod prelude;
 mod edge_storage;
 mod algorithms;
 mod handles;
+mod weighted_graph;

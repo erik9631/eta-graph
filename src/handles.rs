@@ -33,6 +33,8 @@ pub mod types {
 
 pub type Slot = PackedEdge;
 
+pub const NONE: VHandle = VHandle::MAX;
+
 #[inline(always)]
 pub fn vh(handle: PackedEdge) -> VHandle {
     handle as VHandle

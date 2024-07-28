@@ -81,11 +81,10 @@ impl Header {
 
 
 impl EdgeStorage {
-    pub const NONE: VHandle = VHandle::MAX;
 
     /// Creates a new graph with the assumption that the usage will be dynamic.
     /// It will create the graph with high reserve count of 50 to avoid reallocations.
-    pub fn new_dyn() -> Self {
+    pub fn new_large() -> Self {
         return EdgeStorage {
             global_visited_flag: 1,
             vertex_capacity: 50,

@@ -5,7 +5,7 @@ use crate::edge_storage::{EdgeStorage};
 use crate::handles::Slot;
 use crate::handles::types::{VHandle, Weight};
 use crate::traits;
-use crate::traits::{EdgeOperator, WeightedEdgeOperator};
+use crate::traits::{EdgeOperator, EdgeStore, EdgeStoreMut, TraverseMarker};
 use crate::utils::{split_to_parts_mut};
 use crate::views::tree::TreeView;
 
@@ -14,32 +14,23 @@ pub enum Error {
     NoHandle,
 }
 
-pub struct Vertices<T> {
-    data: Vec<T>,
+pub struct Vertices<VertexType> {
+    data: Vec<VertexType>,
 }
 
-pub struct Graph<T> {
-    pub vertices: Vertices<T>,
-    pub edges: EdgeStorage,
+pub struct Graph<VertexType, EdgeStorageType> {
+    pub vertices: Vertices<VertexType>,
+    pub edges: EdgeStorageType,
 }
 
 
-impl<T> Graph<T>{
-
-    pub fn tree_view(&mut self) -> TreeView<T> {
-        return TreeView::new(&mut self.edges, &mut self.vertices);
-    }
-
-    /// Creates a new graph with the assumption that the usage will be dynamic.
-    /// It will create the graph with high reserve count of 50 to avoid reallocations.
+impl<VertexType> Graph<VertexType, EdgeStorage> {
     pub fn new_large() -> Self {
         return Graph{
-            edges: EdgeStorage::new_dyn(),
+            edges: EdgeStorage::new_large(),
             vertices: Vertices::new(),
-
         }
     }
-    /// Creates a new graph with a custom reserve
     pub fn with_reserve(reserve: Slot) -> Self {
         return Graph{
             edges: EdgeStorage::with_reserve(reserve),
@@ -55,33 +46,37 @@ impl<T> Graph<T>{
         };
     }
 
-    pub fn create_and_connect(&mut self, src_vertex: VHandle, val: T, edge_count: Slot) -> VHandle {
+}
+
+impl<VertexType, EdgeStorageType> Graph<VertexType, EdgeStorageType>
+where EdgeStorageType: EdgeStoreMut+ EdgeOperator + TraverseMarker {
+    pub fn tree_view(&mut self) -> TreeView<VertexType, EdgeStorageType> {
+        return TreeView::new(&mut self.edges, &mut self.vertices);
+    }
+
+    pub fn create_and_connect(&mut self, src_vertex: VHandle, val: VertexType, edge_count: Slot) -> VHandle {
         let new_vertex = self.create(val, edge_count);
         self.edges.connect(src_vertex, new_vertex);
         return new_vertex;
     }
 
-    pub fn create_and_connect_weighted(&mut self, src_vertex: VHandle, val: T, weight: Weight, edge_count: Slot) -> VHandle {
-        let new_vertex = self.create(val, edge_count);
-        self.edges.connect_weighted(src_vertex, new_vertex, weight);
-        return new_vertex;
-    }
-
-    pub fn create_and_connect_leaf_weighted(&mut self, src_vertex: VHandle, val: T, weight: Weight) -> VHandle {
-        return self.create_and_connect_weighted(src_vertex, val, weight, 0);
-    }
-    pub fn create_and_connect_leaf(&mut self, src_vertex: VHandle, val: T) -> VHandle {
+    // pub fn create_and_connect_weighted(&mut self, src_vertex: VHandle, val: VertexType, weight: Weight, edge_count: Slot) -> VHandle {
+    //     let new_vertex = self.create(val, edge_count);
+    //     self.edges.connect_weighted(src_vertex, new_vertex, weight);
+    //     return new_vertex;
+    // }
+    pub fn create_and_connect_leaf(&mut self, src_vertex: VHandle, val: VertexType) -> VHandle {
         return self.create_and_connect(src_vertex, val, 0);
     }
 
-    pub fn create(&mut self, val: T, edge_count: Slot) -> VHandle {
+    pub fn create(&mut self, val: VertexType, edge_count: Slot) -> VHandle {
         self.vertices.push(val);
         let new_vertex = (self.vertices.len() - 1)  as VHandle;
         self.edges.extend_edge_storage(edge_count);
         return new_vertex;
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn create_leaf(&mut self, val: T) -> VHandle {
+    pub fn create_leaf(&mut self, val: VertexType) -> VHandle {
         return self.create(val, 0)
     }
 }
