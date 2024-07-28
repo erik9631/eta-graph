@@ -1,10 +1,10 @@
 use std::alloc::{alloc, dealloc, Layout};
 use std::slice::{from_raw_parts_mut, Iter};
-use firestorm::{profile_fn, profile_method, profile_section};
+use firestorm::{profile_fn, profile_section};
 use crate::graph::TraverseResult;
 use crate::graph::TraverseResult::End;
-use crate::handles::types::{PackedEdge, VHandle};
-use crate::handles::{Slot, vh, vh_pack};
+use crate::handles::types::{VHandle};
+use crate::handles::{Slot, vh};
 use crate::traits::{EdgeStore, TraverseMarker};
 
 pub fn bfs<PreOrderFunc, Edges>(edges: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order: PreOrderFunc) where
