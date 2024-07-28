@@ -1,8 +1,8 @@
 use crate::edge_storage::EdgeStorage;
-use crate::graph::{Graph, Vertices};
+use crate::graph::{Graph};
 use crate::handles::Slot;
 use crate::handles::types::{VHandle, Weight};
-use crate::traits::{Operate, StoreMut, Visit, WeightedManipulate, WeightedOperate};
+use crate::traits::{WeightedManipulate, WeightedOperate};
 
 pub struct WeightedGraph<VertexType, EdgeStorageType> {
     pub graph: Graph<VertexType, EdgeStorageType>,

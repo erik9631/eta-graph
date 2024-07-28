@@ -1,2 +1,2 @@
 pub mod general;
-mod max_flow;
+pub mod max_flow;

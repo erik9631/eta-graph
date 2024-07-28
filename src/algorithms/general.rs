@@ -4,7 +4,7 @@ use firestorm::{profile_fn, profile_section};
 use crate::graph;
 use crate::handles::types::{VHandle, Weight};
 use crate::handles::{Slot, vh};
-use crate::traits::{Store, StoreMut, Visit, WeightedManipulate};
+use crate::traits::{Store, Visit, WeightedManipulate};
 use crate::weighted_graph::WeightedGraph;
 
 pub enum ControlFlow {

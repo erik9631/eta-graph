@@ -4,7 +4,7 @@ use firestorm::{profile_method, profile_section};
 use crate::graph::{Error};
 use crate::handles::{pack, Slot, vh};
 use crate::handles::types::{VHandle, Weight, PackedEdge};
-use crate::traits::{Manipulate, Operate, Store, StoreMut, Visit, WeightedManipulate, WeightedOperate};
+use crate::traits::{Manipulate, Operate, Store, Visit, WeightedManipulate, WeightedOperate};
 
 const FLAG_OFFSET: Slot = 0;
 const LEN_OFFSET: Slot = 1;
@@ -264,8 +264,7 @@ impl Store for EdgeStorage {
         let index = self.indices[vertex as usize];
         return self.edges[ ( index + HEADER_SIZE + offset) as usize];
     }
-}
-impl StoreMut for EdgeStorage {
+
     fn edges_mut_offset(&mut self, vertex: VHandle, offset: Slot) -> &mut [PackedEdge] {
         profile_method!(edges_mut_from_offset);
         let edge_chunk_index = self.indices[vertex as usize];
@@ -295,9 +294,7 @@ impl StoreMut for EdgeStorage {
         let index = self.indices[src as usize];
         self.edges[ (index + offset + HEADER_SIZE) as usize] = val;
     }
-
 }
-
 impl Clone for EdgeStorage {
     fn clone(&self) -> Self {
         return EdgeStorage {

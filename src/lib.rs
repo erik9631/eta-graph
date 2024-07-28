@@ -13,3 +13,4 @@ mod edge_storage;
 mod handles;
 mod weighted_graph;
 mod algorithms;
+mod vertex_storage;

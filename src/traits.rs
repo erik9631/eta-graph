@@ -1,9 +1,24 @@
+use std::ops::{Deref, DerefMut, Index, IndexMut};
 use crate::handles::Slot;
 use crate::handles::types::{PackedEdge, VHandle, Weight};
 
+// TODO add iters for edges
+
 pub trait Transform<T>{
     fn transform(&mut self, transform_fn: fn(&mut [T]));
+}
+
+pub trait AsyncTransform<T>: Transform<T>{
     fn async_transform(&mut self, transform_fn: fn(&mut [T]));
+}
+
+pub trait StoreVertex<T>: Index<VHandle> + IndexMut<VHandle> + Clone{
+    fn len(&self) -> usize;
+    fn push(&mut self, val: T);
+    fn capacity(&self) -> usize;
+    fn iter(&self) -> std::slice::Iter<T>;
+    fn iter_mut(&mut self) -> std::slice::IterMut<T>;
+    fn as_slice(&self) -> &[T];
 }
 
 pub trait Operate {
@@ -33,15 +48,11 @@ pub trait Store {
     fn len(&self, handle: VHandle) -> Slot;
     fn edge_block_capacity(&self, handle: VHandle) -> Slot;
     fn get(&self, vertex: VHandle, offset: Slot) -> PackedEdge;
-}
-
-pub trait StoreMut: Store {
     fn edges_mut_offset(&mut self, vertex: VHandle, offset: Slot) -> &mut [PackedEdge];
     fn edges_mut_ptr_offset(&mut self, vertex: VHandle, offset: Slot) -> *mut PackedEdge;
     fn edges_mut_ptr(&mut self, vertex: VHandle) -> *mut PackedEdge;
     fn edges_mut(&mut self, vertex: VHandle) -> &mut [PackedEdge];
     fn set(&mut self, src: VHandle, val: PackedEdge, offset: Slot);
 }
-
-pub trait Manipulate: StoreMut + Operate + Visit + Clone{}
+pub trait Manipulate: Store + Operate + Visit + Clone{}
 pub trait WeightedManipulate: Manipulate + WeightedOperate {}
