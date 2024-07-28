@@ -7,9 +7,9 @@ use crate::handles::types::{PackedEdge, VHandle};
 use crate::handles::{Slot, vh, vh_pack};
 use crate::traits::{EdgeStore, TraverseMarker};
 
-pub fn bfs<TraverseFunc, GraphType>(graph: &mut GraphType, start: VHandle, vertices_count: usize, mut transform: TraverseFunc) where
-        TraverseFunc: FnMut(&mut GraphType, VHandle) -> TraverseResult,
-        GraphType: EdgeStore + TraverseMarker{
+pub fn bfs<PreOrderFunc, Edges>(edges: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order: PreOrderFunc) where
+    PreOrderFunc: FnMut(&mut Edges, VHandle) -> TraverseResult,
+    Edges: EdgeStore + TraverseMarker{
     profile_fn!(bfs);
     let layout = Layout::array::<VHandle>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
     let memory_ptr = unsafe {alloc(layout)};
@@ -21,17 +21,17 @@ pub fn bfs<TraverseFunc, GraphType>(graph: &mut GraphType, start: VHandle, verti
     while i != end {
         profile_section!(bfs_loop_outer);
         let handle = to_visit[i];
-        if transform(graph, handle) == End{
-            graph.inc_global_visited_flag();
+        if pre_order(edges, handle) == End{
+            edges.inc_global_visited_flag();
             break;
         }
-        graph.inc_visited_flag(handle);
+        edges.inc_visited_flag(handle);
 
-        let edges = graph.edges(handle);
+        let edges = edges.edges(handle);
         for next in edges {
             profile_section!(bfs_loop_inner);
             let handle = vh(*next);
-            if graph.visited_flag(handle) == graph.global_visited_flag() {
+            if edges.visited_flag(handle) == edges.global_visited_flag() {
                 continue;
             }
             to_visit[end] = handle;
@@ -40,48 +40,57 @@ pub fn bfs<TraverseFunc, GraphType>(graph: &mut GraphType, start: VHandle, verti
         i +=1;
     }
 
-    graph.reset_global_visited_flag(); // Reset the visited flag as we traversed the whole graph
+    edges.reset_global_visited_flag(); // Reset the visited flag as we traversed the whole graph
     unsafe {dealloc(memory_ptr, layout)};
 }
-pub fn dfs<TraverseFunc, GraphType>(graph: &mut GraphType, start: VHandle, vertices_count: usize, mut transform: TraverseFunc) where
-        TraverseFunc: FnMut(&mut GraphType, VHandle) -> TraverseResult,
-    GraphType: EdgeStore + TraverseMarker{
+pub fn dfs<PreOrderFunc, PostOrderFunc, Edges>(edges: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order_func: PreOrderFunc, mut post_order_func: PostOrderFunc) where
+    PreOrderFunc: FnMut(&mut Edges, VHandle) -> TraverseResult,
+    PostOrderFunc: FnMut(&mut Edges, VHandle),
+    Edges: EdgeStore + TraverseMarker{
     profile_fn!(dfs);
-    let layout = Layout::array::<(*const PackedEdge, *const Slot)>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
+    let layout = Layout::array::<(*const Slot, *const Slot, VHandle)>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
 
     // Have to use unsafe as the borrow checker doesn't know that flags and edges don't overlap
     let memory_ptr = unsafe {alloc(layout)};
-    let to_visit = unsafe {memory_ptr as *mut (*const PackedEdge, *const Slot)};
+    let to_visit = unsafe {memory_ptr as *mut (*const Slot, *const Slot, VHandle)};
     let mut top = 0;
-    let start = [vh_pack(start);1 ];
     unsafe {
-        *to_visit.offset(top) = (start.as_ptr(), start.as_ptr().add(1));
+        *to_visit.offset(top) = (edges.edges_ptr(start), edges.edges_ptr(start).add(edges.len(start) as usize), start);
     }
+    //Special case for the root:
+    edges.inc_visited_flag(start);
+    if pre_order_func(edges, start) == End{
+        edges.inc_global_visited_flag();
+        return;
+    }
+
     while top >= 0{
         profile_section!(dfs_loop);
-        let (ptr, end) = unsafe{*to_visit.offset(top)};
-        unsafe {
-            *to_visit.offset(top) = (ptr.add(1), end);
-        }
+        let (ptr, end, vertex) = unsafe{*to_visit.offset(top)};
         if ptr == end{
+            post_order_func(edges, vertex);
             top -= 1;
             continue;
         }
+        unsafe {
+            *to_visit.offset(top) = (ptr.add(1), end, vertex); // Move to the next edge
+        }
+
         let current_handle = vh(unsafe{*ptr});
-        if graph.visited_flag(current_handle) == graph.global_visited_flag() {
+        if edges.visited_flag(current_handle) == edges.global_visited_flag() {
             continue;
         }
 
-        graph.inc_visited_flag(current_handle);
-        if transform(graph, current_handle) == End{
-            graph.inc_global_visited_flag();
+        edges.inc_visited_flag(current_handle);
+        if pre_order_func(edges, current_handle) == End{
+            edges.inc_global_visited_flag();
             break;
         }
         unsafe {
-            *to_visit.offset(top + 1) = (graph.edges_ptr(current_handle), graph.edges_ptr(current_handle).add(graph.len(current_handle) as usize));
+            *to_visit.offset(top + 1) = (edges.edges_ptr(current_handle), edges.edges_ptr(current_handle).add(edges.len(current_handle) as usize), current_handle);
         }
         top += 1;
     }
-    graph.reset_global_visited_flag(); // Reset the visited flag as we traversed the whole graph
+    edges.reset_global_visited_flag(); // Reset the visited flag as we traversed the whole graph
     unsafe {dealloc(memory_ptr, layout)};
 }

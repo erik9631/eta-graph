@@ -303,9 +303,24 @@ pub fn graph_dfs_test(){
         "root".to_string(),
     ];
 
+    let mut snap2 = vec![
+        "root".to_string(),
+        "c".to_string(),
+        "b".to_string(),
+        "b_b".to_string(),
+        "b_a".to_string(),
+        "b_a_a".to_string(),
+        "a".to_string(),
+        "a_c".to_string(),
+        "a_b".to_string(),
+        "a_a".to_string(),
+    ];
+
     dfs(&mut graph.edges, root, graph.vertices.len(), |_edges, handle|{
         assert_eq!(graph.vertices[handle], snap.pop().unwrap());
         Continue
+    }, |_edges, handle|{
+        assert_eq!(graph.vertices[handle], snap2.pop().unwrap());
     });
 
 }

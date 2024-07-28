@@ -111,7 +111,7 @@ pub fn dfs_bench(){
         graph.vertices[vertex] = 0;
         counter += 1;
         return Continue;
-    });
+    }, |_edges, vertex|{});
 
     println!("Time taken: {:?}", start.elapsed());
     assert_eq!(counter, number_of_nodes);
