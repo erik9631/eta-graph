@@ -1,8 +1,8 @@
 use std::time::Instant;
 use firestorm::profile_fn;
 use crate::algorithms::{bfs, dfs};
+use crate::algorithms::ControlFlow::Resume;
 use crate::graph;
-use crate::graph::TraverseResult::Continue;
 use crate::handles::types::VHandle;
 use crate::traits::EdgeOperator;
 
@@ -78,7 +78,7 @@ pub fn bfs_bench(){
         profile_fn!("bfs_transform");
         graph.vertices[vertex] = 0;
         counter += 1;
-        return Continue;
+        return Resume;
     });
 
     println!("Time taken: {:?}", start.elapsed());
@@ -110,7 +110,7 @@ pub fn dfs_bench(){
         profile_fn!("dfs_transform");
         graph.vertices[vertex] = 0;
         counter += 1;
-        return Continue;
+        return Resume;
     }, |_edges, vertex|{});
 
     println!("Time taken: {:?}", start.elapsed());

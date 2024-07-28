@@ -3,9 +3,9 @@ use std::mem::size_of;
 use std::time::{Instant};
 use crate::{graph};
 use crate::algorithms::{bfs, dfs};
+use crate::algorithms::ControlFlow::Resume;
 use crate::edge_storage::{HEADER_SIZE};
 use crate::graph::{Graph};
-use crate::graph::TraverseResult::Continue;
 use crate::handles::types::{VHandle, Weight};
 use crate::handles::{vh, wgt};
 use crate::traits::{EdgeOperator, EdgeStore, Transformer};
@@ -270,7 +270,7 @@ pub fn graph_bfs_test(){
 
     bfs(&mut graph.edges, root, graph.vertices.len(), |_edges, handle|{
         assert_eq!(graph.vertices[handle], snap.pop().unwrap());
-        Continue
+        Resume
     });
 }
 #[test]
@@ -318,7 +318,7 @@ pub fn graph_dfs_test(){
 
     dfs(&mut graph.edges, root, graph.vertices.len(), |_edges, handle|{
         assert_eq!(graph.vertices[handle], snap.pop().unwrap());
-        Continue
+        Resume
     }, |_edges, handle|{
         assert_eq!(graph.vertices[handle], snap2.pop().unwrap());
     });

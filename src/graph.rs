@@ -14,13 +14,6 @@ pub enum Error {
     NoHandle,
 }
 
-#[derive(Eq, PartialEq)]
-pub enum TraverseResult {
-    Continue,
-    End,
-}
-
-
 pub struct Vertices<T> {
     data: Vec<T>,
 }
