@@ -1,12 +1,12 @@
 use crate::edge_storage::{EdgeStorage};
 use crate::graph::{Vertices};
-use crate::handles::{Slot, vh, vh_pack};
+use crate::handles::{NONE, Slot, vh, vh_pack};
 use crate::handles::types::{PackedEdge, VHandle};
-use crate::traits::{EdgeOperator, EdgeStore, EdgeStoreMut};
+use crate::traits::{EdgeOperator, EdgeStore, EdgeStoreMut, TraverseMarker};
 
-pub struct TreeView<'a, T> {
-    pub nodes: &'a mut EdgeStorage,
-    pub values: &'a mut Vertices<T>,
+pub struct TreeView<'a, VertexType, EdgeStorageType> {
+    pub nodes: &'a mut EdgeStorageType,
+    pub values: &'a mut Vertices<VertexType>,
 }
 
 const TREE_HEADER_ELEMENTS: Slot = 2;
@@ -15,9 +15,10 @@ const PARENT_OFFSET: Slot = 1;
 
 
 
-impl <'a, T> TreeView<'a, T> {
+impl <'a, VertexType, EdgeStorageType> TreeView<'a, VertexType, EdgeStorageType>
+where EdgeStorageType: EdgeStoreMut + EdgeOperator + TraverseMarker {
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn new(edges: &'a mut EdgeStorage, vertices: &'a mut Vertices<T>) -> Self {
+    pub fn new(edges: &'a mut EdgeStorageType, vertices: &'a mut Vertices<VertexType>) -> Self {
         return TreeView{
             nodes: edges,
             values: vertices,
@@ -35,7 +36,7 @@ impl <'a, T> TreeView<'a, T> {
         self.nodes.set(child, vh_pack(self.get_root(parent)), ROOT_OFFSET);
     }
 
-    fn create_vertex(&mut self, val: T) -> VHandle {
+    fn create_vertex(&mut self, val: VertexType) -> VHandle {
         self.values.push(val);
         self.nodes.extend_edge_storage(0);
         let vertex = self.values.len() -1;
@@ -50,17 +51,17 @@ impl <'a, T> TreeView<'a, T> {
         return vh(self.nodes.get(vertex, 1));
     }
 
-    pub fn create_node(&mut self, val: T) -> VHandle {
+    pub fn create_node(&mut self, val: VertexType) -> VHandle {
         let vertex = self.create_vertex(val);
 
         self.nodes.connect(vertex, vertex); // root
-        self.nodes.connect(vertex, EdgeStorage::NONE); // parent
+        self.nodes.connect(vertex, NONE); // parent
 
         return vertex;
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn create_child(&mut self, parent: VHandle, val: T) -> VHandle {
+    pub fn create_child(&mut self, parent: VHandle, val: VertexType) -> VHandle {
         let child = self.create_node(val);
         self.add_child(parent, child);
         return child;
