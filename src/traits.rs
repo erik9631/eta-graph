@@ -1,23 +1,23 @@
 use crate::handles::Slot;
 use crate::handles::types::{PackedEdge, VHandle, Weight};
 
-pub trait Transformer<T>{
+pub trait Transform<T>{
     fn transform(&mut self, transform_fn: fn(&mut [T]));
     fn async_transform(&mut self, transform_fn: fn(&mut [T]));
 }
 
-pub trait EdgeOperator {
+pub trait Operate {
     fn add_edges(&mut self, src: VHandle, targets: &[PackedEdge]);
     fn extend_edge_storage(&mut self, size: Slot) -> Slot;
     fn disconnect(&mut self, src_handle: VHandle, handle: VHandle);
     fn connect(&mut self, from: VHandle, to: VHandle);
 }
 
-pub trait WeightedEdgeOperator {
+pub trait WeightedOperate {
     fn connect_weighted(&mut self, from: VHandle, to: VHandle, weight: Weight);
 }
 
-pub trait TraverseMarker {
+pub trait Visit {
     fn global_visited_flag(&self) -> Slot;
     fn inc_global_visited_flag(&mut self);
     fn reset_global_visited_flag(&mut self);
@@ -25,7 +25,7 @@ pub trait TraverseMarker {
     fn inc_visited_flag(&mut self, vertex: VHandle);
     fn set_visited_flag(&mut self, vertex: VHandle, val: Slot);
 }
-pub trait EdgeStore {
+pub trait Store {
     fn edges_offset(&self, vertex: VHandle, offset: Slot) -> &[PackedEdge];
     fn edges_ptr_offset(&self, vertex: VHandle, offset: Slot) -> *const PackedEdge;
     fn edges(&self, vertex: VHandle) -> &[PackedEdge];
@@ -35,10 +35,13 @@ pub trait EdgeStore {
     fn get(&self, vertex: VHandle, offset: Slot) -> PackedEdge;
 }
 
-pub trait EdgeStoreMut: EdgeStore {
+pub trait StoreMut: Store {
     fn edges_mut_offset(&mut self, vertex: VHandle, offset: Slot) -> &mut [PackedEdge];
     fn edges_mut_ptr_offset(&mut self, vertex: VHandle, offset: Slot) -> *mut PackedEdge;
     fn edges_mut_ptr(&mut self, vertex: VHandle) -> *mut PackedEdge;
     fn edges_mut(&mut self, vertex: VHandle) -> &mut [PackedEdge];
     fn set(&mut self, src: VHandle, val: PackedEdge, offset: Slot);
 }
+
+pub trait Manipulate: StoreMut + Operate + Visit + Clone{}
+pub trait WeightedManipulate: Manipulate + WeightedOperate {}

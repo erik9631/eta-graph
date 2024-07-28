@@ -1,10 +1,10 @@
 use std::time::Instant;
 use firestorm::profile_fn;
-use crate::algorithms::{bfs, dfs};
-use crate::algorithms::ControlFlow::Resume;
+use crate::algorithms::general::{bfs, dfs};
+use crate::algorithms::general::ControlFlow::Resume;
 use crate::graph;
 use crate::handles::types::VHandle;
-use crate::traits::EdgeOperator;
+use crate::traits::Operate;
 
 #[test]
 pub fn graph_disconnect_bench(){

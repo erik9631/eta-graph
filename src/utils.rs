@@ -1,3 +1,4 @@
+
 pub fn split_to_parts<T>(input: &[T], number_of_parts: usize) -> Vec<&[T]>{
     let (quot, rem) = (input.len() / number_of_parts, input.len() % number_of_parts);
 

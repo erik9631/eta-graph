@@ -2,13 +2,13 @@ use std::cmp::min;
 use std::mem::size_of;
 use std::time::{Instant};
 use crate::{graph};
-use crate::algorithms::{bfs, dfs};
-use crate::algorithms::ControlFlow::Resume;
+use crate::algorithms::general::{bfs, dfs};
+use crate::algorithms::general::ControlFlow::Resume;
 use crate::edge_storage::{HEADER_SIZE};
 use crate::graph::{Graph};
 use crate::handles::types::{VHandle, Weight};
 use crate::handles::{vh, wgt};
-use crate::traits::{EdgeOperator, EdgeStore, Transformer};
+use crate::traits::{Operate, Store, Transform};
 use crate::weighted_graph::WeightedGraph;
 
 #[test]

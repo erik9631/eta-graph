@@ -4,7 +4,7 @@ use firestorm::{profile_method, profile_section};
 use crate::graph::{Error};
 use crate::handles::{pack, Slot, vh};
 use crate::handles::types::{VHandle, Weight, PackedEdge};
-use crate::traits::{EdgeOperator, EdgeStore, EdgeStoreMut, TraverseMarker, WeightedEdgeOperator};
+use crate::traits::{Manipulate, Operate, Store, StoreMut, Visit, WeightedManipulate, WeightedOperate};
 
 const FLAG_OFFSET: Slot = 0;
 const LEN_OFFSET: Slot = 1;
@@ -138,7 +138,7 @@ impl EdgeStorage {
     }
 }
 
-impl EdgeOperator for EdgeStorage {
+impl Operate for EdgeStorage {
     fn add_edges(&mut self, src: VHandle, targets: &[PackedEdge]) {
         let len = self.len(src) as usize;
         let new_size = len + targets.len();
@@ -184,13 +184,13 @@ impl EdgeOperator for EdgeStorage {
     }
 }
 
-impl WeightedEdgeOperator for EdgeStorage{
+impl WeightedOperate for EdgeStorage{
     fn connect_weighted(&mut self, from: VHandle, to: VHandle, weight: Weight) {
         self.add_edges(from, &[pack(to, weight)]);
     }
 }
 
-impl TraverseMarker for EdgeStorage {
+impl Visit for EdgeStorage {
     fn global_visited_flag(&self) -> Slot {
         return self.global_visited_flag;
     }
@@ -226,7 +226,7 @@ impl TraverseMarker for EdgeStorage {
     }
 }
 
-impl EdgeStore for EdgeStorage {
+impl Store for EdgeStorage {
     fn edges_offset(&self, vertex: VHandle, offset: Slot) -> &[PackedEdge] {
         profile_method!(edges_from_offset);
         let edge_chunk_index = self.indices[vertex as usize];
@@ -265,7 +265,7 @@ impl EdgeStore for EdgeStorage {
         return self.edges[ ( index + HEADER_SIZE + offset) as usize];
     }
 }
-impl EdgeStoreMut for EdgeStorage {
+impl StoreMut for EdgeStorage {
     fn edges_mut_offset(&mut self, vertex: VHandle, offset: Slot) -> &mut [PackedEdge] {
         profile_method!(edges_mut_from_offset);
         let edge_chunk_index = self.indices[vertex as usize];
@@ -297,3 +297,25 @@ impl EdgeStoreMut for EdgeStorage {
     }
 
 }
+
+impl Clone for EdgeStorage {
+    fn clone(&self) -> Self {
+        return EdgeStorage {
+            global_visited_flag: self.global_visited_flag,
+            vertex_capacity: self.vertex_capacity,
+            edges: self.edges.clone(),
+            indices: self.indices.clone(),
+        }
+    }
+
+    fn clone_from(&mut self, source: &Self) {
+        self.global_visited_flag = source.global_visited_flag;
+        self.vertex_capacity = source.vertex_capacity;
+        self.edges.clone_from(&source.edges);
+        self.indices.clone_from(&source.indices);
+    }
+}
+
+impl Manipulate for EdgeStorage {}
+
+impl WeightedManipulate for EdgeStorage {}

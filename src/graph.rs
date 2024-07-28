@@ -5,7 +5,7 @@ use crate::edge_storage::{EdgeStorage};
 use crate::handles::Slot;
 use crate::handles::types::{VHandle, Weight};
 use crate::traits;
-use crate::traits::{EdgeOperator, EdgeStore, EdgeStoreMut, TraverseMarker};
+use crate::traits::{Operate, Store, StoreMut, Visit, Manipulate};
 use crate::utils::{split_to_parts_mut};
 use crate::views::tree::TreeView;
 
@@ -15,7 +15,7 @@ pub enum Error {
 }
 
 pub struct Vertices<VertexType> {
-    data: Vec<VertexType>,
+    pub data: Vec<VertexType>,
 }
 
 pub struct Graph<VertexType, EdgeStorageType> {
@@ -23,6 +23,20 @@ pub struct Graph<VertexType, EdgeStorageType> {
     pub edges: EdgeStorageType,
 }
 
+impl<VertexType, EdgeStorageType> Clone for Graph<VertexType, EdgeStorageType>
+where EdgeStorageType: Manipulate, VertexType: Clone {
+    fn clone(&self) -> Self {
+        return Graph{
+            vertices: self.vertices.clone(),
+            edges: self.edges.clone(),
+        }
+    }
+
+    fn clone_from(&mut self, source: &Self) {
+        self.vertices.clone_from(&source.vertices);
+        self.edges.clone_from(&source.edges);
+    }
+}
 
 impl<VertexType> Graph<VertexType, EdgeStorage> {
     pub fn new_large() -> Self {
@@ -49,7 +63,8 @@ impl<VertexType> Graph<VertexType, EdgeStorage> {
 }
 
 impl<VertexType, EdgeStorageType> Graph<VertexType, EdgeStorageType>
-where EdgeStorageType: EdgeStoreMut+ EdgeOperator + TraverseMarker {
+where EdgeStorageType: StoreMut + Operate + Visit
+{
     pub fn tree_view(&mut self) -> TreeView<VertexType, EdgeStorageType> {
         return TreeView::new(&mut self.edges, &mut self.vertices);
     }
@@ -60,11 +75,6 @@ where EdgeStorageType: EdgeStoreMut+ EdgeOperator + TraverseMarker {
         return new_vertex;
     }
 
-    // pub fn create_and_connect_weighted(&mut self, src_vertex: VHandle, val: VertexType, weight: Weight, edge_count: Slot) -> VHandle {
-    //     let new_vertex = self.create(val, edge_count);
-    //     self.edges.connect_weighted(src_vertex, new_vertex, weight);
-    //     return new_vertex;
-    // }
     pub fn create_and_connect_leaf(&mut self, src_vertex: VHandle, val: VertexType) -> VHandle {
         return self.create_and_connect(src_vertex, val, 0);
     }
@@ -82,11 +92,11 @@ where EdgeStorageType: EdgeStoreMut+ EdgeOperator + TraverseMarker {
 }
 
 
-impl <T: Send> traits::Transformer<T> for Vertices<T> {
-    fn transform(&mut self, transform_fn: fn(&mut [T])) {
+impl <VertexType: Send> traits::Transform<VertexType> for Vertices<VertexType> {
+    fn transform(&mut self, transform_fn: fn(&mut [VertexType])) {
         transform_fn(self.data.as_mut_slice());
     }
-    fn async_transform(&mut self, transform_fn: fn(&mut [T])) {
+    fn async_transform(&mut self, transform_fn: fn(&mut [VertexType])) {
         let max_parallelism = available_parallelism().ok().unwrap().get();
         let parallelism_count = min(max_parallelism, self.data.len());
         let parts = split_to_parts_mut(&mut self.data, parallelism_count);
@@ -103,7 +113,7 @@ impl <T: Send> traits::Transformer<T> for Vertices<T> {
     }
 
 }
-impl <T> Vertices<T>{
+impl <VertexType> Vertices<VertexType>{
     pub fn new() -> Self {
         return Vertices{
             data: Vec::new(),
@@ -111,7 +121,7 @@ impl <T> Vertices<T>{
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn push(&mut self, val: T) {
+    pub fn push(&mut self, val: VertexType) {
         self.data.push(val);
     }
     pub fn len(&self) -> usize {
@@ -119,15 +129,27 @@ impl <T> Vertices<T>{
     }
 }
 
-impl <T> Index<VHandle> for Vertices<T>{
-    type Output = T;
+impl <VertexType> Index<VHandle> for Vertices<VertexType>{
+    type Output = VertexType;
     fn index(&self, index: VHandle) -> &Self::Output {
         return &self.data[index as usize];
     }
 }
 
-impl <T> IndexMut<VHandle> for Vertices<T>{
+impl <VertexType> IndexMut<VHandle> for Vertices<VertexType>{
     fn index_mut(&mut self, index: VHandle) -> &mut Self::Output {
         return &mut self.data[index as usize];
+    }
+}
+
+impl <VertexType> Clone for Vertices<VertexType>
+where VertexType: Clone {
+    fn clone(&self) -> Self {
+        return Vertices{
+            data: self.data.clone(),
+        }
+    }
+    fn clone_from(&mut self, source: &Self) {
+        self.data.clone_from(&source.data);
     }
 }
