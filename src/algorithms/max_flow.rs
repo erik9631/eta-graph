@@ -1,11 +1,8 @@
-use std::alloc::{alloc, Layout};
-use std::iter::zip;
+
 use std::ops::{Index, IndexMut};
 use std::slice::{Iter, IterMut};
-use std::thread;
 use crate::handles::types::{VHandle, Weight};
 use crate::traits::{StoreVertex, WeightedManipulate};
-use crate::utils::{split_to_parts, split_to_parts_mut};
 use crate::vertex_storage::VertexStorage;
 use crate::weighted_graph::WeightedGraph;
 
