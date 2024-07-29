@@ -15,15 +15,14 @@ pub struct FlowData {
     pub sub_sum: Weight,
 }
 
-pub struct DinicVertexStorage<'a, VertexType, StoreVertexType> {
-    vertices: &'a StoreVertexType,
+pub struct DinicVertexStorage<'a, VertexType> {
+    vertices: &'a VertexStorage<VertexType>,
     pub flow_data: Vec<FlowData>,
 }
 
-impl<VertexType, StoreVertexType> DinicVertexStorage<VertexType, StoreVertexType>
+impl<VertexType> DinicVertexStorage<VertexType>
 where
     VertexType: Clone,
-    StoreVertexType: StoreVertex<VertexType>,
 {
     pub fn from<StoreVertex, StoreVertexType>(vertices: &StoreVertex<StoreVertexType>) -> Self {
         DinicVertexStorage {
@@ -33,10 +32,9 @@ where
     }
 }
 
-impl<VertexType, StoreVertexType> Index<VHandle> for DinicVertexStorage<VertexType, StoreVertexType>
+impl<VertexType> Index<VHandle> for DinicVertexStorage<VertexType>
 where
     VertexType: Clone,
-    StoreVertexType: StoreVertex<VertexType>,
 {
     type Output = (VertexType, FlowData);
 
@@ -45,20 +43,18 @@ where
     }
 }
 
-impl<VertexType, StoreVertexType> IndexMut<VHandle> for DinicVertexStorage<VertexType, StoreVertexType>
+impl<VertexType> IndexMut<VHandle> for DinicVertexStorage<VertexType>
 where
     VertexType: Clone,
-    StoreVertexType: StoreVertex<VertexType>,
 {
     fn index_mut(&mut self, index: VHandle) -> &mut Self::Output {
         self.vertices.index_mut(index)
     }
 }
 
-impl<VertexType, StoreVertexType> Clone for DinicVertexStorage<VertexType, StoreVertexType>
+impl<VertexType, StoreVertexType> Clone for DinicVertexStorage<VertexType>
 where
     VertexType: Clone,
-    StoreVertexType: StoreVertex<VertexType>,
 {
     fn clone(&self) -> Self {
         DinicVertexStorage {
@@ -68,10 +64,9 @@ where
     }
 }
 
-impl<VertexType, StoreVertexType> StoreVertex<VertexType> for DinicVertexStorage<VertexType, StoreVertexType>
+impl<VertexType, StoreVertexType> StoreVertex<VertexType> for DinicVertexStorage<VertexType>
 where
     VertexType: Clone,
-    StoreVertexType: StoreVertex<VertexType>,
 {
     type Item = VertexType;
     fn len(&self) -> usize {
@@ -105,7 +100,7 @@ where
     }
 }
 
-pub fn hybrid_dinic<VertexType, EdgeStorageType>(graph: WeightedGraph<VertexType, EdgeStorageType>) -> WeightedGraph<DinicVertexStorage<VertexType, VertexStorage<VertexType>>, EdgeStorageType>
+pub fn hybrid_dinic<VertexType, EdgeStorageType>(graph: WeightedGraph<VertexType, EdgeStorageType>) -> WeightedGraph<DinicVertexStorage<VertexType>, EdgeStorageType>
 where EdgeStorageType: WeightedManipulate {
     let mut edges = graph.graph.edges.clone();
     let mut vertices = DinicVertexStorage::from(&graph.graph.vertices);
