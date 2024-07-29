@@ -74,7 +74,9 @@ where VertexType: Clone {
     }
 }
 
-impl <VertexType> StoreVertex<VertexType> for VertexStorage<VertexType> {
+impl <VertexType> StoreVertex<VertexType> for VertexStorage<VertexType>
+where VertexType : Clone {
+    type Item = VertexType;
     fn len(&self) -> usize {
         return self.data.len();
     }

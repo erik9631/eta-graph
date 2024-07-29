@@ -2,7 +2,7 @@ use crate::algorithms::general::{bfs, dfs};
 use crate::algorithms::general::ControlFlow::Resume;
 use crate::algorithms::max_flow::clone_from_vertices_to_dinic_vertices_async;
 use crate::graph::Graph;
-use crate::handles::types::{VHandle, Weight};
+use crate::handles::types::{VHandle};
 
 #[test]
 pub fn graph_bfs_test(){
