@@ -33,14 +33,6 @@ pub trait WeightedGraphOperate {
     fn connect_weighted(&mut self, from: VHandle, to: VHandle, weight: Weight);
 }
 
-pub trait EdgeVisit {
-    fn global_visited_flag(&self) -> Slot;
-    fn inc_global_visited_flag(&mut self);
-    fn reset_global_visited_flag(&mut self);
-    fn visited_flag(&self, vertex: VHandle) -> Slot;
-    fn inc_visited_flag(&mut self, vertex: VHandle);
-    fn set_visited_flag(&mut self, vertex: VHandle, val: Slot);
-}
 pub trait EdgeStore {
     fn edges_offset(&self, vertex: VHandle, offset: Slot) -> &[PackedEdge];
     fn edges_ptr_offset(&self, vertex: VHandle, offset: Slot) -> *const PackedEdge;
@@ -55,5 +47,5 @@ pub trait EdgeStore {
     fn edges_mut(&mut self, vertex: VHandle) -> &mut [PackedEdge];
     fn set(&mut self, src: VHandle, val: PackedEdge, offset: Slot);
 }
-pub trait EdgeManipulate: EdgeStore + GraphOperate + EdgeVisit + Clone{}
+pub trait EdgeManipulate: EdgeStore + GraphOperate + Clone{}
 pub trait WeightedEdgeManipulate: EdgeManipulate + WeightedGraphOperate {}

@@ -74,7 +74,7 @@ pub fn bfs_bench(){
 
     let start = Instant::now();
     let mut counter = 0;
-    bfs(&mut graph.edges, root, number_of_nodes, |_edges, vertex|{
+    bfs(&mut graph.edges, root, number_of_nodes, |_edges, vertex, layer|{
         profile_fn!("bfs_transform");
         graph.vertices[vertex] = 0;
         counter += 1;

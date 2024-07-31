@@ -4,7 +4,7 @@ use firestorm::{profile_fn, profile_section};
 use crate::graph;
 use crate::handles::types::{VHandle, Weight};
 use crate::handles::{Slot, vh};
-use crate::traits::{EdgeStore, EdgeVisit, WeightedEdgeManipulate};
+use crate::traits::{EdgeStore, WeightedEdgeManipulate};
 use crate::weighted_graph::WeightedGraph;
 
 pub enum ControlFlow {
@@ -15,22 +15,32 @@ pub enum ControlFlow {
 
 
 pub fn bfs<PreOrderFunc, Edges>(edge_storage: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order: PreOrderFunc)
-where PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow, Edges: EdgeStore + EdgeVisit
+where
+    PreOrderFunc: FnMut(&mut Edges, VHandle, Weight) -> ControlFlow,
+    Edges: EdgeStore
 {
     profile_fn!(bfs);
-    let layout = Layout::array::<VHandle>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
-    let memory_ptr = unsafe {alloc(layout)};
-    let to_visit = unsafe {from_raw_parts_mut(memory_ptr as *mut VHandle, vertices_count)};
+    let to_visit_layout = Layout::array::<VHandle>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
+    let flag_layout = Layout::array::<bool>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
+
+    let to_visit_ptr = unsafe {alloc(to_visit_layout)};
+    let flags_ptr = unsafe {alloc(flag_layout)};
+    unsafe {std::ptr::write_bytes(flags_ptr, 0, vertices_count)};
+
+    let was_queued_flags = unsafe {from_raw_parts_mut(flags_ptr as *mut bool, vertices_count)};
+    let to_visit = unsafe {from_raw_parts_mut(to_visit_ptr as *mut VHandle, vertices_count)};
     let mut end = 1;
+    let mut next_layer = 1;
+    let mut layer = 0;
     to_visit[0] = start;
+    was_queued_flags[0] = true;
     let mut i = 0;
 
     while i != end {
         profile_section!(bfs_loop_outer);
         let handle = to_visit[i];
-        match pre_order(edge_storage, handle) {
+        match pre_order(edge_storage, handle, layer) { // the i is a place holder for the layer
             ControlFlow::End => {
-                edge_storage.inc_global_visited_flag();
                 break;
             }
             ControlFlow::Continue => {
@@ -39,43 +49,55 @@ where PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow, Edges: EdgeStore 
             }
             ControlFlow::Resume => {}
         }
-        edge_storage.inc_visited_flag(handle);
-
         let edges = edge_storage.edges(handle);
         for next in edges {
             profile_section!(bfs_loop_inner);
-            let handle = vh(*next);
-            if edge_storage.visited_flag(handle) == edge_storage.global_visited_flag() {
+            let next_handle = vh(*next);
+            if was_queued_flags[next_handle as usize] {
                 continue;
             }
-            to_visit[end] = handle;
+            was_queued_flags[next_handle as usize] = true;
+            to_visit[end] = next_handle;
             end += 1;
         }
         i +=1;
+
+        if i == next_layer {
+            layer += 1;
+            next_layer = end;
+        }
     }
 
-    edge_storage.reset_global_visited_flag(); // Reset the visited flag as we traversed the whole graph
-    unsafe {dealloc(memory_ptr, layout)};
+    unsafe {dealloc(to_visit_ptr, to_visit_layout)};
+    unsafe {dealloc(flags_ptr, flag_layout)};
 }
 pub fn dfs<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order_func: PreOrderFunc,
                                                mut post_order_func: PostOrderFunc)
-where PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow, PostOrderFunc: FnMut(&mut Edges, VHandle), Edges: EdgeStore + EdgeVisit
+where
+    PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow,
+    PostOrderFunc: FnMut(&mut Edges, VHandle),
+    Edges: EdgeStore
 {
     profile_fn!(dfs);
     let layout = Layout::array::<(*const Slot, *const Slot, VHandle)>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
+    let flag_layout = Layout::array::<bool>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
 
     // Have to use unsafe as the borrow checker doesn't know that flags and edges don't overlap
-    let memory_ptr = unsafe {alloc(layout)};
-    let to_visit = unsafe {memory_ptr as *mut (*const Slot, *const Slot, VHandle)};
+    let visit_ptr = unsafe {alloc(layout)};
+    let flags_ptr = unsafe {alloc(flag_layout)};
+    unsafe {std::ptr::write_bytes(flags_ptr, 0, vertices_count)};
+
+
+    let to_visit = unsafe { visit_ptr as *mut (*const Slot, *const Slot, VHandle)};
+    let was_visited_flags = unsafe {from_raw_parts_mut(flags_ptr as *mut bool, vertices_count)};
     let mut top = 0;
     unsafe {
         *to_visit.offset(top) = (edge_storage.edges_ptr(start), edge_storage.edges_ptr(start).add(edge_storage.len(start) as usize), start);
     }
-    //Special case for the root:
-    edge_storage.inc_visited_flag(start);
     match pre_order_func(edge_storage, start){
         ControlFlow::End => {
-            edge_storage.inc_global_visited_flag();
+            unsafe {dealloc(visit_ptr, layout)};
+            unsafe {dealloc(flags_ptr, flag_layout)};
             return;
         },
         _ => {}
@@ -94,14 +116,13 @@ where PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow, PostOrderFunc: Fn
         }
 
         let current_handle = vh(unsafe{*ptr});
-        if edge_storage.visited_flag(current_handle) == edge_storage.global_visited_flag() {
+        if was_visited_flags[current_handle as usize]{
             continue;
         }
 
-        edge_storage.inc_visited_flag(current_handle);
+        was_visited_flags[current_handle as usize] = true;
         match pre_order_func(edge_storage, current_handle){
             ControlFlow::End => {
-                edge_storage.inc_global_visited_flag();
                 break;
             },
             ControlFlow::Continue => {
@@ -115,6 +136,6 @@ where PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow, PostOrderFunc: Fn
         }
         top += 1;
     }
-    edge_storage.reset_global_visited_flag(); // Reset the visited flag as we traversed the whole graph
-    unsafe {dealloc(memory_ptr, layout)};
+    unsafe {dealloc(visit_ptr, layout)};
+    unsafe {dealloc(flags_ptr, flag_layout)};
 }

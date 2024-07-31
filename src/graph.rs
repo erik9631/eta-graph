@@ -71,14 +71,14 @@ where
         return TreeView::new(&mut self.edges, &mut self.vertices);
     }
 
-    pub fn create_and_connect(&mut self, src_vertex: VHandle, val: VertexType, edge_count: Slot) -> VHandle {
+    pub fn create_and_connect(&mut self, from: VHandle, val: VertexType, edge_count: Slot) -> VHandle {
         let new_vertex = self.create(val, edge_count);
-        self.edges.connect(src_vertex, new_vertex);
+        self.edges.connect(from, new_vertex);
         return new_vertex;
     }
 
-    pub fn create_and_connect_leaf(&mut self, src_vertex: VHandle, val: VertexType) -> VHandle {
-        return self.create_and_connect(src_vertex, val, 0);
+    pub fn create_and_connect_leaf(&mut self, from: VHandle, val: VertexType) -> VHandle {
+        return self.create_and_connect(from, val, 0);
     }
 
     pub fn create(&mut self, val: VertexType, edge_count: Slot) -> VHandle {
