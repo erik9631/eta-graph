@@ -1,7 +1,11 @@
+use std::alloc::{alloc, Layout};
 use std::ops::{Index, IndexMut};
+use std::ptr;
 use std::slice::{Iter, IterMut};
+use crate::graph::Graph;
 use crate::handles::types::{VHandle, Weight};
-use crate::traits::{StoreVertex};
+use crate::traits::{EdgeManipulate, StoreVertex, WeightedEdgeManipulate};
+use crate::weighted_graph::WeightedGraph;
 
 pub struct FlowData {
     pub level: Weight,
@@ -9,82 +13,37 @@ pub struct FlowData {
     pub sub_sum: Weight,
 }
 
-pub struct DinicVertexWrapper<'a, VertexType, VertexStorageType>
+pub struct DinicGraph<'a, VertexType, VertexStorageType, EdgeStorageType>
 where
-    VertexStorageType: StoreVertex<VertexType=VertexType>
+    VertexStorageType: StoreVertex<VertexType=VertexType>,
+    EdgeStorageType: WeightedEdgeManipulate,
 {
-    vertices: &'a mut VertexStorageType,
+    pub weighted_graph: &'a WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>,
     pub flow_data: Vec<FlowData>,
 }
 
-impl<'a, VertexType, VertexStorageType> DinicVertexWrapper<'a, VertexType, VertexStorageType>
+impl<'a, VertexType, VertexStorageType, EdgeStorageType> DinicGraph<'a, VertexType, VertexStorageType, EdgeStorageType>
 where
     VertexStorageType: StoreVertex<VertexType=VertexType>,
+    EdgeStorageType: WeightedEdgeManipulate,
 {
-    pub fn from(vertices: &'a mut VertexStorageType) -> Self {
-        let len = vertices.len();
-        DinicVertexWrapper {
-            vertices,
-            flow_data: Vec::with_capacity(len),
+    pub fn from(graph: &'a WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>) -> Self {
+        let vertices_len = graph.graph.vertices.len();
+        let layout = Layout::array::<FlowData>(vertices_len).expect("Failed to create layout");
+        // TODO use SIMD
+        let ptr = unsafe { alloc(layout) as *mut FlowData };
+        unsafe {ptr::write_bytes(ptr, 0, vertices_len)};
+        let flow_data = unsafe { Vec::from_raw_parts(ptr, vertices_len, vertices_len) };
+        DinicGraph {
+            weighted_graph: graph,
+            flow_data,
         }
     }
-}
 
-impl<'a, VertexType, VertexStorageType> Index<VHandle> for DinicVertexWrapper<'a, VertexType, VertexStorageType>
-where
-    VertexStorageType: StoreVertex<VertexType=VertexType>,
-{
-    type Output = VertexType;
-
-    fn index(&self, index: VHandle) -> &Self::Output {
-        self.vertices.index(index)
+    pub fn iter_zip(&self) -> std::iter::Zip<Iter<VertexType>, Iter<FlowData>> {
+        self.weighted_graph.graph.vertices.iter().zip(self.flow_data.iter())
     }
 }
-
-impl<'a, VertexType, VertexStorageType> IndexMut<VHandle> for DinicVertexWrapper<'a, VertexType, VertexStorageType>
-where
-    VertexStorageType: StoreVertex<VertexType=VertexType>,
-{
-    fn index_mut(&mut self, index: VHandle) -> &mut Self::Output {
-        self.index_mut(index)
-    }
-}
-impl<'a, VertexType, VertexStorageType> StoreVertex for DinicVertexWrapper<'a, VertexType, VertexStorageType>
-where
-    VertexStorageType: StoreVertex<VertexType=VertexType>,
-{
-    type VertexType = VertexType;
-    fn len(&self) -> usize {
-        self.vertices.len()
-    }
-
-    fn push(&mut self, val: VertexType) {
-        self.vertices.push(val);
-        self.flow_data.push({
-            FlowData {
-                level: Weight::MAX,
-                flow: Weight::MAX,
-                sub_sum: Weight::MAX,
-            }
-        });
-    }
-    fn capacity(&self) -> usize {
-        self.vertices.capacity()
-    }
-
-    fn iter(&self) -> Iter<VertexType> {
-        self.vertices.iter()
-    }
-
-    fn iter_mut(&mut self) -> IterMut<VertexType> {
-        self.vertices.iter_mut()
-    }
-
-    fn as_slice(&self) -> &[VertexType] {
-        self.vertices.as_slice()
-    }
-}
-
 pub fn mark_levels() {}
 
 // pub fn hybrid_dinic<VertexType, EdgeStorageType>(graph: WeightedGraph<VertexType, EdgeStorageType>) -> WeightedGraph<DinicVertexStorage<VertexType>, EdgeStorageType>

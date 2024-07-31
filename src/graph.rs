@@ -1,7 +1,7 @@
 use crate::edge_storage::{EdgeStorage};
 use crate::handles::Slot;
 use crate::handles::types::{VHandle};
-use crate::traits::{Operate, Manipulate, StoreVertex};
+use crate::traits::{GraphOperate, EdgeManipulate, StoreVertex};
 use crate::vertex_storage::VertexStorage;
 use crate::views::tree::TreeView;
 
@@ -11,7 +11,8 @@ pub enum Error {
 }
 pub struct Graph<VertexType, VertexStorageType, EdgeStorageType>
 where
-    VertexStorageType: StoreVertex<VertexType=VertexType>
+    VertexStorageType: StoreVertex<VertexType=VertexType>,
+    EdgeStorageType: EdgeManipulate,
 {
     pub vertices: VertexStorageType,
     pub edges: EdgeStorageType,
@@ -19,7 +20,7 @@ where
 
 impl<VertexType, VertexStorageType, EdgeStorageType> Clone for Graph<VertexType, VertexStorageType, EdgeStorageType>
 where
-    EdgeStorageType: Manipulate,
+    EdgeStorageType: EdgeManipulate,
     VertexType: Clone,
     VertexStorageType: StoreVertex<VertexType=VertexType> + Clone{
     fn clone(&self) -> Self {
@@ -64,7 +65,7 @@ where
 
 impl<VertexType, VertexStorageType, EdgeStorageType> Graph<VertexType, VertexStorageType, EdgeStorageType>
 where
-    EdgeStorageType: Manipulate,
+    EdgeStorageType: EdgeManipulate,
     VertexStorageType: StoreVertex<VertexType=VertexType>{
     pub fn tree_view(&mut self) -> TreeView<VertexType, VertexStorageType, EdgeStorageType> {
         return TreeView::new(&mut self.edges, &mut self.vertices);

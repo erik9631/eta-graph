@@ -4,7 +4,7 @@ use firestorm::{profile_fn, profile_section};
 use crate::graph;
 use crate::handles::types::{VHandle, Weight};
 use crate::handles::{Slot, vh};
-use crate::traits::{Store, Visit, WeightedManipulate};
+use crate::traits::{EdgeStore, EdgeVisit, WeightedEdgeManipulate};
 use crate::weighted_graph::WeightedGraph;
 
 pub enum ControlFlow {
@@ -15,7 +15,7 @@ pub enum ControlFlow {
 
 
 pub fn bfs<PreOrderFunc, Edges>(edge_storage: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order: PreOrderFunc)
-where PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow, Edges: Store + Visit
+where PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow, Edges: EdgeStore + EdgeVisit
 {
     profile_fn!(bfs);
     let layout = Layout::array::<VHandle>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
@@ -59,7 +59,7 @@ where PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow, Edges: Store + Vi
 }
 pub fn dfs<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order_func: PreOrderFunc,
                                                mut post_order_func: PostOrderFunc)
-where PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow, PostOrderFunc: FnMut(&mut Edges, VHandle), Edges: Store + Visit
+where PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow, PostOrderFunc: FnMut(&mut Edges, VHandle), Edges: EdgeStore + EdgeVisit
 {
     profile_fn!(dfs);
     let layout = Layout::array::<(*const Slot, *const Slot, VHandle)>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec

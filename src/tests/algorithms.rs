@@ -1,7 +1,9 @@
 use crate::algorithms::general::{bfs, dfs};
 use crate::algorithms::general::ControlFlow::Resume;
+use crate::algorithms::max_flow::DinicGraph;
 use crate::graph::Graph;
-use crate::handles::types::{VHandle};
+use crate::handles::types::{VHandle, Weight};
+use crate::weighted_graph::WeightedGraph;
 
 #[test]
 pub fn graph_bfs_test(){
@@ -90,19 +92,22 @@ pub fn graph_dfs_test(){
 }
 
 
-// #[test]
-// pub fn vertices_to_dinic_test(){
-//     let mut graph = Graph::new();
-//     let data_size: VHandle = 2000;
-//     for i in 0..data_size {
-//         graph.create_leaf(i);
-//     }
-//
-//     let transformed_vertices = clone_from_vertices_to_dinic_vertices_async(&graph.vertices);
-//     for (idx, dinic_vertex) in transformed_vertices.iter().enumerate(){
-//         assert_eq!(dinic_vertex.level, 0);
-//         assert_eq!(dinic_vertex.flow, 0);
-//         assert_eq!(dinic_vertex.sub_sum, 0);
-//         assert_eq!(dinic_vertex.vertex, idx as VHandle);
-//     }
-// }
+#[test]
+pub fn vertices_to_dinic_test(){
+    let mut graph = WeightedGraph::new();
+    let data_size: VHandle = 2000;
+    for i in 0..data_size {
+        graph.graph.create_leaf(i);
+    }
+
+    let dinic_graph = DinicGraph::from(&graph);
+
+    assert_eq!(dinic_graph.flow_data.len(), data_size as usize);
+    assert_eq!(dinic_graph.weighted_graph.graph.vertices.len(), data_size as usize);
+    for zipped_iter in dinic_graph.iter_zip(){
+        let (vertex, dinic_vertex) = zipped_iter;
+        assert_eq!(dinic_vertex.flow, 0);
+        assert_eq!(dinic_vertex.level, 0);
+        assert_eq!(dinic_vertex.sub_sum, 0);
+    }
+}

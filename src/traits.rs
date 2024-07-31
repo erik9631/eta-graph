@@ -22,18 +22,18 @@ pub trait StoreVertex: Index<VHandle, Output=Self::VertexType> + IndexMut<VHandl
     fn as_slice(&self) -> &[Self::VertexType];
 }
 
-pub trait Operate {
+pub trait GraphOperate {
     fn add_edges(&mut self, src: VHandle, targets: &[PackedEdge]);
     fn extend_edge_storage(&mut self, size: Slot) -> Slot;
     fn disconnect(&mut self, src_handle: VHandle, handle: VHandle);
     fn connect(&mut self, from: VHandle, to: VHandle);
 }
 
-pub trait WeightedOperate {
+pub trait WeightedGraphOperate {
     fn connect_weighted(&mut self, from: VHandle, to: VHandle, weight: Weight);
 }
 
-pub trait Visit {
+pub trait EdgeVisit {
     fn global_visited_flag(&self) -> Slot;
     fn inc_global_visited_flag(&mut self);
     fn reset_global_visited_flag(&mut self);
@@ -41,7 +41,7 @@ pub trait Visit {
     fn inc_visited_flag(&mut self, vertex: VHandle);
     fn set_visited_flag(&mut self, vertex: VHandle, val: Slot);
 }
-pub trait Store {
+pub trait EdgeStore {
     fn edges_offset(&self, vertex: VHandle, offset: Slot) -> &[PackedEdge];
     fn edges_ptr_offset(&self, vertex: VHandle, offset: Slot) -> *const PackedEdge;
     fn edges(&self, vertex: VHandle) -> &[PackedEdge];
@@ -55,5 +55,5 @@ pub trait Store {
     fn edges_mut(&mut self, vertex: VHandle) -> &mut [PackedEdge];
     fn set(&mut self, src: VHandle, val: PackedEdge, offset: Slot);
 }
-pub trait Manipulate: Store + Operate + Visit + Clone{}
-pub trait WeightedManipulate: Manipulate + WeightedOperate {}
+pub trait EdgeManipulate: EdgeStore + GraphOperate + EdgeVisit + Clone{}
+pub trait WeightedEdgeManipulate: EdgeManipulate + WeightedGraphOperate {}

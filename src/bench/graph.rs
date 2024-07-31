@@ -4,7 +4,7 @@ use crate::algorithms::general::{bfs, dfs};
 use crate::algorithms::general::ControlFlow::Resume;
 use crate::graph;
 use crate::handles::types::VHandle;
-use crate::traits::Operate;
+use crate::traits::GraphOperate;
 
 #[test]
 pub fn graph_disconnect_bench(){

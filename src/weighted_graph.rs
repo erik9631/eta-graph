@@ -2,12 +2,12 @@ use crate::edge_storage::EdgeStorage;
 use crate::graph::{Graph};
 use crate::handles::Slot;
 use crate::handles::types::{VHandle, Weight};
-use crate::traits::{StoreVertex, WeightedManipulate, WeightedOperate};
+use crate::traits::{StoreVertex, WeightedEdgeManipulate, WeightedGraphOperate};
 use crate::vertex_storage::VertexStorage;
 
 pub struct WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>
 where
-    EdgeStorageType: WeightedOperate,
+    EdgeStorageType: WeightedEdgeManipulate,
     VertexStorageType: StoreVertex<VertexType=VertexType>
 {
     pub graph: Graph<VertexType, VertexStorageType, EdgeStorageType>,
@@ -32,7 +32,7 @@ impl<VertexType> WeightedGraph<VertexType, VertexStorage<VertexType>, EdgeStorag
 }
 impl<VertexType, StoreVertexType, EdgeStorageType> WeightedGraph<VertexType, StoreVertexType, EdgeStorageType>
 where
-    EdgeStorageType: WeightedManipulate,
+    EdgeStorageType: WeightedEdgeManipulate,
     StoreVertexType: StoreVertex<VertexType=VertexType> {
     pub fn create_and_connect_weighted(&mut self, src_vertex: VHandle, val: VertexType, weight: Weight, edge_count: Slot) -> VHandle {
         let new_vertex = self.graph.create(val, edge_count);

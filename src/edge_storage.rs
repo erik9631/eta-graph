@@ -4,7 +4,7 @@ use firestorm::{profile_method, profile_section};
 use crate::graph::{Error};
 use crate::handles::{pack, Slot, vh};
 use crate::handles::types::{VHandle, Weight, PackedEdge};
-use crate::traits::{Manipulate, Operate, Store, Visit, WeightedManipulate, WeightedOperate};
+use crate::traits::{EdgeManipulate, GraphOperate, EdgeStore, EdgeVisit, WeightedEdgeManipulate, WeightedGraphOperate};
 
 const FLAG_OFFSET: Slot = 0;
 const LEN_OFFSET: Slot = 1;
@@ -138,7 +138,7 @@ impl EdgeStorage {
     }
 }
 
-impl Operate for EdgeStorage {
+impl GraphOperate for EdgeStorage {
     fn add_edges(&mut self, src: VHandle, targets: &[PackedEdge]) {
         let len = self.len(src) as usize;
         let new_size = len + targets.len();
@@ -184,13 +184,13 @@ impl Operate for EdgeStorage {
     }
 }
 
-impl WeightedOperate for EdgeStorage{
+impl WeightedGraphOperate for EdgeStorage{
     fn connect_weighted(&mut self, from: VHandle, to: VHandle, weight: Weight) {
         self.add_edges(from, &[pack(to, weight)]);
     }
 }
 
-impl Visit for EdgeStorage {
+impl EdgeVisit for EdgeStorage {
     fn global_visited_flag(&self) -> Slot {
         return self.global_visited_flag;
     }
@@ -226,7 +226,7 @@ impl Visit for EdgeStorage {
     }
 }
 
-impl Store for EdgeStorage {
+impl EdgeStore for EdgeStorage {
     fn edges_offset(&self, vertex: VHandle, offset: Slot) -> &[PackedEdge] {
         profile_method!(edges_from_offset);
         let edge_chunk_index = self.indices[vertex as usize];
@@ -313,6 +313,6 @@ impl Clone for EdgeStorage {
     }
 }
 
-impl Manipulate for EdgeStorage {}
+impl EdgeManipulate for EdgeStorage {}
 
-impl WeightedManipulate for EdgeStorage {}
+impl WeightedEdgeManipulate for EdgeStorage {}
