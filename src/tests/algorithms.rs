@@ -138,7 +138,7 @@ pub fn graph_dfs_test(){
 
 
 #[test]
-pub fn vertices_to_dinic_test(){
+pub fn graph_to_dinic_test(){
     let mut graph = WeightedGraph::new();
     let data_size: VHandle = 2000;
     for i in 0..data_size {
@@ -155,4 +155,10 @@ pub fn vertices_to_dinic_test(){
         assert_eq!(dinic_vertex.level, 0);
         assert_eq!(dinic_vertex.sub_sum, 0);
     }
+}
+
+#[test]
+pub fn dinic_level_test(){
+    let mut graph = WeightedGraph::new();
+    // Write test for layering
 }
