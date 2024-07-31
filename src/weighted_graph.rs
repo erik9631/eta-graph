@@ -7,15 +7,13 @@ use crate::vertex_storage::VertexStorage;
 
 pub struct WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>
 where
-    VertexType: Clone,
+    EdgeStorageType: WeightedOperate,
     VertexStorageType: StoreVertex<VertexType=VertexType>
 {
     pub graph: Graph<VertexType, VertexStorageType, EdgeStorageType>,
 }
 
-impl<VertexType> WeightedGraph<VertexType, VertexStorage<VertexType>, EdgeStorage>
-where
-    VertexType: Clone{
+impl<VertexType> WeightedGraph<VertexType, VertexStorage<VertexType>, EdgeStorage> {
     pub fn new() -> Self {
         return WeightedGraph{
             graph: Graph::new(),
@@ -35,7 +33,6 @@ where
 impl<VertexType, StoreVertexType, EdgeStorageType> WeightedGraph<VertexType, StoreVertexType, EdgeStorageType>
 where
     EdgeStorageType: WeightedManipulate,
-    VertexType: Clone,
     StoreVertexType: StoreVertex<VertexType=VertexType> {
     pub fn create_and_connect_weighted(&mut self, src_vertex: VHandle, val: VertexType, weight: Weight, edge_count: Slot) -> VHandle {
         let new_vertex = self.graph.create(val, edge_count);
