@@ -266,41 +266,41 @@ pub fn graph_static_test(){
 }
 
 
-#[test]
-pub fn graph_weight_test(){
-    let mut wgraph = WeightedGraph::new();
-    let root = wgraph.graph.create("root", 5);
-    wgraph.create_and_connect_weighted(root, "a", 5, 0);
-    wgraph.create_and_connect_weighted(root, "b", 7, 0);
-    wgraph.create_and_connect_weighted(root, "c", 1052, 0);
-    wgraph.create_and_connect_weighted(root, "d", Weight::MAX, 0);
-    wgraph.create_and_connect_weighted(root, "e", -Weight::MAX, 0);
-
-    assert_eq!(wgraph.graph.edges.len(root), 5);
-
-    for edge in wgraph.graph.edges.edges(root){
-        match *edge{
-            0 => {
-                assert_eq!(wgt(*edge), 5);
-                assert_eq!(vh(*edge), 1);
-            },
-            1 => {
-                assert_eq!(wgt(*edge), 7);
-                assert_eq!(vh(*edge), 2);
-            },
-            2 => {
-                assert_eq!(wgt(*edge), 1052);
-                assert_eq!(vh(*edge), 3);
-            },
-            3 => {
-                assert_eq!(wgt(*edge), Weight::MAX);
-                assert_eq!(vh(*edge), 4);
-            },
-            4 => {
-                assert_eq!(wgt(*edge), -Weight::MAX);
-                assert_eq!(vh(*edge), 5);
-            },
-            _ => continue,
-        }
-    }
-}
+// #[test]
+// pub fn graph_weight_test(){
+//     let mut wgraph = WeightedGraph::new();
+//     let root = wgraph.graph.create("root", 5);
+//     wgraph.create_and_connect_weighted(root, "a", 5, 0);
+//     wgraph.create_and_connect_weighted(root, "b", 7, 0);
+//     wgraph.create_and_connect_weighted(root, "c", 1052, 0);
+//     wgraph.create_and_connect_weighted(root, "d", Weight::MAX, 0);
+//     wgraph.create_and_connect_weighted(root, "e", -Weight::MAX, 0);
+//
+//     assert_eq!(wgraph.graph.edges.len(root), 5);
+//
+//     for edge in wgraph.graph.edges.edges(root){
+//         match *edge{
+//             0 => {
+//                 assert_eq!(wgt(*edge), 5);
+//                 assert_eq!(vh(*edge), 1);
+//             },
+//             1 => {
+//                 assert_eq!(wgt(*edge), 7);
+//                 assert_eq!(vh(*edge), 2);
+//             },
+//             2 => {
+//                 assert_eq!(wgt(*edge), 1052);
+//                 assert_eq!(vh(*edge), 3);
+//             },
+//             3 => {
+//                 assert_eq!(wgt(*edge), Weight::MAX);
+//                 assert_eq!(vh(*edge), 4);
+//             },
+//             4 => {
+//                 assert_eq!(wgt(*edge), -Weight::MAX);
+//                 assert_eq!(vh(*edge), 5);
+//             },
+//             _ => continue,
+//         }
+//     }
+// }

@@ -1,12 +1,7 @@
-use std::cmp::min;
-use std::ops::{Index, IndexMut};
-use std::thread::available_parallelism;
 use crate::edge_storage::{EdgeStorage};
 use crate::handles::Slot;
 use crate::handles::types::{VHandle};
-use crate::traits;
-use crate::traits::{Operate, Store, Visit, Manipulate};
-use crate::utils::{split_to_parts_mut};
+use crate::traits::{Operate, Manipulate, StoreVertex};
 use crate::vertex_storage::VertexStorage;
 use crate::views::tree::TreeView;
 
@@ -14,13 +9,19 @@ use crate::views::tree::TreeView;
 pub enum Error {
     NoHandle,
 }
-pub struct Graph<VertexType, EdgeStorageType> {
-    pub vertices: VertexStorage<VertexType>,
+pub struct Graph<VertexType, VertexStorageType, EdgeStorageType>
+where
+    VertexStorageType: StoreVertex<VertexType=VertexType>
+{
+    pub vertices: VertexStorageType,
     pub edges: EdgeStorageType,
 }
 
-impl<VertexType, EdgeStorageType> Clone for Graph<VertexType, EdgeStorageType>
-where EdgeStorageType: Manipulate, VertexType: Clone {
+impl<VertexType, VertexStorageType, EdgeStorageType> Clone for Graph<VertexType, VertexStorageType, EdgeStorageType>
+where
+    EdgeStorageType: Manipulate,
+    VertexType: Clone,
+    VertexStorageType: StoreVertex<VertexType=VertexType> + Clone{
     fn clone(&self) -> Self {
         return Graph{
             vertices: self.vertices.clone(),
@@ -34,7 +35,9 @@ where EdgeStorageType: Manipulate, VertexType: Clone {
     }
 }
 
-impl<VertexType> Graph<VertexType, EdgeStorage> {
+impl<VertexType> Graph<VertexType, VertexStorage<VertexType>, EdgeStorage>
+where
+{
     pub fn new_large() -> Self {
         return Graph{
             edges: EdgeStorage::new_large(),
@@ -56,12 +59,14 @@ impl<VertexType> Graph<VertexType, EdgeStorage> {
         };
     }
 
+
 }
 
-impl<VertexType, EdgeStorageType> Graph<VertexType, EdgeStorageType>
-where EdgeStorageType: Store + Operate + Visit
-{
-    pub fn tree_view(&mut self) -> TreeView<VertexType, EdgeStorageType> {
+impl<VertexType, VertexStorageType, EdgeStorageType> Graph<VertexType, VertexStorageType, EdgeStorageType>
+where
+    EdgeStorageType: Manipulate,
+    VertexStorageType: StoreVertex<VertexType=VertexType>{
+    pub fn tree_view(&mut self) -> TreeView<VertexType, VertexStorageType, EdgeStorageType> {
         return TreeView::new(&mut self.edges, &mut self.vertices);
     }
 

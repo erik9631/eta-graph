@@ -55,7 +55,7 @@ impl<VertexType> Index<VHandle> for VertexStorage<VertexType> {
     type Output = VertexType;
 
     fn index(&self, index: VHandle) -> &Self::Output {
-        return &self.data[index as usize];
+        return self.data.index(index as usize);
     }
 }
 
@@ -74,9 +74,8 @@ where VertexType: Clone {
     }
 }
 
-impl <VertexType> StoreVertex<VertexType> for VertexStorage<VertexType>
-where VertexType : Clone {
-    type Item = VertexType;
+impl <VertexType> StoreVertex for VertexStorage<VertexType> {
+    type VertexType = VertexType;
     fn len(&self) -> usize {
         return self.data.len();
     }

@@ -1,10 +1,7 @@
-
 use std::ops::{Index, IndexMut};
 use std::slice::{Iter, IterMut};
 use crate::handles::types::{VHandle, Weight};
-use crate::traits::{StoreVertex, WeightedManipulate};
-use crate::vertex_storage::VertexStorage;
-use crate::weighted_graph::WeightedGraph;
+use crate::traits::{StoreVertex};
 
 pub struct FlowData {
     pub level: Weight,
@@ -12,65 +9,56 @@ pub struct FlowData {
     pub sub_sum: Weight,
 }
 
-pub struct DinicVertexStorage<'a, VertexType> {
-    vertices: &'a VertexStorage<VertexType>,
+pub struct DinicVertexWrapper<'a, VertexType, VertexStorageType>
+where
+    VertexStorageType: StoreVertex<VertexType=VertexType>
+{
+    vertices: &'a mut VertexStorageType,
     pub flow_data: Vec<FlowData>,
 }
 
-impl<VertexType> DinicVertexStorage<VertexType>
+impl<'a, VertexType, VertexStorageType> DinicVertexWrapper<'a, VertexType, VertexStorageType>
 where
-    VertexType: Clone,
+    VertexStorageType: StoreVertex<VertexType=VertexType>,
 {
-    pub fn from<StoreVertex, StoreVertexType>(vertices: &StoreVertex<StoreVertexType>) -> Self {
-        DinicVertexStorage {
+    pub fn from(vertices: &'a mut VertexStorageType) -> Self {
+        let len = vertices.len();
+        DinicVertexWrapper {
             vertices,
-            flow_data: Vec::with_capacity(vertices.len()),
+            flow_data: Vec::with_capacity(len),
         }
     }
 }
 
-impl<VertexType> Index<VHandle> for DinicVertexStorage<VertexType>
+impl<'a, VertexType, VertexStorageType> Index<VHandle> for DinicVertexWrapper<'a, VertexType, VertexStorageType>
 where
-    VertexType: Clone,
+    VertexStorageType: StoreVertex<VertexType=VertexType>,
 {
-    type Output = (VertexType, FlowData);
+    type Output = VertexType;
 
     fn index(&self, index: VHandle) -> &Self::Output {
         self.vertices.index(index)
     }
 }
 
-impl<VertexType> IndexMut<VHandle> for DinicVertexStorage<VertexType>
+impl<'a, VertexType, VertexStorageType> IndexMut<VHandle> for DinicVertexWrapper<'a, VertexType, VertexStorageType>
 where
-    VertexType: Clone,
+    VertexStorageType: StoreVertex<VertexType=VertexType>,
 {
     fn index_mut(&mut self, index: VHandle) -> &mut Self::Output {
-        self.vertices.index_mut(index)
+        self.index_mut(index)
     }
 }
-
-impl<VertexType, StoreVertexType> Clone for DinicVertexStorage<VertexType>
+impl<'a, VertexType, VertexStorageType> StoreVertex for DinicVertexWrapper<'a, VertexType, VertexStorageType>
 where
-    VertexType: Clone,
+    VertexStorageType: StoreVertex<VertexType=VertexType>,
 {
-    fn clone(&self) -> Self {
-        DinicVertexStorage {
-            vertices: self.vertices,
-            flow_data: self.flow_data.clone(),
-        }
-    }
-}
-
-impl<VertexType, StoreVertexType> StoreVertex<VertexType> for DinicVertexStorage<VertexType>
-where
-    VertexType: Clone,
-{
-    type Item = VertexType;
+    type VertexType = VertexType;
     fn len(&self) -> usize {
         self.vertices.len()
     }
 
-    fn push(&mut self, val: Self::Item) {
+    fn push(&mut self, val: VertexType) {
         self.vertices.push(val);
         self.flow_data.push({
             FlowData {
@@ -84,11 +72,11 @@ where
         self.vertices.capacity()
     }
 
-    fn iter(&self) -> Iter<Self::Item> {
+    fn iter(&self) -> Iter<VertexType> {
         self.vertices.iter()
     }
 
-    fn iter_mut(&mut self) -> IterMut<Self::Item> {
+    fn iter_mut(&mut self) -> IterMut<VertexType> {
         self.vertices.iter_mut()
     }
 
@@ -97,8 +85,15 @@ where
     }
 }
 
-pub fn hybrid_dinic<VertexType, EdgeStorageType>(graph: WeightedGraph<VertexType, EdgeStorageType>) -> WeightedGraph<DinicVertexStorage<VertexType>, EdgeStorageType>
-where EdgeStorageType: WeightedManipulate {
-    let mut edges = graph.graph.edges.clone();
-    let mut vertices = DinicVertexStorage::from(&graph.graph.vertices);
-}
+pub fn mark_levels() {}
+
+// pub fn hybrid_dinic<VertexType, EdgeStorageType>(graph: WeightedGraph<VertexType, EdgeStorageType>) -> WeightedGraph<DinicVertexStorage<VertexType>, EdgeStorageType>
+// where EdgeStorageType: WeightedManipulate {
+//     let mut edges = graph.graph.edges.clone();
+//     let mut vertices = DinicVertexStorage::from(&graph.graph.vertices);
+//     // let new_graph = Graph{
+//     //     vertices,
+//     //     edges,
+//     // };
+//
+// }

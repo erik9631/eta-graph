@@ -2,13 +2,20 @@ use crate::edge_storage::EdgeStorage;
 use crate::graph::{Graph};
 use crate::handles::Slot;
 use crate::handles::types::{VHandle, Weight};
-use crate::traits::{WeightedManipulate, WeightedOperate};
+use crate::traits::{StoreVertex, WeightedManipulate, WeightedOperate};
+use crate::vertex_storage::VertexStorage;
 
-pub struct WeightedGraph<VertexType, EdgeStorageType> {
-    pub graph: Graph<VertexType, EdgeStorageType>,
+pub struct WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>
+where
+    VertexType: Clone,
+    VertexStorageType: StoreVertex<VertexType=VertexType>
+{
+    pub graph: Graph<VertexType, VertexStorageType, EdgeStorageType>,
 }
 
-impl <VertexType> WeightedGraph<VertexType, EdgeStorage>{
+impl<VertexType> WeightedGraph<VertexType, VertexStorage<VertexType>, EdgeStorage>
+where
+    VertexType: Clone{
     pub fn new() -> Self {
         return WeightedGraph{
             graph: Graph::new(),
@@ -25,9 +32,11 @@ impl <VertexType> WeightedGraph<VertexType, EdgeStorage>{
         }
     }
 }
-impl<VertexType, EdgeStorageType> WeightedGraph<VertexType, EdgeStorageType>
-where EdgeStorageType: WeightedManipulate
-{
+impl<VertexType, StoreVertexType, EdgeStorageType> WeightedGraph<VertexType, StoreVertexType, EdgeStorageType>
+where
+    EdgeStorageType: WeightedManipulate,
+    VertexType: Clone,
+    StoreVertexType: StoreVertex<VertexType=VertexType> {
     pub fn create_and_connect_weighted(&mut self, src_vertex: VHandle, val: VertexType, weight: Weight, edge_count: Slot) -> VHandle {
         let new_vertex = self.graph.create(val, edge_count);
         self.graph.edges.connect_weighted(src_vertex, new_vertex, weight);

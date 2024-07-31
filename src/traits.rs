@@ -12,14 +12,14 @@ pub trait AsyncTransform<T>: Transform<T>{
     fn async_transform(&mut self, transform_fn: fn(&mut [T]));
 }
 
-pub trait StoreVertex<T>: Index<VHandle> + IndexMut<VHandle> + Clone{
-    type Item;
+pub trait StoreVertex: Index<VHandle, Output=Self::VertexType> + IndexMut<VHandle, Output=Self::VertexType>{
+    type VertexType;
     fn len(&self) -> usize;
-    fn push(&mut self, val: Self::Item);
+    fn push(&mut self, val: Self::VertexType);
     fn capacity(&self) -> usize;
-    fn iter(&self) -> std::slice::Iter<Self::Item>;
-    fn iter_mut(&mut self) -> std::slice::IterMut<Self::Item>;
-    fn as_slice(&self) -> &[Self::Item];
+    fn iter(&self) -> std::slice::Iter<Self::VertexType>;
+    fn iter_mut(&mut self) -> std::slice::IterMut<Self::VertexType>;
+    fn as_slice(&self) -> &[Self::VertexType];
 }
 
 pub trait Operate {

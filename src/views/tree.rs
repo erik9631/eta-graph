@@ -1,12 +1,14 @@
 
 use crate::handles::{NONE, Slot, vh, vh_pack};
 use crate::handles::types::{PackedEdge, VHandle};
-use crate::traits::{Operate, Store, Visit};
+use crate::traits::{Operate, Store, StoreVertex, Visit};
 use crate::vertex_storage::VertexStorage;
 
-pub struct TreeView<'a, VertexType, EdgeStorageType> {
+pub struct TreeView<'a, VertexType, VertexStorageType, EdgeStorageType>
+where
+    VertexStorageType: StoreVertex<VertexType=VertexType>,{
     pub nodes: &'a mut EdgeStorageType,
-    pub values: &'a mut VertexStorage<VertexType>,
+    pub values: &'a mut VertexStorageType,
 }
 
 const TREE_HEADER_ELEMENTS: Slot = 2;
@@ -15,11 +17,13 @@ const PARENT_OFFSET: Slot = 1;
 
 
 
-impl <'a, VertexType, EdgeStorageType> TreeView<'a, VertexType, EdgeStorageType>
-where EdgeStorageType: Store + Operate + Visit
+impl <'a, VertexType, VertexStorageType, EdgeStorageType> TreeView<'a, VertexType, VertexStorageType, EdgeStorageType>
+where
+    EdgeStorageType: Store + Operate + Visit,
+    VertexStorageType: StoreVertex<VertexType=VertexType>
 {
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn new(edges: &'a mut EdgeStorageType, vertices: &'a mut VertexStorage<VertexType>) -> Self {
+    pub fn new(edges: &'a mut EdgeStorageType, vertices: &'a mut VertexStorageType) -> Self {
         return TreeView{
             nodes: edges,
             values: vertices,

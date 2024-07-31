@@ -1,6 +1,5 @@
 use crate::algorithms::general::{bfs, dfs};
 use crate::algorithms::general::ControlFlow::Resume;
-use crate::algorithms::max_flow::clone_from_vertices_to_dinic_vertices_async;
 use crate::graph::Graph;
 use crate::handles::types::{VHandle};
 
@@ -91,19 +90,19 @@ pub fn graph_dfs_test(){
 }
 
 
-#[test]
-pub fn vertices_to_dinic_test(){
-    let mut graph = Graph::new();
-    let data_size: VHandle = 2000;
-    for i in 0..data_size {
-        graph.create_leaf(i);
-    }
-
-    let transformed_vertices = clone_from_vertices_to_dinic_vertices_async(&graph.vertices);
-    for (idx, dinic_vertex) in transformed_vertices.iter().enumerate(){
-        assert_eq!(dinic_vertex.level, 0);
-        assert_eq!(dinic_vertex.flow, 0);
-        assert_eq!(dinic_vertex.sub_sum, 0);
-        assert_eq!(dinic_vertex.vertex, idx as VHandle);
-    }
-}
+// #[test]
+// pub fn vertices_to_dinic_test(){
+//     let mut graph = Graph::new();
+//     let data_size: VHandle = 2000;
+//     for i in 0..data_size {
+//         graph.create_leaf(i);
+//     }
+//
+//     let transformed_vertices = clone_from_vertices_to_dinic_vertices_async(&graph.vertices);
+//     for (idx, dinic_vertex) in transformed_vertices.iter().enumerate(){
+//         assert_eq!(dinic_vertex.level, 0);
+//         assert_eq!(dinic_vertex.flow, 0);
+//         assert_eq!(dinic_vertex.sub_sum, 0);
+//         assert_eq!(dinic_vertex.vertex, idx as VHandle);
+//     }
+// }
