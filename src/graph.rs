@@ -22,7 +22,7 @@ impl<VertexType, VertexStorageType, EdgeStorageType> Clone for Graph<VertexType,
 where
     EdgeStorageType: EdgeManipulate,
     VertexType: Clone,
-    VertexStorageType: StoreVertex<VertexType=VertexType> + Clone{
+    VertexStorageType: StoreVertex<VertexType=VertexType> + Clone {
     fn clone(&self) -> Self {
         return Graph{
             vertices: self.vertices.clone(),

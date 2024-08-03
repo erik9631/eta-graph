@@ -107,12 +107,12 @@ pub fn dfs_bench(){
 
     let start = Instant::now();
     let mut counter = 0;
-    dfs(&mut graph.edges, root, number_of_nodes, |_edges, vertex, stack, top|{
+    dfs(&mut graph.edges, root, number_of_nodes, |vertex|{
         profile_fn!("dfs_transform");
-        graph.vertices[vh(vertex)] = 0;
+        graph.vertices[vh(*vertex)] = 0;
         counter += 1;
         return Resume;
-    }, |_edges, vertex, stack, top|{});
+    }, |vertex|{});
 
     println!("Time taken: {:?}", start.elapsed());
     assert_eq!(counter, number_of_nodes);

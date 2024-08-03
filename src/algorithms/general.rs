@@ -71,11 +71,12 @@ where
     unsafe {dealloc(to_visit_ptr, to_visit_layout)};
     unsafe {dealloc(flags_ptr, flag_layout)};
 }
+// TODO Consider creating iter for the edges
 pub fn dfs<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order_func: PreOrderFunc,
                                                mut post_order_func: PostOrderFunc)
 where
-    PreOrderFunc: FnMut(&mut Edges, PackedEdge, &[(*const Slot, *const Slot, PackedEdge)], usize) -> ControlFlow,
-    PostOrderFunc: FnMut(&mut Edges, PackedEdge, &[(*const Slot, *const Slot, PackedEdge)], usize),
+    PreOrderFunc: FnMut(&mut PackedEdge) -> ControlFlow,
+    PostOrderFunc: FnMut(&mut PackedEdge),
     Edges: EdgeStore
 {
     profile_fn!(dfs);
@@ -88,14 +89,15 @@ where
     unsafe {std::ptr::write_bytes(flags_ptr, 0, vertices_count)};
 
 
-    let to_visit = unsafe { visit_ptr as *mut (*const Slot, *const Slot, PackedEdge)};
+    let to_visit = unsafe { visit_ptr as *mut (*mut Slot, *mut Slot, *mut PackedEdge)};
     let stack = unsafe {from_raw_parts_mut(to_visit, vertices_count)};
     let was_visited_flags = unsafe {from_raw_parts_mut(flags_ptr as *mut bool, vertices_count)};
     let mut top: isize = 0;
+    let mut start_edge = vh_pack(start);
     unsafe {
-        stack[top as usize] = (edge_storage.edges_ptr(start), edge_storage.edges_ptr(start).add(edge_storage.len(start) as usize), vh_pack(start));
+        stack[top as usize] = (edge_storage.edges_mut_ptr(start), edge_storage.edges_mut_ptr(start).add(edge_storage.len(start) as usize), &mut start_edge as *mut PackedEdge);
     }
-    match pre_order_func(edge_storage, vh_pack(start), stack, top as usize){
+    match pre_order_func( unsafe {stack[top as usize].2.as_mut().unwrap() }){
         ControlFlow::End => {
             unsafe {dealloc(visit_ptr, layout)};
             unsafe {dealloc(flags_ptr, flag_layout)};
@@ -108,7 +110,7 @@ where
         profile_section!(dfs_loop);
         let (ptr, end, packed_edge) = stack[top as usize];
         if ptr == end{
-            post_order_func(edge_storage, packed_edge, stack, top as usize);
+            post_order_func( unsafe {packed_edge.as_mut().unwrap()});
             top -= 1;
             continue;
         }
@@ -117,13 +119,13 @@ where
         }
 
         let next_handle = vh(unsafe{*ptr});
-        let next_packed_edge = unsafe{*ptr} as PackedEdge;
+        let next_packed_edge = ptr;
         if was_visited_flags[next_handle as usize]{
             continue;
         }
 
         was_visited_flags[next_handle as usize] = true;
-        match pre_order_func(edge_storage, next_packed_edge, &[], top as usize){
+        match pre_order_func( unsafe{next_packed_edge.as_mut().unwrap()} ){
             ControlFlow::End => {
                 break;
             },
@@ -134,10 +136,19 @@ where
         }
 
         unsafe {
-            stack[ (top + 1) as usize] = (edge_storage.edges_ptr(next_handle), edge_storage.edges_ptr(next_handle).add(edge_storage.len(next_handle) as usize), next_packed_edge);
+            stack[ (top + 1) as usize] = (edge_storage.edges_mut_ptr(next_handle), edge_storage.edges_mut_ptr(next_handle).add(edge_storage.len(next_handle) as usize), next_packed_edge);
         }
         top += 1;
     }
+
+    // Return back to the src without exploring further
+    while top >= 0{
+        profile_section!(dfs_post_loop);
+        let (ptr, end, packed_edge) = stack[top as usize];
+        post_order_func( unsafe{packed_edge.as_mut().unwrap()});
+        top -= 1;
+    }
+
     unsafe {dealloc(visit_ptr, layout)};
     unsafe {dealloc(flags_ptr, flag_layout)};
 }

@@ -13,6 +13,18 @@ where
     pub graph: Graph<VertexType, VertexStorageType, EdgeStorageType>,
 }
 
+impl<VertexType, VertexStorageType, EdgeStorageType> Clone for WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>
+where
+    EdgeStorageType: WeightedEdgeManipulate,
+    VertexType: Clone,
+    VertexStorageType: StoreVertex<VertexType=VertexType> + Clone {
+    fn clone(&self) -> Self {
+        return WeightedGraph{
+            graph: self.graph.clone(),
+        }
+    }
+}
+
 impl<VertexType> WeightedGraph<VertexType, VertexStorage<VertexType>, EdgeStorage> {
     pub fn new() -> Self {
         return WeightedGraph{

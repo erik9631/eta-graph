@@ -233,8 +233,7 @@ impl EdgeStore for EdgeStorage {
     fn edges_mut_ptr_offset(&mut self, vertex: VHandle, offset: Slot) -> *mut PackedEdge {
         profile_method!(edges_mut_ptr_offset);
         let edge_chunk_index = self.indices[vertex as usize];
-        let data = &mut self.edges[ (offset + edge_chunk_index + HEADER_SIZE) as usize];
-        return data;
+        return unsafe {self.edges.as_mut_ptr().add((offset + edge_chunk_index + HEADER_SIZE) as usize)}
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]

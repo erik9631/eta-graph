@@ -1,44 +1,41 @@
 use std::alloc::{alloc, Layout};
+use std::cell::{Cell, RefCell};
 use std::ptr;
 use std::slice::{Iter};
 use crate::algorithms::general::{bfs, dfs};
-use crate::algorithms::general::ControlFlow::Resume;
+use crate::algorithms::general::ControlFlow::{Continue, End, Resume};
 use crate::graph::Error;
 use crate::handles::types::{VHandle, Weight};
-use crate::handles::wgt;
+use crate::handles::{set_wgt, vh, wgt};
 use crate::traits::{StoreVertex, WeightedEdgeManipulate};
 use crate::vertex_storage::VertexStorage;
 use crate::weighted_graph::WeightedGraph;
 
-pub struct FlowData {
-    pub level: Weight,
-    pub flow: Weight,
-    pub sub_sum: Weight,
-}
-
-pub struct DinicGraphView<'a, VertexType, VertexStorageType, EdgeStorageType>
+pub struct DinicGraph<VertexType, VertexStorageType, EdgeStorageType>
 where
-    VertexStorageType: StoreVertex<VertexType=VertexType>,
+    VertexType: Clone,
+    VertexStorageType: StoreVertex<VertexType=VertexType> + Clone,
     EdgeStorageType: WeightedEdgeManipulate,
 {
-    pub weighted_graph: &'a mut WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>,
-    pub flow_data: Vec<FlowData>,
+    pub weighted_graph: WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>,
+    pub flow_data: Vec<Weight>,
 }
 
-impl<'a, VertexType, VertexStorageType, EdgeStorageType> DinicGraphView<'a, VertexType, VertexStorageType, EdgeStorageType>
+impl<VertexType, VertexStorageType, EdgeStorageType> DinicGraph<VertexType, VertexStorageType, EdgeStorageType>
 where
-    VertexStorageType: StoreVertex<VertexType=VertexType>,
+    VertexType: Clone,
+    VertexStorageType: StoreVertex<VertexType=VertexType> + Clone,
     EdgeStorageType: WeightedEdgeManipulate,
 {
-    pub fn from(graph: &'a mut WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>) -> Self {
+    pub fn from(graph: & WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>) -> Self {
         let vertices_len = graph.graph.vertices.len();
-        let layout = Layout::array::<FlowData>(vertices_len).expect("Failed to create layout");
+        let layout = Layout::array::<Weight>(vertices_len).expect("Failed to create layout");
         // TODO use SIMD
-        let ptr = unsafe { alloc(layout) as *mut FlowData };
+        let ptr = unsafe { alloc(layout) as *mut Weight };
         unsafe {ptr::write_bytes(ptr, 0, vertices_len)};
         let flow_data = unsafe { Vec::from_raw_parts(ptr, vertices_len, vertices_len) };
-        DinicGraphView {
-            weighted_graph: graph,
+        DinicGraph {
+            weighted_graph: graph.clone(),
             flow_data,
         }
     }
@@ -49,30 +46,51 @@ where
             if v_handle == sink_handle {
                 found_sink = true;
             }
-            self.flow_data[v_handle as usize].level = layer;
+
+            if wgt(v_handle) == 0 {
+                return Continue;
+            }
+
+            self.flow_data[v_handle as usize] = layer;
             Resume
         });
 
         if !found_sink {
             return Err("Sink not found");
         }
-
         return Ok(())
     }
 
     pub fn perform_search(&mut self, src_handle: VHandle, sink_handle: VHandle) {
-        let repeat_residual = false;
-        let prev_v_handle = VHandle::MAX;
-        let bottleneck_value = Weight::MAX;
-        dfs(&mut self.weighted_graph.graph.edges, src_handle, self.flow_data.len(),
-            |edge_storage, v_handle, stack, top| {
+        let mut generate_residual = false;
+        let mut last_layer = -1;
+        let bottleneck_value = Cell::new(Weight::MAX);
+        dfs(&mut self.weighted_graph.graph.edges, src_handle, self.weighted_graph.graph.vertices.len(),
+            |v_handle| {
+                if vh(*v_handle) == sink_handle {
+                    return End;
+                }
+
+                if wgt(*v_handle) == 0 {
+                    return Continue;
+                }
+
+                if last_layer <= self.flow_data[vh(*v_handle) as usize] {
+                    generate_residual = true;
+                    return Continue;
+                }
+
+                last_layer = self.flow_data[vh(*v_handle) as usize];
+
+                let weight = wgt(*v_handle);
+                if wgt(*v_handle) < bottleneck_value.get() {
+                    bottleneck_value.set(weight);
+                }
                 Resume
-        }, |edge_storage, v_handle, stack, top|
-        {
-        });
-    }
-    pub fn iter_zip(&self) -> std::iter::Zip<Iter<VertexType>, Iter<FlowData>> {
-        self.weighted_graph.graph.vertices.iter().zip(self.flow_data.iter())
+            }, |v_handle|
+            {
+                set_wgt(*v_handle, wgt(*v_handle) - bottleneck_value.get());
+            });
     }
 }
 // pub fn hybrid_dinic<VertexType, VertexStorageType, EdgeStorageType>(graph: WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>) -> DinicGraphView<VertexType, VertexStorageType, EdgeStorageType>

@@ -1,6 +1,6 @@
 use crate::algorithms::general::{bfs, dfs};
-use crate::algorithms::general::ControlFlow::Resume;
-use crate::algorithms::max_flow::DinicGraphView;
+use crate::algorithms::general::ControlFlow::{End, Resume};
+use crate::algorithms::max_flow::DinicGraph;
 use crate::graph::Graph;
 use crate::handles::types::{VHandle, Weight};
 use crate::handles::vh;
@@ -128,34 +128,58 @@ pub fn graph_dfs_test(){
         "a_a".to_string(),
     ];
 
-    dfs(&mut graph.edges, root, graph.vertices.len(), |_edges, handle, stack, top|{
-        assert_eq!(graph.vertices[vh(handle)], snap.pop().unwrap());
+    dfs(&mut graph.edges, root, graph.vertices.len(), |handle|{
+        assert_eq!(graph.vertices[vh(*handle)], snap.pop().unwrap());
         Resume
-    }, |_edges, handle, stack, top|{
-        assert_eq!(graph.vertices[vh(handle)], snap2.pop().unwrap());
+    }, |handle|{
+        assert_eq!(graph.vertices[vh(*handle)], snap2.pop().unwrap());
     });
 
 }
 
-
 #[test]
-pub fn graph_to_dinic_test(){
-    let mut graph = WeightedGraph::new();
-    let data_size: VHandle = 2000;
-    for i in 0..data_size {
-        graph.graph.create_leaf(i);
-    }
+pub fn graph_dfs_end_test(){
+    let mut graph = Graph::new();
+    let root = graph.create("root", 3);
+    let a = graph.create_and_connect(root, "a", 3);
+    let b = graph.create_and_connect(root, "b", 2);
+    graph.create_and_connect_leaf(root, "c");
 
-    let dinic_graph = DinicGraphView::from(&mut graph);
+    graph.create_and_connect_leaf(a, "a_a");
+    graph.create_and_connect_leaf(a, "a_b");
+    graph.create_and_connect_leaf(a, "a_c");
 
-    assert_eq!(dinic_graph.flow_data.len(), data_size as usize);
-    assert_eq!(dinic_graph.weighted_graph.graph.vertices.len(), data_size as usize);
-    for zipped_iter in dinic_graph.iter_zip(){
-        let (vertex, dinic_vertex) = zipped_iter;
-        assert_eq!(dinic_vertex.flow, 0);
-        assert_eq!(dinic_vertex.level, 0);
-        assert_eq!(dinic_vertex.sub_sum, 0);
-    }
+    let b_a = graph.create_and_connect(b, "b_a", 1);
+    graph.create_and_connect_leaf(b, "b_b");
+
+    graph.create_and_connect_leaf(b_a, "b_a_a");
+
+    let mut snap = vec![
+        "a_c".to_string(),
+        "a_b".to_string(),
+        "a_a".to_string(),
+        "a".to_string(),
+        "root".to_string(),
+    ];
+
+    let mut snap2 = vec![
+        "root".to_string(),
+        "a".to_string(),
+        "a_c".to_string(),
+        "a_b".to_string(),
+        "a_a".to_string(),
+    ];
+
+    dfs(&mut graph.edges, root, graph.vertices.len(), |handle|{
+        if snap.len() == 0 {
+            return End;
+        }
+        assert_eq!(graph.vertices[vh(*handle)], snap.pop().unwrap());
+        Resume
+    }, |handle|{
+        assert_eq!(graph.vertices[vh(*handle)], snap2.pop().unwrap());
+    });
+
 }
 
 #[test]
@@ -176,7 +200,7 @@ pub fn dinic_level_test(){
     graph.graph.edges.connect_weighted(a_b_b, a_a_x, 10);
     graph.graph.edges.connect_weighted(a_b_c, a_a_x, 10);
 
-    let mut dinic_graph = DinicGraphView::from(&mut graph);
+    let mut dinic_graph = DinicGraph::from(&mut graph);
     dinic_graph.mark_levels(a, a_a_x).expect("Sink not found");
 
     let mut snap = vec![
@@ -190,13 +214,10 @@ pub fn dinic_level_test(){
         ("a".to_string(), 0),
     ];
 
-    bfs(&mut dinic_graph.weighted_graph.graph.edges, a, dinic_graph.flow_data.len(), |edge_storage, v_handle, layer|{
+    bfs(&mut dinic_graph.weighted_graph.graph.edges, a, dinic_graph.weighted_graph.graph.vertices.len(), |edge_storage, v_handle, layer|{
         let snap_data = snap.pop().unwrap();
         assert_eq!(dinic_graph.weighted_graph.graph.vertices[v_handle], snap_data.0);
-
-        assert_eq!(dinic_graph.flow_data[v_handle as usize].level, snap_data.1);
-        assert_eq!(dinic_graph.flow_data[v_handle as usize].flow, 0);
-        assert_eq!(dinic_graph.flow_data[v_handle as usize].sub_sum, 0);
+        assert_eq!(dinic_graph.flow_data[v_handle as usize], snap_data.1);
         Resume
     });
 
