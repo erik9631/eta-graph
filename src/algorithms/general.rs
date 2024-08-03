@@ -2,8 +2,8 @@ use std::alloc::{alloc, dealloc, Layout};
 use std::slice::{from_raw_parts_mut, Iter};
 use firestorm::{profile_fn, profile_section};
 use crate::graph;
-use crate::handles::types::{VHandle, Weight};
-use crate::handles::{Slot, vh};
+use crate::handles::types::{PackedEdge, VHandle, Weight};
+use crate::handles::{Slot, vh, vh_pack};
 use crate::traits::{EdgeStore, WeightedEdgeManipulate};
 use crate::weighted_graph::WeightedGraph;
 
@@ -74,12 +74,12 @@ where
 pub fn dfs<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order_func: PreOrderFunc,
                                                mut post_order_func: PostOrderFunc)
 where
-    PreOrderFunc: FnMut(&mut Edges, VHandle, &[(*const Slot, *const Slot, VHandle)], usize) -> ControlFlow,
-    PostOrderFunc: FnMut(&mut Edges, VHandle, &[(*const Slot, *const Slot, VHandle)], usize),
+    PreOrderFunc: FnMut(&mut Edges, PackedEdge, &[(*const Slot, *const Slot, PackedEdge)], usize) -> ControlFlow,
+    PostOrderFunc: FnMut(&mut Edges, PackedEdge, &[(*const Slot, *const Slot, PackedEdge)], usize),
     Edges: EdgeStore
 {
     profile_fn!(dfs);
-    let layout = Layout::array::<(*const Slot, *const Slot, VHandle)>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
+    let layout = Layout::array::<(*const Slot, *const Slot, PackedEdge)>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
     let flag_layout = Layout::array::<bool>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
 
     // Have to use unsafe as the borrow checker doesn't know that flags and edges don't overlap
@@ -88,14 +88,14 @@ where
     unsafe {std::ptr::write_bytes(flags_ptr, 0, vertices_count)};
 
 
-    let to_visit = unsafe { visit_ptr as *mut (*const Slot, *const Slot, VHandle)};
+    let to_visit = unsafe { visit_ptr as *mut (*const Slot, *const Slot, PackedEdge)};
     let stack = unsafe {from_raw_parts_mut(to_visit, vertices_count)};
     let was_visited_flags = unsafe {from_raw_parts_mut(flags_ptr as *mut bool, vertices_count)};
     let mut top: isize = 0;
     unsafe {
-        stack[top as usize] = (edge_storage.edges_ptr(start), edge_storage.edges_ptr(start).add(edge_storage.len(start) as usize), start);
+        stack[top as usize] = (edge_storage.edges_ptr(start), edge_storage.edges_ptr(start).add(edge_storage.len(start) as usize), vh_pack(start));
     }
-    match pre_order_func(edge_storage, start, stack, top as usize){
+    match pre_order_func(edge_storage, vh_pack(start), stack, top as usize){
         ControlFlow::End => {
             unsafe {dealloc(visit_ptr, layout)};
             unsafe {dealloc(flags_ptr, flag_layout)};
@@ -106,23 +106,24 @@ where
 
     while top >= 0{
         profile_section!(dfs_loop);
-        let (ptr, end, vertex) = stack[top as usize];
+        let (ptr, end, packed_edge) = stack[top as usize];
         if ptr == end{
-            post_order_func(edge_storage, vertex, stack, top as usize);
+            post_order_func(edge_storage, packed_edge, stack, top as usize);
             top -= 1;
             continue;
         }
         unsafe {
-            stack[top as usize] = (ptr.add(1), end, vertex); // Move to the next edge
+            stack[top as usize] = (ptr.add(1), end, packed_edge); // Move to the next edge
         }
 
-        let current_handle = vh(unsafe{*ptr});
-        if was_visited_flags[current_handle as usize]{
+        let next_handle = vh(unsafe{*ptr});
+        let next_packed_edge = unsafe{*ptr} as PackedEdge;
+        if was_visited_flags[next_handle as usize]{
             continue;
         }
 
-        was_visited_flags[current_handle as usize] = true;
-        match pre_order_func(edge_storage, current_handle, &[], top as usize){
+        was_visited_flags[next_handle as usize] = true;
+        match pre_order_func(edge_storage, next_packed_edge, &[], top as usize){
             ControlFlow::End => {
                 break;
             },
@@ -133,7 +134,7 @@ where
         }
 
         unsafe {
-            stack[ (top + 1) as usize] = (edge_storage.edges_ptr(current_handle), edge_storage.edges_ptr(current_handle).add(edge_storage.len(current_handle) as usize), current_handle);
+            stack[ (top + 1) as usize] = (edge_storage.edges_ptr(next_handle), edge_storage.edges_ptr(next_handle).add(edge_storage.len(next_handle) as usize), next_packed_edge);
         }
         top += 1;
     }

@@ -5,6 +5,7 @@ use crate::algorithms::general::{bfs, dfs};
 use crate::algorithms::general::ControlFlow::Resume;
 use crate::graph::Error;
 use crate::handles::types::{VHandle, Weight};
+use crate::handles::wgt;
 use crate::traits::{StoreVertex, WeightedEdgeManipulate};
 use crate::vertex_storage::VertexStorage;
 use crate::weighted_graph::WeightedGraph;

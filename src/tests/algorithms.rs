@@ -3,6 +3,7 @@ use crate::algorithms::general::ControlFlow::Resume;
 use crate::algorithms::max_flow::DinicGraphView;
 use crate::graph::Graph;
 use crate::handles::types::{VHandle, Weight};
+use crate::handles::vh;
 use crate::traits::{GraphOperate, WeightedGraphOperate};
 use crate::weighted_graph::WeightedGraph;
 
@@ -128,10 +129,10 @@ pub fn graph_dfs_test(){
     ];
 
     dfs(&mut graph.edges, root, graph.vertices.len(), |_edges, handle, stack, top|{
-        assert_eq!(graph.vertices[handle], snap.pop().unwrap());
+        assert_eq!(graph.vertices[vh(handle)], snap.pop().unwrap());
         Resume
     }, |_edges, handle, stack, top|{
-        assert_eq!(graph.vertices[handle], snap2.pop().unwrap());
+        assert_eq!(graph.vertices[vh(handle)], snap2.pop().unwrap());
     });
 
 }

@@ -4,6 +4,7 @@ use crate::algorithms::general::{bfs, dfs};
 use crate::algorithms::general::ControlFlow::Resume;
 use crate::graph;
 use crate::handles::types::VHandle;
+use crate::handles::vh;
 use crate::traits::GraphOperate;
 
 #[test]
@@ -108,7 +109,7 @@ pub fn dfs_bench(){
     let mut counter = 0;
     dfs(&mut graph.edges, root, number_of_nodes, |_edges, vertex, stack, top|{
         profile_fn!("dfs_transform");
-        graph.vertices[vertex] = 0;
+        graph.vertices[vh(vertex)] = 0;
         counter += 1;
         return Resume;
     }, |_edges, vertex, stack, top|{});

@@ -1,5 +1,5 @@
 use std::ops::AddAssign;
-use crate::handles::types::{MASK, SHIFT, VHandle, Weight, PackedEdge};
+use crate::handles::types::{MASK, SHIFT, VHandle, Weight, PackedEdge, UNSET};
 #[cfg(msize_type = "u16")]
 pub mod types{
     pub type PackedEdge = u16;
@@ -7,6 +7,7 @@ pub mod types{
     pub type VHandle = u8;
     pub(in crate::handles) const SHIFT: usize = 8;
     pub(in crate::handles) const MASK: u8 = 0xFF;
+    pub const UNSET: u8 = MASK;
 }
 
 
@@ -17,6 +18,7 @@ pub mod types{
     pub type VHandle = u16;
     pub(in crate::handles) const SHIFT: usize = 16;
     pub(in crate::handles) const MASK: u16 = 0xFFFF;
+    pub const UNSET: u16 = MASK;
 
 }
 
@@ -29,6 +31,7 @@ pub mod types {
     pub type VHandle = u32;
     pub(in crate::handles) const SHIFT: usize = 32;
     pub(in crate::handles) const MASK: u32 = 0xFFFFFFFF;
+    pub const UNSET: u32 = MASK;
 }
 
 pub type Slot = PackedEdge;
@@ -46,7 +49,7 @@ pub fn wgt(handle: PackedEdge) -> Weight {
 }
 #[inline(always)]
 pub fn vh_pack(handle: VHandle) -> PackedEdge {
-    handle as PackedEdge
+    handle as PackedEdge | ((UNSET as PackedEdge) << SHIFT)
 }
 
 #[inline(always)]
