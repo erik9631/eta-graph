@@ -74,8 +74,8 @@ where
 pub fn dfs<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order_func: PreOrderFunc,
                                                mut post_order_func: PostOrderFunc)
 where
-    PreOrderFunc: FnMut(&mut Edges, VHandle) -> ControlFlow,
-    PostOrderFunc: FnMut(&mut Edges, VHandle),
+    PreOrderFunc: FnMut(&mut Edges, VHandle, &[(*const Slot, *const Slot, VHandle)], usize) -> ControlFlow,
+    PostOrderFunc: FnMut(&mut Edges, VHandle, &[(*const Slot, *const Slot, VHandle)], usize),
     Edges: EdgeStore
 {
     profile_fn!(dfs);
@@ -89,12 +89,13 @@ where
 
 
     let to_visit = unsafe { visit_ptr as *mut (*const Slot, *const Slot, VHandle)};
+    let stack = unsafe {from_raw_parts_mut(to_visit, vertices_count)};
     let was_visited_flags = unsafe {from_raw_parts_mut(flags_ptr as *mut bool, vertices_count)};
-    let mut top = 0;
+    let mut top: isize = 0;
     unsafe {
-        *to_visit.offset(top) = (edge_storage.edges_ptr(start), edge_storage.edges_ptr(start).add(edge_storage.len(start) as usize), start);
+        stack[top as usize] = (edge_storage.edges_ptr(start), edge_storage.edges_ptr(start).add(edge_storage.len(start) as usize), start);
     }
-    match pre_order_func(edge_storage, start){
+    match pre_order_func(edge_storage, start, stack, top as usize){
         ControlFlow::End => {
             unsafe {dealloc(visit_ptr, layout)};
             unsafe {dealloc(flags_ptr, flag_layout)};
@@ -105,14 +106,14 @@ where
 
     while top >= 0{
         profile_section!(dfs_loop);
-        let (ptr, end, vertex) = unsafe{*to_visit.offset(top)};
+        let (ptr, end, vertex) = stack[top as usize];
         if ptr == end{
-            post_order_func(edge_storage, vertex);
+            post_order_func(edge_storage, vertex, stack, top as usize);
             top -= 1;
             continue;
         }
         unsafe {
-            *to_visit.offset(top) = (ptr.add(1), end, vertex); // Move to the next edge
+            stack[top as usize] = (ptr.add(1), end, vertex); // Move to the next edge
         }
 
         let current_handle = vh(unsafe{*ptr});
@@ -121,7 +122,7 @@ where
         }
 
         was_visited_flags[current_handle as usize] = true;
-        match pre_order_func(edge_storage, current_handle){
+        match pre_order_func(edge_storage, current_handle, &[], top as usize){
             ControlFlow::End => {
                 break;
             },
@@ -132,7 +133,7 @@ where
         }
 
         unsafe {
-            *to_visit.offset(top + 1) = (edge_storage.edges_ptr(current_handle), edge_storage.edges_ptr(current_handle).add(edge_storage.len(current_handle) as usize), current_handle);
+            stack[ (top + 1) as usize] = (edge_storage.edges_ptr(current_handle), edge_storage.edges_ptr(current_handle).add(edge_storage.len(current_handle) as usize), current_handle);
         }
         top += 1;
     }
