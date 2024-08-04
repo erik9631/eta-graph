@@ -16,7 +16,7 @@ pub enum ControlFlow {
 
 pub fn bfs<PreOrderFunc, Edges>(edge_storage: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order: PreOrderFunc)
 where
-    PreOrderFunc: FnMut(&mut Edges, &mut PackedEdge, Weight) -> ControlFlow,
+    PreOrderFunc: FnMut( &mut PackedEdge, Weight) -> ControlFlow,
     Edges: EdgeStore
 {
     profile_fn!(bfs);
@@ -40,7 +40,7 @@ where
     while i != end {
         profile_section!(bfs_loop_outer);
         let handle = to_visit[i];
-        match pre_order(edge_storage, unsafe {handle.as_mut().unwrap()}, layer) { // the i is a place holder for the layer
+        match pre_order(unsafe {handle.as_mut().unwrap()}, layer) { // the i is a place holder for the layer
             ControlFlow::End => {
                 break;
             }

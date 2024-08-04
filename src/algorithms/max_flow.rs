@@ -39,7 +39,7 @@ where
 
     pub fn mark_levels(&mut self, src_handle: VHandle, sink_handle: VHandle) -> Result<(), &str> {
         let mut found_sink = false;
-        bfs(&mut self.weighted_graph.graph.edge_storage, src_handle, self.weighted_graph.graph.vertices.len(), |edge_storage, v_handle, layer|{
+        bfs(&mut self.weighted_graph.graph.edge_storage, src_handle, self.weighted_graph.graph.vertices.len(), |v_handle, layer|{
             if vh(*v_handle) == sink_handle {
                 found_sink = true;
             }
