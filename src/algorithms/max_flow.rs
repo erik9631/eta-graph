@@ -125,7 +125,6 @@ where
                                      if !dfs_found_sink.get(){
                                          return;
                                      }
-                                     println!("{}: {} - {}", self.weighted_graph.graph.vertices[vh(*v_handle)] ,wgt(*v_handle), bottleneck_value.get());
                                      *v_handle = set_wgt(*v_handle, wgt(*v_handle) - bottleneck_value.get());
                                     // println!("{} {}", vh(*v_handle), wgt(*v_handle));
                                  });

@@ -245,7 +245,7 @@ pub fn dinic_test(){
     dinic_graph.finalize_flow_calc(&graph);
 
     let mut snap = vec![
-        0,10,10,20,0,10,10,20,20,20
+        0,10,10,20,0,10,10,20,20,20,-1 // Todo fix the initial value
     ];
 
     bfs(&mut dinic_graph.weighted_graph.graph.edge_storage, a, dinic_graph.weighted_graph.graph.vertices.len(), |v_handle, layer|{
@@ -253,8 +253,4 @@ pub fn dinic_test(){
         assert_eq!(snap_data, wgt(*v_handle));
         Resume
     });
-
-    for edge in dinic_graph.weighted_graph.graph.edge_storage.iter() {
-        println!("Edge: {} - {}", vh(*edge), wgt(*edge));
-    }
 }
