@@ -25,7 +25,8 @@ where
     }
 }
 
-impl<VertexType> WeightedGraph<VertexType, VertexStorage<VertexType>, EdgeStorage> {
+impl<VertexType> WeightedGraph<VertexType, VertexStorage<VertexType>, EdgeStorage>
+{
     pub fn new() -> Self {
         return WeightedGraph{
             graph: Graph::new(),
@@ -48,7 +49,7 @@ where
     StoreVertexType: StoreVertex<VertexType=VertexType> {
     pub fn create_and_connect_weighted(&mut self, src_vertex: VHandle, val: VertexType, weight: Weight, edge_count: Slot) -> VHandle {
         let new_vertex = self.graph.create(val, edge_count);
-        self.graph.edges.connect_weighted(src_vertex, new_vertex, weight);
+        self.graph.edge_storage.connect_weighted(src_vertex, new_vertex, weight);
         return new_vertex;
     }
 

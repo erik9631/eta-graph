@@ -3,8 +3,8 @@ use crate::algorithms::general::ControlFlow::{End, Resume};
 use crate::algorithms::max_flow::DinicGraph;
 use crate::graph::Graph;
 use crate::handles::types::{VHandle, Weight};
-use crate::handles::vh;
-use crate::traits::{GraphOperate, WeightedGraphOperate};
+use crate::handles::{vh, vh_pack, vh_pack_max, wgt};
+use crate::traits::{EdgeStore, GraphOperate, WeightedGraphOperate};
 use crate::weighted_graph::WeightedGraph;
 
 #[test]
@@ -36,9 +36,9 @@ pub fn graph_bfs_test(){
         ("root".to_string(), 0),
     ];
 
-    bfs(&mut graph.edges, root, graph.vertices.len(), |_edges, handle, layer|{
+    bfs(&mut graph.edge_storage, root, graph.vertices.len(), |_edges, handle, layer|{
         let val = snap.pop().unwrap();
-        assert_eq!(graph.vertices[handle], val.0);
+        assert_eq!(graph.vertices[vh(*handle)], val.0);
         assert_eq!(layer, val.1);
         Resume
     });
@@ -51,7 +51,7 @@ pub fn graph_bfs_test_cyclic(){
     let a = graph.create_and_connect(root, "a", 3);
     let b = graph.create_and_connect(root, "b", 2);
     let c = graph.create_and_connect_leaf(root, "c");
-    graph.edges.connect(c, root);
+    graph.edge_storage.connect(c, root);
 
     graph.create_and_connect_leaf(a, "a_a");
     let a_b = graph.create_and_connect_leaf(a, "a_b");
@@ -61,8 +61,8 @@ pub fn graph_bfs_test_cyclic(){
     graph.create_and_connect_leaf(b, "b_b");
 
     let b_a_a = graph.create_and_connect_leaf(b_a, "b_a_a");
-    graph.edges.connect(a_b, b_a_a);
-    graph.edges.connect(b_a_a, b_a);
+    graph.edge_storage.connect(a_b, b_a_a);
+    graph.edge_storage.connect(b_a_a, b_a);
 
     let mut snap: Vec<(String, Weight)> = vec![
         ("b_a_a".to_string(), 3),
@@ -77,9 +77,9 @@ pub fn graph_bfs_test_cyclic(){
         ("root".to_string(), 0),
     ];
 
-    bfs(&mut graph.edges, root, graph.vertices.len(), |_edges, handle, layer|{
+    bfs(&mut graph.edge_storage, root, graph.vertices.len(), |_edges, handle, layer|{
         let val = snap.pop().unwrap();
-        assert_eq!(graph.vertices[handle], val.0);
+        assert_eq!(graph.vertices[vh(*handle)], val.0);
         assert_eq!(layer, val.1);
         Resume
     });
@@ -128,7 +128,7 @@ pub fn graph_dfs_test(){
         "a_a".to_string(),
     ];
 
-    dfs(&mut graph.edges, root, graph.vertices.len(), |handle|{
+    dfs(&mut graph.edge_storage, vh_pack_max(root), graph.vertices.len(), |handle|{
         assert_eq!(graph.vertices[vh(*handle)], snap.pop().unwrap());
         Resume
     }, |handle|{
@@ -170,7 +170,7 @@ pub fn graph_dfs_end_test(){
         "a_a".to_string(),
     ];
 
-    dfs(&mut graph.edges, root, graph.vertices.len(), |handle|{
+    dfs(&mut graph.edge_storage, vh_pack_max(root), graph.vertices.len(), |handle|{
         if snap.len() == 0 {
             return End;
         }
@@ -196,9 +196,9 @@ pub fn dinic_level_test(){
     let a_b_b = graph.create_and_connect_weighted(a_b, "a_b_b", 10, 1);
     let a_b_c = graph.create_and_connect_weighted(a_b, "a_b_c", 10, 1);
 
-    graph.graph.edges.connect_weighted(a_b_a, a_a_x, 10);
-    graph.graph.edges.connect_weighted(a_b_b, a_a_x, 10);
-    graph.graph.edges.connect_weighted(a_b_c, a_a_x, 10);
+    graph.graph.edge_storage.connect_weighted(a_b_a, a_a_x, 10);
+    graph.graph.edge_storage.connect_weighted(a_b_b, a_a_x, 10);
+    graph.graph.edge_storage.connect_weighted(a_b_c, a_a_x, 10);
 
     let mut dinic_graph = DinicGraph::from(&mut graph);
     dinic_graph.mark_levels(a, a_a_x).expect("Sink not found");
@@ -214,11 +214,37 @@ pub fn dinic_level_test(){
         ("a".to_string(), 0),
     ];
 
-    bfs(&mut dinic_graph.weighted_graph.graph.edges, a, dinic_graph.weighted_graph.graph.vertices.len(), |edge_storage, v_handle, layer|{
+    bfs(&mut dinic_graph.weighted_graph.graph.edge_storage, a, dinic_graph.weighted_graph.graph.vertices.len(), |edge_storage, v_handle, layer|{
         let snap_data = snap.pop().unwrap();
-        assert_eq!(dinic_graph.weighted_graph.graph.vertices[v_handle], snap_data.0);
-        assert_eq!(dinic_graph.flow_data[v_handle as usize], snap_data.1);
+        assert_eq!(dinic_graph.weighted_graph.graph.vertices[vh(*v_handle)], snap_data.0);
+        assert_eq!(dinic_graph.flow_data[vh(*v_handle) as usize], snap_data.1);
         Resume
     });
+}
 
+#[test]
+pub fn dinic_test(){
+    let mut graph = WeightedGraph::new();
+    // Write test for layering
+    let a = graph.graph.create("a", 2);
+    let a_a = graph.create_and_connect_weighted(a, "a_a", 100, 1);
+    let a_a_a = graph.create_and_connect_weighted(a_a, "a_a_a", 20, 1);
+    let a_a_x = graph.create_and_connect_weighted(a_a_a, "a_a_x", 30, 0);
+
+    let a_b = graph.create_and_connect_weighted(a, "a_b", 20, 3);
+    let a_b_a = graph.create_and_connect_weighted(a_b, "a_b_a", 10, 1);
+    let a_b_b = graph.create_and_connect_weighted(a_b, "a_b_b", 10, 1);
+    let a_b_c = graph.create_and_connect_weighted(a_b, "a_b_c", 10, 1);
+
+    graph.graph.edge_storage.connect_weighted(a_b_a, a_a_x, 10);
+    graph.graph.edge_storage.connect_weighted(a_b_b, a_a_x, 10);
+    graph.graph.edge_storage.connect_weighted(a_b_c, a_a_x, 10);
+
+    let mut dinic_graph = DinicGraph::from(&mut graph);
+    dinic_graph.perform_search(a, a_a_x);
+    dinic_graph.finalize_flow_calc(&graph);
+
+    for edge in dinic_graph.weighted_graph.graph.edge_storage.iter() {
+        println!("Edge: {} - {}", vh(*edge), wgt(*edge));
+    }
 }

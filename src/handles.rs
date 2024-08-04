@@ -51,6 +51,10 @@ pub fn wgt(handle: PackedEdge) -> Weight {
 pub fn vh_pack(handle: VHandle) -> PackedEdge {
     handle as PackedEdge | ((UNSET as PackedEdge) << SHIFT)
 }
+#[inline(always)]
+pub fn vh_pack_max(handle: VHandle) -> PackedEdge {
+    handle as PackedEdge | ((Weight::MAX as PackedEdge) << SHIFT)
+}
 
 #[inline(always)]
 pub fn pack(node_id: VHandle, weight: Weight) -> PackedEdge {
@@ -58,7 +62,7 @@ pub fn pack(node_id: VHandle, weight: Weight) -> PackedEdge {
 }
 #[inline(always)]
 pub fn set_wgt(handle: PackedEdge, weight: Weight) -> PackedEdge {
-    (handle & (MASK as PackedEdge)) | ((weight as PackedEdge) << SHIFT)
+    (handle & !((MASK as PackedEdge) << SHIFT)) | ((weight as PackedEdge) << SHIFT)
 }
 #[inline(always)]
 pub fn set_vid(handle: PackedEdge, vert_id: VHandle) -> PackedEdge {

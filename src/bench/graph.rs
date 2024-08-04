@@ -4,7 +4,7 @@ use crate::algorithms::general::{bfs, dfs};
 use crate::algorithms::general::ControlFlow::Resume;
 use crate::graph;
 use crate::handles::types::VHandle;
-use crate::handles::vh;
+use crate::handles::{vh, vh_pack_max};
 use crate::traits::GraphOperate;
 
 #[test]
@@ -21,7 +21,7 @@ pub fn graph_disconnect_bench(){
     let start = Instant::now();
     while handles.len() > 0 {
         let handle = handles.pop().unwrap();
-        graph.edges.disconnect(root, handle);
+        graph.edge_storage.disconnect(root, handle);
     }
     println!("Time taken: {:?}", start.elapsed());
 }
@@ -38,7 +38,7 @@ pub fn graph_disconnect_safe_bench(){
 
     let start = Instant::now();
     for i in 0..data_size as VHandle {
-        graph.edges.disconnect(root, i+1);
+        graph.edge_storage.disconnect(root, i+1);
     }
     println!("Time taken: {:?}", start.elapsed());
 }
@@ -75,9 +75,9 @@ pub fn bfs_bench(){
 
     let start = Instant::now();
     let mut counter = 0;
-    bfs(&mut graph.edges, root, number_of_nodes, |_edges, vertex, layer|{
-        profile_fn!("bfs_transform");
-        graph.vertices[vertex] = 0;
+    bfs(&mut graph.edge_storage, root, number_of_nodes, |_edges, vertex, layer|{
+        profile_fn!("bfs");
+        graph.vertices[vh(*vertex)] = 0;
         counter += 1;
         return Resume;
     });
@@ -107,12 +107,12 @@ pub fn dfs_bench(){
 
     let start = Instant::now();
     let mut counter = 0;
-    dfs(&mut graph.edges, root, number_of_nodes, |vertex|{
-        profile_fn!("dfs_transform");
+    dfs(&mut graph.edge_storage, vh_pack_max(root), number_of_nodes, |vertex| {
+        profile_fn!("dfs");
         graph.vertices[vh(*vertex)] = 0;
         counter += 1;
         return Resume;
-    }, |vertex|{});
+    }, |vertex| {});
 
     println!("Time taken: {:?}", start.elapsed());
     assert_eq!(counter, number_of_nodes);

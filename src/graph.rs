@@ -15,7 +15,7 @@ where
     EdgeStorageType: EdgeManipulate,
 {
     pub vertices: VertexStorageType,
-    pub edges: EdgeStorageType,
+    pub edge_storage: EdgeStorageType,
 }
 
 impl<VertexType, VertexStorageType, EdgeStorageType> Clone for Graph<VertexType, VertexStorageType, EdgeStorageType>
@@ -26,28 +26,27 @@ where
     fn clone(&self) -> Self {
         return Graph{
             vertices: self.vertices.clone(),
-            edges: self.edges.clone(),
+            edge_storage: self.edge_storage.clone(),
         }
     }
 
     fn clone_from(&mut self, source: &Self) {
         self.vertices.clone_from(&source.vertices);
-        self.edges.clone_from(&source.edges);
+        self.edge_storage.clone_from(&source.edge_storage);
     }
 }
 
 impl<VertexType> Graph<VertexType, VertexStorage<VertexType>, EdgeStorage>
-where
 {
     pub fn new_large() -> Self {
         return Graph{
-            edges: EdgeStorage::new_large(),
+            edge_storage: EdgeStorage::new_large(),
             vertices: VertexStorage::new(),
         }
     }
     pub fn with_reserve(reserve: Slot) -> Self {
         return Graph{
-            edges: EdgeStorage::with_reserve(reserve),
+            edge_storage: EdgeStorage::with_reserve(reserve),
             vertices: VertexStorage::new(),
         };
     }
@@ -55,7 +54,7 @@ where
     /// Creates a new graph with the assumption that the graph size is known ahead of time. Small reserve count of 5
     pub fn new() -> Self {
         return Graph{
-            edges: EdgeStorage::new(),
+            edge_storage: EdgeStorage::new(),
             vertices: VertexStorage::new(),
         };
     }
@@ -68,12 +67,12 @@ where
     EdgeStorageType: EdgeManipulate,
     VertexStorageType: StoreVertex<VertexType=VertexType>{
     pub fn tree_view(&mut self) -> TreeView<VertexType, VertexStorageType, EdgeStorageType> {
-        return TreeView::new(&mut self.edges, &mut self.vertices);
+        return TreeView::new(&mut self.edge_storage, &mut self.vertices);
     }
 
     pub fn create_and_connect(&mut self, from: VHandle, val: VertexType, edge_count: Slot) -> VHandle {
         let new_vertex = self.create(val, edge_count);
-        self.edges.connect(from, new_vertex);
+        self.edge_storage.connect(from, new_vertex);
         return new_vertex;
     }
 
@@ -84,7 +83,7 @@ where
     pub fn create(&mut self, val: VertexType, edge_count: Slot) -> VHandle {
         self.vertices.push(val);
         let new_vertex = (self.vertices.len() - 1)  as VHandle;
-        self.edges.extend_edge_storage(edge_count);
+        self.edge_storage.extend_edge_storage(edge_count);
         return new_vertex;
     }
     #[cfg_attr(not(debug_assertions), inline(always))]

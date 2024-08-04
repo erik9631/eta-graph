@@ -1,4 +1,4 @@
-use crate::handles::{pack, set_vid, set_wgt, vh, wgt};
+use crate::handles::{pack, set_vid, set_wgt, vh, vh_pack_max, wgt};
 use crate::handles::types::{VHandle, Weight};
 
 #[test]
@@ -129,4 +129,11 @@ pub fn combined_set_test(){
 
     assert_eq!(vh(handle), VHandle::MAX);
     assert_eq!(wgt(handle), -Weight::MAX);
+}
+
+#[test]
+pub fn weight_max_test(){
+    let handle = vh_pack_max(5);
+    assert_eq!(vh(handle), 5);
+    assert_eq!(wgt(handle), Weight::MAX);
 }

@@ -1,10 +1,11 @@
+use std::iter::Enumerate;
+use std::mem;
 use std::mem::size_of;
 use std::slice::{from_raw_parts, from_raw_parts_mut};
-use firestorm::{profile_method, profile_section};
-use crate::graph::{Error};
+use firestorm::{profile_method};
 use crate::handles::{pack, Slot, vh};
 use crate::handles::types::{VHandle, Weight, PackedEdge};
-use crate::traits::{EdgeManipulate, GraphOperate, EdgeStore, WeightedEdgeManipulate, WeightedGraphOperate};
+use crate::traits::{EdgeManipulate, GraphOperate, EdgeStore, WeightedEdgeManipulate, WeightedGraphOperate, EdgeStorageIterator};
 
 const LEN_OFFSET: Slot = 0;
 const CAPACITY_OFFSET: Slot = 1;
@@ -20,7 +21,115 @@ pub struct EdgeStorage {
     pub edges: Vec<Slot>,
     pub indices: Vec<Slot>, //Todo, make it contain EHandles which are not compatible with VHandles
 }
+//TODO Refactor efficiency unsafe code
 
+pub struct EdgeStorageIter<'a> {
+    edges: &'a Vec<Slot>,
+    started: bool,
+    index: usize,
+    chunk_end: usize,
+    next_chunk: usize,
+    data_end: usize,
+}
+impl <'a> EdgeStorageIter<'a>{
+    pub fn new(edges: &'a Vec<Slot>) -> Self {
+        let start: usize = 0;
+        let len = edges[start + LEN_OFFSET as usize] as usize;
+        let capacity = edges[ start + CAPACITY_OFFSET as usize] as usize;
+        let next_chunk = start + capacity + HEADER_SIZE as usize;
+        let chunk_end = start + len + HEADER_SIZE as usize;
+        let data_end = edges.len();
+        let index = start + HEADER_SIZE as usize;
+        return EdgeStorageIter {
+            edges,
+            started: false,
+            index,
+            chunk_end,
+            next_chunk,
+            data_end,
+        }
+    }
+}
+
+impl<'a> Iterator for EdgeStorageIter<'a> {
+    type Item = &'a Slot;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index == self.chunk_end {
+            self.index = self.next_chunk;
+            let len = self.edges[self.index + LEN_OFFSET as usize] as usize;
+            let capacity = self.edges[ self.index + CAPACITY_OFFSET as usize ] as usize;
+            self.next_chunk = self.index + capacity + HEADER_SIZE as usize;
+            self.chunk_end = self.index + len + HEADER_SIZE as usize;
+            self.index = self.index + HEADER_SIZE as usize;
+        }
+        if self.index == self.data_end {
+            return None;
+        }
+        let result = Some(unsafe{self.edges.as_ptr().add(self.index).as_ref().unwrap()});
+        self.index += 1;
+        return result
+    }
+}
+impl<'a> EdgeStorageIterator for EdgeStorageIter<'a> {
+    type Output = &'a Slot;
+    fn edge_index(&self) -> usize {
+        return self.index;
+    }
+}
+
+pub struct EdgeStorageIterMut<'a> {
+    edges: &'a mut Vec<Slot>,
+    started: bool,
+    index: usize,
+    chunk_end: usize,
+    next_chunk: usize,
+    data_end: usize,
+}
+impl <'a> EdgeStorageIterMut<'a> {
+    pub fn new(edges: &'a mut  Vec<Slot>) -> Self {
+        let start: usize = 0;
+        let len = edges[start + LEN_OFFSET as usize] as usize;
+        let capacity = edges[ start + CAPACITY_OFFSET as usize] as usize;
+        let next_chunk = start + capacity + HEADER_SIZE as usize;
+        let chunk_end = start + len + HEADER_SIZE as usize;
+        let data_end = edges.len();
+        let index = start + HEADER_SIZE as usize;
+        return EdgeStorageIterMut {
+            edges,
+            started: false,
+            index,
+            chunk_end,
+            next_chunk,
+            data_end,
+        }
+    }
+}
+
+impl<'a> Iterator for EdgeStorageIterMut<'a> {
+    type Item = &'a mut Slot;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index == self.chunk_end {
+            self.index = self.next_chunk;
+            let len = self.edges[self.index + LEN_OFFSET as usize] as usize;
+            let capacity = self.edges[ self.index + CAPACITY_OFFSET as usize ] as usize;
+            self.next_chunk = self.index + capacity + HEADER_SIZE as usize;
+            self.chunk_end = self.index + len + HEADER_SIZE as usize;
+            self.index = self.index + HEADER_SIZE as usize;
+        }
+        if self.index == self.data_end {
+            return None;
+        }
+        let result = Some(unsafe{self.edges.as_mut_ptr().add(self.index).as_mut().unwrap()});
+        self.index += 1;
+        return result
+    }
+}
+impl<'a> EdgeStorageIterator for EdgeStorageIterMut<'a> {
+    type Output = &'a mut Slot;
+    fn edge_index(&self) -> usize {
+        return self.index;
+    }
+}
 
 impl Header {
     #[allow(unused)]
@@ -183,7 +292,6 @@ impl WeightedGraphOperate for EdgeStorage{
         self.add_edges(from, &[pack(to, weight)]);
     }
 }
-
 impl EdgeStore for EdgeStorage {
     fn edges_offset(&self, vertex: VHandle, offset: Slot) -> &[PackedEdge] {
         profile_method!(edges_from_offset);
@@ -250,6 +358,14 @@ impl EdgeStore for EdgeStorage {
     fn set(&mut self, src: VHandle, val: PackedEdge, offset: Slot) {
         let index = self.indices[src as usize];
         self.edges[ (index + offset + HEADER_SIZE) as usize] = val;
+    }
+
+    fn iter(&self) -> impl EdgeStorageIterator<Output=&Slot> {
+        return EdgeStorageIter::new(&self.edges);
+    }
+
+    fn iter_mut(&mut self) -> impl EdgeStorageIterator<Output=&mut Slot> {
+        return EdgeStorageIterMut::new(&mut self.edges);
     }
 }
 impl Clone for EdgeStorage {
