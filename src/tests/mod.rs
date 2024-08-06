@@ -1,4 +1,4 @@
 pub mod graph_tests;
-mod tree_tests;
-mod handle;
-mod algorithms;
+pub mod tree_tests;
+pub mod handle;
+pub mod algorithms;

@@ -104,26 +104,32 @@ where
     Edges: EdgeStore
 {
     let flags = alloc_flags(vertices_count);
-    dfs_custom_flags(edge_storage, start, flags.0, pre_order_func, post_order_func);
+    dfs_custom_flags(edge_storage, start, vertices_count, |to_visit|{
+        let was_visited = flags.0[vh(to_visit) as usize];
+        flags.0[vh(to_visit) as usize] = true;
+        return was_visited;
+    }, pre_order_func, post_order_func);
     dealloc_flags(flags);
 }
 
 // TODO Consider creating iter for the edges
-pub fn dfs_custom_flags<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: Edge, visit_flags: &mut[bool], mut pre_order_func: PreOrderFunc,
-                                                            mut post_order_func: PostOrderFunc)
+pub fn dfs_custom_flags<VisitedFunc, PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: Edge, vertex_count: usize,
+                                                                         mut is_visited: VisitedFunc, mut pre_order_func: PreOrderFunc,
+                                                                        mut post_order_func: PostOrderFunc)
 where
+    VisitedFunc: FnMut(Edge) -> bool,
     PreOrderFunc: FnMut(&mut Edge) -> ControlFlow,
     PostOrderFunc: FnMut(&mut Edge),
     Edges: EdgeStore
 {
     profile_fn!(dfs);
-    let layout = Layout::array::<(*const Slot, *const Slot, Edge)>(visit_flags.len()).expect("Failed to create layout"); // Around ~50% faster than vec
+    let layout = Layout::array::<(*const Slot, *const Slot, Edge)>(vertex_count).expect("Failed to create layout"); // Around ~50% faster than vec
 
     // Have to use unsafe as the borrow checker doesn't know that flags and edges don't overlap
     let visit_ptr = unsafe {alloc(layout)};
 
     let to_visit = unsafe { visit_ptr as *mut (*mut Slot, *mut Slot, *mut Edge)};
-    let stack = unsafe {from_raw_parts_mut(to_visit, visit_flags.len())};
+    let stack = unsafe {from_raw_parts_mut(to_visit, vertex_count)};
     let mut top: isize = 0;
     let mut start_edge = start;
     unsafe {
@@ -151,11 +157,9 @@ where
 
         let next_handle = vh(unsafe{*ptr});
         let next_packed_edge = ptr;
-        if visit_flags[next_handle as usize]{
+        if is_visited(unsafe{*next_packed_edge}){
             continue;
         }
-
-        visit_flags[next_handle as usize] = true;
         match pre_order_func( unsafe{next_packed_edge.as_mut().unwrap()} ){
             ControlFlow::End => {
                 break;
