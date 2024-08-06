@@ -38,8 +38,9 @@ where
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn add_child(&mut self, parent: VHandle, child: VHandle){
         self.nodes.connect(parent, child);
-        self.nodes.set(child, vh_pack(parent), PARENT_OFFSET);
-        self.nodes.set(child, vh_pack(self.get_root(parent)), ROOT_OFFSET);
+        let child_edge = self.nodes.get_edges_index(child);
+        self.nodes[child_edge + PARENT_OFFSET] = vh_pack(parent);
+        self.nodes[child_edge + ROOT_OFFSET] = vh_pack(self.get_root(parent));
     }
 
     fn create_vertex(&mut self, val: VertexType) -> VHandle {
@@ -50,11 +51,11 @@ where
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn get_root(&self, vertex: VHandle) -> VHandle {
-        return vh(self.nodes.get(vertex, 0));
+        return vh(self.nodes[self.nodes.get_edges_index(vertex) + ROOT_OFFSET]);
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn get_parent(&self, vertex: VHandle) -> VHandle {
-        return vh(self.nodes.get(vertex, 1));
+        return vh(self.nodes[self.nodes.get_edges_index(vertex) + PARENT_OFFSET]);
     }
 
     pub fn create_node(&mut self, val: VertexType) -> VHandle {

@@ -1,5 +1,6 @@
 use std::collections::btree_set::Iter;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
+use std::process::Output;
 use crate::handles::Slot;
 use crate::handles::types::{Edge, VHandle, Weight};
 
@@ -37,19 +38,18 @@ pub trait EdgeStorageIterator: Iterator<Item=Self::Output>{
     }
 }
 
-pub trait EdgeStore{
+pub trait EdgeStore: Index<Slot, Output=Slot> + IndexMut<Slot, Output=Slot>{
     fn edges_offset(&self, vertex: VHandle, offset: Slot) -> &[Edge];
     fn edges_ptr_offset(&self, vertex: VHandle, offset: Slot) -> *const Edge;
     fn edges(&self, vertex: VHandle) -> &[Edge];
     fn edges_ptr(&self, vertex: VHandle) -> *const Edge;
     fn len(&self, handle: VHandle) -> Slot;
     fn edge_block_capacity(&self, handle: VHandle) -> Slot;
-    fn get(&self, vertex: VHandle, offset: Slot) -> Edge;
+    fn get_edges_index(&self, vertex: VHandle) -> Slot;
     fn edges_mut_offset(&mut self, vertex: VHandle, offset: Slot) -> &mut [Edge];
     fn edges_mut_ptr_offset(&mut self, vertex: VHandle, offset: Slot) -> *mut Edge;
     fn edges_mut_ptr(&mut self, vertex: VHandle) -> *mut Edge;
     fn edges_mut(&mut self, vertex: VHandle) -> &mut [Edge];
-    fn set(&mut self, src: VHandle, val: Edge, offset: Slot);
     fn iter (&self) -> impl EdgeStorageIterator<Output=&Slot>;
     fn iter_mut (&mut self) -> impl EdgeStorageIterator<Output=&mut Slot>;
 }

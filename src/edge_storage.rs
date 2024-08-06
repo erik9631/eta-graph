@@ -1,6 +1,7 @@
 use std::iter::Enumerate;
 use std::mem;
 use std::mem::size_of;
+use std::ops::{Index, IndexMut};
 use std::slice::{from_raw_parts, from_raw_parts_mut};
 use firestorm::{profile_method};
 use crate::handles::{pack, Slot, vh};
@@ -326,9 +327,9 @@ impl EdgeStore for EdgeStorage {
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
-    fn get(&self, vertex: VHandle, offset: Slot) -> Edge {
-        let index = self.indices[vertex as usize];
-        return self.edges[ ( index + HEADER_SIZE + offset) as usize];
+    fn get_edges_index(&self, vertex: VHandle) -> Slot {
+        let index = self.indices[vertex as usize] + HEADER_SIZE;
+        return index;
     }
 
     fn edges_mut_offset(&mut self, vertex: VHandle, offset: Slot) -> &mut [Edge] {
@@ -353,13 +354,6 @@ impl EdgeStore for EdgeStorage {
     fn edges_mut(&mut self, vertex: VHandle) -> &mut [Edge] {
         return self.edges_mut_offset(vertex, 0);
     }
-
-    #[cfg_attr(not(debug_assertions), inline(always))]
-    fn set(&mut self, src: VHandle, val: Edge, offset: Slot) {
-        let index = self.indices[src as usize];
-        self.edges[ (index + offset + HEADER_SIZE) as usize] = val;
-    }
-
     fn iter(&self) -> impl EdgeStorageIterator<Output=&Slot> {
         return EdgeStorageIter::new(&self.edges);
     }
@@ -381,6 +375,19 @@ impl Clone for EdgeStorage {
         self.vertex_capacity = source.vertex_capacity;
         self.edges.clone_from(&source.edges);
         self.indices.clone_from(&source.indices);
+    }
+}
+
+impl Index<Slot> for EdgeStorage {
+    type Output = Slot;
+    fn index(&self, index: Slot) -> &Self::Output {
+        return &self.edges[index as usize];
+    }
+}
+
+impl IndexMut<Slot> for EdgeStorage {
+    fn index_mut(&mut self, index: Slot) -> &mut Self::Output {
+        return &mut self.edges[index as usize];
     }
 }
 
