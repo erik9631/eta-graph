@@ -4,7 +4,7 @@ use std::mem::size_of;
 use std::slice::{from_raw_parts, from_raw_parts_mut};
 use firestorm::{profile_method};
 use crate::handles::{pack, Slot, vh};
-use crate::handles::types::{VHandle, Weight, PackedEdge};
+use crate::handles::types::{VHandle, Weight, Edge};
 use crate::traits::{EdgeManipulate, GraphOperate, EdgeStore, WeightedEdgeManipulate, WeightedGraphOperate, EdgeStorageIterator};
 
 const LEN_OFFSET: Slot = 0;
@@ -242,7 +242,7 @@ impl EdgeStorage {
 }
 
 impl GraphOperate for EdgeStorage {
-    fn add_edges(&mut self, from: VHandle, to: &[PackedEdge]) {
+    fn add_edges(&mut self, from: VHandle, to: &[Edge]) {
         let len = self.len(from) as usize;
         let new_size = len + to.len();
 
@@ -293,26 +293,26 @@ impl WeightedGraphOperate for EdgeStorage{
     }
 }
 impl EdgeStore for EdgeStorage {
-    fn edges_offset(&self, vertex: VHandle, offset: Slot) -> &[PackedEdge] {
+    fn edges_offset(&self, vertex: VHandle, offset: Slot) -> &[Edge] {
         profile_method!(edges_from_offset);
         let edge_chunk_index = self.indices[vertex as usize];
         let len = self.edges[ (edge_chunk_index + LEN_OFFSET) as usize];
         let data = &self.edges[ (offset + edge_chunk_index + HEADER_SIZE) as usize.. (edge_chunk_index + HEADER_SIZE + len) as usize];
         return data;
     }
-    fn edges_ptr_offset(&self, vertex: VHandle, offset: Slot) -> *const PackedEdge {
+    fn edges_ptr_offset(&self, vertex: VHandle, offset: Slot) -> *const Edge {
         profile_method!(edges_ptr_offset);
         let edge_chunk_index = self.indices[vertex as usize];
         return unsafe {self.edges.as_ptr().add((offset + edge_chunk_index + HEADER_SIZE) as usize)}
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
-    fn edges(&self, vertex: VHandle) -> &[PackedEdge] {
+    fn edges(&self, vertex: VHandle) -> &[Edge] {
         return self.edges_offset(vertex, 0);
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
-    fn edges_ptr(&self, vertex: VHandle) -> *const PackedEdge {
+    fn edges_ptr(&self, vertex: VHandle) -> *const Edge {
         return self.edges_ptr_offset(vertex, 0);
     }
 
@@ -326,36 +326,36 @@ impl EdgeStore for EdgeStorage {
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
-    fn get(&self, vertex: VHandle, offset: Slot) -> PackedEdge {
+    fn get(&self, vertex: VHandle, offset: Slot) -> Edge {
         let index = self.indices[vertex as usize];
         return self.edges[ ( index + HEADER_SIZE + offset) as usize];
     }
 
-    fn edges_mut_offset(&mut self, vertex: VHandle, offset: Slot) -> &mut [PackedEdge] {
+    fn edges_mut_offset(&mut self, vertex: VHandle, offset: Slot) -> &mut [Edge] {
         profile_method!(edges_mut_from_offset);
         let edge_chunk_index = self.indices[vertex as usize];
         let reserve = self.edges[ (edge_chunk_index + CAPACITY_OFFSET) as usize];
         let data = &mut self.edges[ (offset + edge_chunk_index + HEADER_SIZE) as usize..(edge_chunk_index + HEADER_SIZE + reserve) as usize];
         return data;
     }
-    fn edges_mut_ptr_offset(&mut self, vertex: VHandle, offset: Slot) -> *mut PackedEdge {
+    fn edges_mut_ptr_offset(&mut self, vertex: VHandle, offset: Slot) -> *mut Edge {
         profile_method!(edges_mut_ptr_offset);
         let edge_chunk_index = self.indices[vertex as usize];
         return unsafe {self.edges.as_mut_ptr().add((offset + edge_chunk_index + HEADER_SIZE) as usize)}
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
-    fn edges_mut_ptr(&mut self, vertex: VHandle) -> *mut PackedEdge {
+    fn edges_mut_ptr(&mut self, vertex: VHandle) -> *mut Edge {
         return self.edges_mut_ptr_offset(vertex, 0);
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
-    fn edges_mut(&mut self, vertex: VHandle) -> &mut [PackedEdge] {
+    fn edges_mut(&mut self, vertex: VHandle) -> &mut [Edge] {
         return self.edges_mut_offset(vertex, 0);
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
-    fn set(&mut self, src: VHandle, val: PackedEdge, offset: Slot) {
+    fn set(&mut self, src: VHandle, val: Edge, offset: Slot) {
         let index = self.indices[src as usize];
         self.edges[ (index + offset + HEADER_SIZE) as usize] = val;
     }

@@ -2,7 +2,7 @@ use std::alloc::{alloc, dealloc, Layout};
 use std::slice::{from_raw_parts_mut, Iter};
 use firestorm::{profile_fn, profile_section};
 use crate::graph;
-use crate::handles::types::{PackedEdge, VHandle, Weight};
+use crate::handles::types::{Edge, VHandle, Weight};
 use crate::handles::{Slot, vh, vh_pack};
 use crate::traits::{EdgeStore};
 
@@ -14,13 +14,13 @@ pub enum ControlFlow {
 }
 
 
-pub fn bfs<PreOrderFunc, Edges>(edge_storage: &mut Edges, start: VHandle, vertices_count: usize, mut pre_order: PreOrderFunc)
+pub fn bfs<PreOrderFunc, Edges>(edge_storage: &mut Edges, start: Edge, vertices_count: usize, mut pre_order: PreOrderFunc)
 where
-    PreOrderFunc: FnMut( &mut PackedEdge, Weight) -> ControlFlow,
+    PreOrderFunc: FnMut( &mut Edge, Weight) -> ControlFlow,
     Edges: EdgeStore
 {
     profile_fn!(bfs);
-    let to_visit_layout = Layout::array::<*mut PackedEdge>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
+    let to_visit_layout = Layout::array::<*mut Edge>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
     let flag_layout = Layout::array::<bool>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
 
     let to_visit_ptr = unsafe {alloc(to_visit_layout)};
@@ -28,12 +28,12 @@ where
     unsafe {std::ptr::write_bytes(flags_ptr, 0, vertices_count)};
 
     let was_queued_flags = unsafe {from_raw_parts_mut(flags_ptr as *mut bool, vertices_count)};
-    let to_visit = unsafe {from_raw_parts_mut(to_visit_ptr as *mut (*mut PackedEdge), vertices_count)};
+    let to_visit = unsafe {from_raw_parts_mut(to_visit_ptr as *mut (*mut Edge), vertices_count)};
     let mut end = 1;
     let mut next_layer = 1;
     let mut layer = 0;
-    let mut start_edge = vh_pack(start);
-    to_visit[0] = (&mut start_edge) as *mut PackedEdge;
+    let mut start_edge = start;
+    to_visit[0] = (&mut start_edge) as *mut Edge;
     was_queued_flags[0] = true;
     let mut i = 0;
 
@@ -96,11 +96,11 @@ pub fn reset_flags(flags: &mut[bool]) {
 
 
 #[cfg_attr(not(debug_assertions), inline(always))]
-pub fn dfs<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: PackedEdge, vertices_count: usize, mut pre_order_func: PreOrderFunc,
+pub fn dfs<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: Edge, vertices_count: usize, mut pre_order_func: PreOrderFunc,
                                                mut post_order_func: PostOrderFunc)
 where
-    PreOrderFunc: FnMut(&mut PackedEdge) -> ControlFlow,
-    PostOrderFunc: FnMut(&mut PackedEdge),
+    PreOrderFunc: FnMut(&mut Edge) -> ControlFlow,
+    PostOrderFunc: FnMut(&mut Edge),
     Edges: EdgeStore
 {
     let flags = alloc_flags(vertices_count);
@@ -109,25 +109,25 @@ where
 }
 
 // TODO Consider creating iter for the edges
-pub fn dfs_custom_flags<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: PackedEdge, visit_flags: &mut[bool] , mut pre_order_func: PreOrderFunc,
-                                               mut post_order_func: PostOrderFunc)
+pub fn dfs_custom_flags<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: Edge, visit_flags: &mut[bool], mut pre_order_func: PreOrderFunc,
+                                                            mut post_order_func: PostOrderFunc)
 where
-    PreOrderFunc: FnMut(&mut PackedEdge) -> ControlFlow,
-    PostOrderFunc: FnMut(&mut PackedEdge),
+    PreOrderFunc: FnMut(&mut Edge) -> ControlFlow,
+    PostOrderFunc: FnMut(&mut Edge),
     Edges: EdgeStore
 {
     profile_fn!(dfs);
-    let layout = Layout::array::<(*const Slot, *const Slot, PackedEdge)>(visit_flags.len()).expect("Failed to create layout"); // Around ~50% faster than vec
+    let layout = Layout::array::<(*const Slot, *const Slot, Edge)>(visit_flags.len()).expect("Failed to create layout"); // Around ~50% faster than vec
 
     // Have to use unsafe as the borrow checker doesn't know that flags and edges don't overlap
     let visit_ptr = unsafe {alloc(layout)};
 
-    let to_visit = unsafe { visit_ptr as *mut (*mut Slot, *mut Slot, *mut PackedEdge)};
+    let to_visit = unsafe { visit_ptr as *mut (*mut Slot, *mut Slot, *mut Edge)};
     let stack = unsafe {from_raw_parts_mut(to_visit, visit_flags.len())};
     let mut top: isize = 0;
     let mut start_edge = start;
     unsafe {
-        stack[top as usize] = (edge_storage.edges_mut_ptr(vh(start)), edge_storage.edges_mut_ptr(vh(start)).add(edge_storage.len(vh(start)) as usize), &mut start_edge as *mut PackedEdge);
+        stack[top as usize] = (edge_storage.edges_mut_ptr(vh(start)), edge_storage.edges_mut_ptr(vh(start)).add(edge_storage.len(vh(start)) as usize), &mut start_edge as *mut Edge);
     }
     match pre_order_func( unsafe {stack[top as usize].2.as_mut().unwrap() }){
         ControlFlow::End => {

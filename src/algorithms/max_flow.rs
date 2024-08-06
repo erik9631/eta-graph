@@ -4,7 +4,7 @@ use std::ptr;
 use crate::algorithms::general::{alloc_flags, bfs, dealloc_flags, dfs, dfs_custom_flags, reset_flags};
 use crate::algorithms::general::ControlFlow::{Continue, End, Resume};
 use crate::handles::types::{VHandle, Weight};
-use crate::handles::{set_wgt, vh, vh_pack_max, wgt};
+use crate::handles::{pack, set_wgt, vh, vh_pack, wgt};
 use crate::traits::{StoreVertex, WeightedEdgeManipulate};
 use crate::weighted_graph::WeightedGraph;
 
@@ -39,7 +39,8 @@ where
 
     pub fn mark_levels(&mut self, src_handle: VHandle, sink_handle: VHandle) -> Result<(), &str> {
         let mut found_sink = false;
-        bfs(&mut self.weighted_graph.graph.edge_storage, src_handle, self.weighted_graph.graph.vertices.len(), |v_handle, layer|{
+        let start = pack(src_handle, -1);
+        bfs(&mut self.weighted_graph.graph.edge_storage, start, self.weighted_graph.graph.vertices.len(), |v_handle, layer|{
             if vh(*v_handle) == sink_handle {
                 found_sink = true;
             }
@@ -92,7 +93,7 @@ where
                 let mut last_layer = Cell::new(-1);
                 bottleneck_value.set(Weight::MAX);
                 dfs_found_sink.set(false);
-                dfs_custom_flags(&mut self.weighted_graph.graph.edge_storage, vh_pack_max(src_handle), flags.0,
+                dfs_custom_flags(&mut self.weighted_graph.graph.edge_storage, vh_pack(src_handle), flags.0,
                                  |v_handle| {
                                      if dfs_found_sink.get() {
                                          return End;

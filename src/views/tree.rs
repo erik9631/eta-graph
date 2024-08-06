@@ -1,6 +1,6 @@
 
 use crate::handles::{NONE, Slot, vh, vh_pack};
-use crate::handles::types::{PackedEdge, VHandle};
+use crate::handles::types::{Edge, VHandle};
 use crate::traits::{GraphOperate, EdgeStore, StoreVertex};
 use crate::vertex_storage::VertexStorage;
 
@@ -31,7 +31,7 @@ where
         }
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn get_children(&self, parent: VHandle) -> &[PackedEdge] {
+    pub fn get_children(&self, parent: VHandle) -> &[Edge] {
         return self.nodes.edges_offset(parent, TREE_HEADER_ELEMENTS);
     }
 

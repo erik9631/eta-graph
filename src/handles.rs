@@ -1,5 +1,5 @@
 use std::ops::AddAssign;
-use crate::handles::types::{MASK, SHIFT, VHandle, Weight, PackedEdge, UNSET};
+use crate::handles::types::{MASK, SHIFT, VHandle, Weight, Edge};
 #[cfg(msize_type = "u16")]
 pub mod types{
     pub type PackedEdge = u16;
@@ -26,45 +26,39 @@ pub mod types{
 
 #[cfg(msize_type = "u64")]
 pub mod types {
-    pub type PackedEdge = u64;
+    pub type Edge = u64;
     pub type Weight = i32;
     pub type VHandle = u32;
     pub(in crate::handles) const SHIFT: usize = 32;
     pub(in crate::handles) const MASK: u32 = 0xFFFFFFFF;
-    pub const UNSET: u32 = MASK;
 }
 
-pub type Slot = PackedEdge;
+pub type Slot = Edge;
 
 pub const NONE: VHandle = VHandle::MAX;
 
 #[inline(always)]
-pub fn vh(handle: PackedEdge) -> VHandle {
+pub fn vh(handle: Edge) -> VHandle {
     handle as VHandle
 }
 
 #[inline(always)]
-pub fn wgt(handle: PackedEdge) -> Weight {
+pub fn wgt(handle: Edge) -> Weight {
     (handle >> SHIFT) as Weight
 }
 #[inline(always)]
-pub fn vh_pack(handle: VHandle) -> PackedEdge {
-    handle as PackedEdge | ((UNSET as PackedEdge) << SHIFT)
+pub fn vh_pack(handle: VHandle) -> Edge {
+    handle as Edge
 }
 #[inline(always)]
-pub fn vh_pack_max(handle: VHandle) -> PackedEdge {
-    handle as PackedEdge | ((Weight::MAX as PackedEdge) << SHIFT)
-}
-
-#[inline(always)]
-pub fn pack(node_id: VHandle, weight: Weight) -> PackedEdge {
-    (node_id as PackedEdge) | ((weight as PackedEdge) << SHIFT)
+pub fn pack(node_id: VHandle, weight: Weight) -> Edge {
+    (node_id as Edge) | ((weight as Edge) << SHIFT)
 }
 #[inline(always)]
-pub fn set_wgt(handle: PackedEdge, weight: Weight) -> PackedEdge {
-    (handle & !((MASK as PackedEdge) << SHIFT)) | ((weight as PackedEdge) << SHIFT)
+pub fn set_wgt(handle: Edge, weight: Weight) -> Edge {
+    (handle & !((MASK as Edge) << SHIFT)) | ((weight as Edge) << SHIFT)
 }
 #[inline(always)]
-pub fn set_vid(handle: PackedEdge, vert_id: VHandle) -> PackedEdge {
-    (handle & !(MASK as PackedEdge)) | (vert_id as PackedEdge)
+pub fn set_vid(handle: Edge, vert_id: VHandle) -> Edge {
+    (handle & !(MASK as Edge)) | (vert_id as Edge)
 }

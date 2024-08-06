@@ -4,7 +4,7 @@ use crate::algorithms::general::{bfs, dfs};
 use crate::algorithms::general::ControlFlow::Resume;
 use crate::graph;
 use crate::handles::types::VHandle;
-use crate::handles::{vh, vh_pack_max};
+use crate::handles::{pack, vh, vh_pack};
 use crate::traits::GraphOperate;
 
 #[test]
@@ -75,7 +75,7 @@ pub fn bfs_bench(){
 
     let start = Instant::now();
     let mut counter = 0;
-    bfs(&mut graph.edge_storage, root, number_of_nodes, |vertex, layer|{
+    bfs(&mut graph.edge_storage, vh_pack(root), number_of_nodes, |vertex, layer|{
         profile_fn!("bfs");
         graph.vertices[vh(*vertex)] = 0;
         counter += 1;
@@ -107,7 +107,7 @@ pub fn dfs_bench(){
 
     let start = Instant::now();
     let mut counter = 0;
-    dfs(&mut graph.edge_storage, vh_pack_max(root), number_of_nodes, |vertex| {
+    dfs(&mut graph.edge_storage, vh_pack(root), number_of_nodes, |vertex| {
         profile_fn!("dfs");
         graph.vertices[vh(*vertex)] = 0;
         counter += 1;
