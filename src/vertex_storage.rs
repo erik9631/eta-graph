@@ -21,24 +21,6 @@ impl <VertexType> VertexStorage<VertexType> {
         return self.data.len();
     }
 }
-// impl <VertexType> traits::AsyncTransform for VertexStorage<VertexType>
-// where VertexType: Send {
-//     type ItemType = VertexType;
-//
-//     fn async_transform(&mut self, transform_fn: fn(&mut [VertexType])) {
-//         let max_parallelism = available_parallelism().ok().unwrap().get();
-//         let parallelism_count = min(max_parallelism, self.data.len());
-//         let parts = split_to_parts_mut(&mut self.data, parallelism_count);
-//
-//         std::thread::scope(|scope| {
-//             for part in parts {
-//                 scope.spawn(|| {
-//                     transform_fn(part);
-//                 });
-//             }
-//         });
-//     }
-// }
 
 impl<VertexType> Index<VHandle> for VertexStorage<VertexType> {
     type Output = VertexType;

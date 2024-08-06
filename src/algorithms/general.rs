@@ -1,9 +1,8 @@
 use std::alloc::{alloc, dealloc, Layout};
-use std::slice::{from_raw_parts_mut, Iter};
+use std::slice::{from_raw_parts_mut};
 use firestorm::{profile_fn, profile_section};
-use crate::graph;
-use crate::handles::types::{Edge, VHandle, Weight};
-use crate::handles::{Slot, vh, vh_pack};
+use crate::handles::types::{Edge, Weight};
+use crate::handles::{Slot, vh};
 use crate::traits::{EdgeStore};
 
 pub enum ControlFlow {
@@ -28,7 +27,7 @@ where
     unsafe { std::ptr::write_bytes(flags_ptr, 0, vertices_count) };
 
     let was_queued_flags = unsafe { from_raw_parts_mut(flags_ptr as *mut bool, vertices_count) };
-    let to_visit = unsafe { from_raw_parts_mut(to_visit_ptr as *mut (*mut Edge), vertices_count) };
+    let to_visit = unsafe { from_raw_parts_mut(to_visit_ptr as *mut (*mut Edge), vertices_count) }; // Cheapest way to handle the starting vertex which doesn't have an edge
     let mut end = 1;
     let mut next_layer = 1;
     let mut layer = 0;
@@ -129,7 +128,7 @@ where
     let visit_ptr = unsafe { alloc(layout) };
 
     let to_visit = unsafe { visit_ptr as *mut (Slot, Slot, *mut Slot) };
-    let stack = unsafe { from_raw_parts_mut(to_visit, vertex_count) };
+    let stack = unsafe { from_raw_parts_mut(to_visit, vertex_count) }; // Cheapest way to handle the starting vertex which doesn't have an edge
     let mut top: isize = 0;
     let mut start_edge = start;
     stack[top as usize] = (edge_storage.get_edges_index(vh(start)), edge_storage.get_edges_index(vh(start)) + edge_storage.len(vh(start)), (&mut start_edge) as *mut Edge);
