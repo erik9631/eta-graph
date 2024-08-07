@@ -22,8 +22,7 @@ where
 
 impl<'a, VertexType, VertexStorageType, EdgeStorageType> DinicGraph<'a, VertexType, VertexStorageType, EdgeStorageType>
 where
-    VertexType: Clone + std::fmt::Display,
-    VertexStorageType: StoreVertex<VertexType=VertexType> + Clone,
+    VertexStorageType: StoreVertex<VertexType=VertexType>,
     EdgeStorageType: WeightedEdgeManipulate,
 {
     pub fn from(vertices: &'a VertexStorageType, edge_storage: &EdgeStorageType) -> Self {
@@ -64,8 +63,7 @@ where
 
     pub fn finalize_flow_calc(&mut self, original_graph: &WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>)
     where
-        VertexType: Clone,
-        VertexStorageType: StoreVertex<VertexType=VertexType> + Clone,
+        VertexStorageType: StoreVertex<VertexType=VertexType>,
         EdgeStorageType: WeightedEdgeManipulate,
     {
         let zipped_iters = original_graph.graph.edge_storage.iter().zip(self.edge_storage.iter_mut());
