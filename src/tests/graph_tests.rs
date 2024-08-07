@@ -167,7 +167,6 @@ pub fn graph_vertices_iter_test(){
 
 }
 
-//TODO Do an integrity test for the graph. Create an edge array memory snapshot. Only way to test
 #[test]
 pub fn graph_edges_iter_test(){
     let mut graph = Graph::new();

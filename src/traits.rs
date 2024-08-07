@@ -4,7 +4,6 @@ use std::process::Output;
 use crate::handles::Slot;
 use crate::handles::types::{Edge, VHandle, Weight};
 
-// TODO add iters for edges
 pub trait StoreVertex: Index<VHandle, Output=Self::VertexType> + IndexMut<VHandle, Output=Self::VertexType>{
     type VertexType;
     fn len(&self) -> usize;

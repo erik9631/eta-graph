@@ -110,8 +110,6 @@ where
     }, pre_order_func, post_order_func);
     dealloc_flags(flags);
 }
-
-// TODO Consider creating iter for the edges
 pub fn dfs_custom_flags<VisitedFunc, PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: Edge, vertex_count: usize,
                                                                          mut is_visited: VisitedFunc, mut pre_order_func: PreOrderFunc,
                                                                          mut post_order_func: PostOrderFunc)
@@ -124,11 +122,9 @@ where
     profile_fn!(dfs);
     let layout = Layout::array::<(Slot, Slot, *mut Slot)>(vertex_count).expect("Failed to create layout"); // Around ~50% faster than vec
 
-    // Have to use unsafe as the borrow checker doesn't know that flags and edges don't overlap
     let visit_ptr = unsafe { alloc(layout) };
-
     let to_visit = unsafe { visit_ptr as *mut (Slot, Slot, *mut Slot) };
-    let stack = unsafe { from_raw_parts_mut(to_visit, vertex_count) }; // Cheapest way to handle the starting vertex which doesn't have an edge
+    let stack = unsafe { from_raw_parts_mut(to_visit, vertex_count) }; // Pointers allow me to handle the start vertex without an edge
     let mut top: isize = 0;
     let mut start_edge = start;
     stack[top as usize] = (edge_storage.get_edges_index(vh(start)), edge_storage.get_edges_index(vh(start)) + edge_storage.len(vh(start)), (&mut start_edge) as *mut Edge);

@@ -3,36 +3,39 @@ use std::cell::{Cell};
 use std::ptr;
 use crate::algorithms::general::{alloc_flags, bfs, dealloc_flags, dfs, dfs_custom_flags, reset_flags};
 use crate::algorithms::general::ControlFlow::{Continue, End, Resume};
+use crate::edge_storage::EdgeStorage;
+use crate::graph::Graph;
 use crate::handles::types::{VHandle, Weight};
 use crate::handles::{pack, set_wgt, vh, vh_pack, wgt};
 use crate::traits::{StoreVertex, WeightedEdgeManipulate};
 use crate::weighted_graph::WeightedGraph;
 
-pub struct DinicGraph<VertexType, VertexStorageType, EdgeStorageType>
+pub struct DinicGraph<'a, VertexType, VertexStorageType, EdgeStorageType>
 where
-    VertexType: Clone,
-    VertexStorageType: StoreVertex<VertexType=VertexType> + Clone,
+    VertexStorageType: StoreVertex<VertexType=VertexType>,
     EdgeStorageType: WeightedEdgeManipulate,
 {
-    pub weighted_graph: WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>,
+    pub vertices: &'a VertexStorageType,
+    pub edge_storage: EdgeStorageType,
     pub flow_data: Vec<Weight>,
 }
 
-impl<VertexType, VertexStorageType, EdgeStorageType> DinicGraph<VertexType, VertexStorageType, EdgeStorageType>
+impl<'a, VertexType, VertexStorageType, EdgeStorageType> DinicGraph<'a, VertexType, VertexStorageType, EdgeStorageType>
 where
     VertexType: Clone + std::fmt::Display,
     VertexStorageType: StoreVertex<VertexType=VertexType> + Clone,
     EdgeStorageType: WeightedEdgeManipulate,
 {
-    pub fn from(graph: &WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>) -> Self {
-        let vertices_len = graph.graph.vertices.len();
+    pub fn from(vertices: &'a VertexStorageType, edge_storage: &EdgeStorageType) -> Self {
+        let vertices_len = vertices.len();
         let layout = Layout::array::<Weight>(vertices_len).expect("Failed to create layout");
         // TODO use SIMD
         let ptr = unsafe { alloc(layout) as *mut Weight };
         unsafe { ptr::write_bytes(ptr, 0, vertices_len) };
         let flow_data = unsafe { Vec::from_raw_parts(ptr, vertices_len, vertices_len) };
         DinicGraph {
-            weighted_graph: graph.clone(),
+            vertices: &vertices,
+            edge_storage: edge_storage.clone(),
             flow_data,
         }
     }
@@ -40,7 +43,7 @@ where
     pub fn mark_levels(&mut self, src_handle: VHandle, sink_handle: VHandle) -> Result<(), &str> {
         let mut found_sink = false;
         let start = pack(src_handle, -1);
-        bfs(&mut self.weighted_graph.graph.edge_storage, start, self.weighted_graph.graph.vertices.len(), |v_handle, layer| {
+        bfs(&mut self.edge_storage, start, self.vertices.len(), |v_handle, layer| {
             if vh(*v_handle) == sink_handle {
                 found_sink = true;
             }
@@ -65,7 +68,7 @@ where
         VertexStorageType: StoreVertex<VertexType=VertexType> + Clone,
         EdgeStorageType: WeightedEdgeManipulate,
     {
-        let zipped_iters = original_graph.graph.edge_storage.iter().zip(self.weighted_graph.graph.edge_storage.iter_mut());
+        let zipped_iters = original_graph.graph.edge_storage.iter().zip(self.edge_storage.iter_mut());
         for (idx, edges) in zipped_iters.enumerate() {
             let (original_edge, dinic_edge) = edges;
             let original_wgt = unsafe { wgt(*original_edge) };
@@ -87,8 +90,8 @@ where
                 let mut last_layer = Cell::new(-1);
                 bottleneck_value.set(Weight::MAX);
                 let mut augmenting_path = Cell::new(false);
-                dfs_custom_flags(&mut self.weighted_graph.graph.edge_storage,
-                                 vh_pack(src_handle), self.weighted_graph.graph.vertices.len(), |edges| {
+                dfs_custom_flags(&mut self.edge_storage,
+                                 vh_pack(src_handle), self.vertices.len(), |edges| {
                         if last_layer.get() < self.flow_data[vh(edges) as usize] {
                             return false;
                         }
@@ -124,6 +127,14 @@ where
         }
     }
 }
+
+// pub fn dinic<VertexType, VertexStorageType, EdgeStorageType>(graph: &mut WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>) -> WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>
+// where
+//     VertexType: Clone,
+//
+// {
+//
+// }
 // pub fn hybrid_dinic<VertexType, VertexStorageType, EdgeStorageType>(graph: WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>) -> DinicGraphView<VertexType, VertexStorageType, EdgeStorageType>
 // where
 //     EdgeStorageType: WeightedManipulate

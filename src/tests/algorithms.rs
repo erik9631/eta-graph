@@ -200,7 +200,7 @@ pub fn dinic_level_test(){
     graph.graph.edge_storage.connect_weighted(a_b_b, a_a_x, 10);
     graph.graph.edge_storage.connect_weighted(a_b_c, a_a_x, 10);
 
-    let mut dinic_graph = DinicGraph::from(&mut graph);
+    let mut dinic_graph = DinicGraph::from(&graph.graph.vertices, &graph.graph.edge_storage);
     dinic_graph.mark_levels(a, a_a_x).expect("Sink not found");
 
     let mut snap = vec![
@@ -214,9 +214,9 @@ pub fn dinic_level_test(){
         ("a".to_string(), 0),
     ];
 
-    bfs(&mut dinic_graph.weighted_graph.graph.edge_storage, vh_pack(a), dinic_graph.weighted_graph.graph.vertices.len(), |v_handle, layer|{
+    bfs(&mut dinic_graph.edge_storage, vh_pack(a), dinic_graph.vertices.len(), |v_handle, layer|{
         let snap_data = snap.pop().unwrap();
-        assert_eq!(dinic_graph.weighted_graph.graph.vertices[vh(*v_handle)], snap_data.0);
+        assert_eq!(dinic_graph.vertices[vh(*v_handle)], snap_data.0);
         assert_eq!(dinic_graph.flow_data[vh(*v_handle) as usize], snap_data.1);
         Resume
     });
@@ -240,15 +240,15 @@ pub fn dinic_test(){
     graph.graph.edge_storage.connect_weighted(a_b_b, a_a_x, 10);
     graph.graph.edge_storage.connect_weighted(a_b_c, a_a_x, 10);
 
-    let mut dinic_graph = DinicGraph::from(&mut graph);
+    let mut dinic_graph = DinicGraph::from(&graph.graph.vertices, &graph.graph.edge_storage);
     dinic_graph.perform_search(a, a_a_x);
     dinic_graph.finalize_flow_calc(&graph);
 
     let mut snap = vec![
-        0,10,10,20,0,10,10,20,20,20,0 // Todo fix the initial value
+        0,10,10,20,0,10,10,20,20,20,0
     ];
 
-    bfs(&mut dinic_graph.weighted_graph.graph.edge_storage, vh_pack(a), dinic_graph.weighted_graph.graph.vertices.len(), |v_handle, layer|{
+    bfs(&mut dinic_graph.edge_storage, vh_pack(a), dinic_graph.vertices.len(), |v_handle, layer|{
         let snap_data = snap.pop().unwrap();
         assert_eq!(snap_data, wgt(*v_handle));
         Resume

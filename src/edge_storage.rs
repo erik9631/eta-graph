@@ -1,5 +1,3 @@
-use std::iter::Enumerate;
-use std::mem;
 use std::mem::size_of;
 use std::ops::{Index, IndexMut};
 use std::slice::{from_raw_parts, from_raw_parts_mut};
@@ -22,7 +20,6 @@ pub struct EdgeStorage {
     pub edges: Vec<Slot>,
     pub indices: Vec<Slot>, //Todo, make it contain EHandles which are not compatible with VHandles
 }
-//TODO Refactor efficiency unsafe code
 
 pub struct EdgeStorageIter<'a> {
     edges: &'a Vec<Slot>,
@@ -66,7 +63,7 @@ impl<'a> Iterator for EdgeStorageIter<'a> {
         if self.index == self.data_end {
             return None;
         }
-        let result = Some(unsafe{self.edges.as_ptr().add(self.index).as_ref().unwrap()});
+        let result = self.edges.get(self.index);
         self.index += 1;
         return result
     }
@@ -247,7 +244,6 @@ impl GraphOperate for EdgeStorage {
         let len = self.len(from) as usize;
         let new_size = len + to.len();
 
-        // TODO return as Result instead of panic!
         if new_size > self.edge_block_capacity(from) as usize {
             panic!("Edge size is greater than the allocated size");
         }
