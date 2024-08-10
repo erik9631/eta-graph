@@ -4,12 +4,8 @@ version = "0.1.0"
 edition = "2021"
 build = "build.rs"
 
-#[profile.release-with-debug]
-#inherits = "release"
-#debug = true
-
 [profile.test]
-inherits = "release"
+#inherits = "release"
 debug = true
 
 [dependencies]

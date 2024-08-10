@@ -1,11 +1,13 @@
 use std::alloc::{alloc, Layout};
 use std::cell::{Cell};
 use std::ptr;
+use eta_algorithms::data_structs::array::Array;
+use eta_algorithms::data_structs::queue::Queue;
 use crate::algorithms::general::{ bfs, dfs_custom_flags};
 use crate::algorithms::general::ControlFlow::{Continue, End, Resume};
 use crate::edge_storage::EdgeStorage;
 use crate::graph::Graph;
-use crate::handles::types::{VHandle, Weight};
+use crate::handles::types::{Edge, VHandle, Weight};
 use crate::handles::{pack, set_wgt, vh, vh_pack, wgt};
 use crate::traits::{StoreVertex, WeightedEdgeManipulate};
 use crate::weighted_graph::WeightedGraph;
@@ -41,19 +43,66 @@ where
 
     pub fn mark_levels(&mut self, src_handle: VHandle, sink_handle: VHandle) -> Result<(), &str> {
         let mut found_sink = false;
-        let start = pack(src_handle, -1);
-        bfs(&mut self.edge_storage, start, self.vertices.len(), |v_handle, layer| {
-            if vh(*v_handle) == sink_handle {
+        let mut start = pack(src_handle, -1);
+        let mut queue = Queue::<*mut Edge>::new_pow2_sized(self.vertices.len()); // Direct pointer access is faster than offsets
+        let mut visited_flag = Array::new_default_bytes(self.vertices.len(), 0);
+        queue.push(&mut start as *mut Edge);
+        let mut layer = 0;
+
+        let mut sibling_counter = 0;
+        let mut last_sibling_in_layer = 1;
+        let mut next_last_sibling_in_layer = 1;
+
+        while queue.len() > 0 {
+            let handle_ptr = unsafe{queue.dequeue().unwrap()};
+            let handle = unsafe{*handle_ptr};
+            if vh(handle) == sink_handle {
                 found_sink = true;
             }
+            self.flow_data[vh(handle) as usize] = layer;
 
-            if wgt(*v_handle) == 0 {
-                return Continue;
+            let len = self.edge_storage.len(vh(handle));
+            let mut next_edge = self.edge_storage.edges_mut_ptr(vh(handle));
+            let edges_end = unsafe{ next_edge.add(len as usize)};
+            if sibling_counter == last_sibling_in_layer {
+
             }
 
-            self.flow_data[vh(*v_handle) as usize] = layer;
-            Resume
-        });
+            while next_edge != edges_end {
+                if visited_flag[vh(unsafe{*next_edge}) as usize] {
+                    unsafe{ next_edge = next_edge.add(1)};
+                    continue;
+                }
+                if wgt(unsafe{*next_edge}) == 0 {
+                    unsafe{ next_edge = next_edge.add(1)};
+                    continue;
+                }
+
+
+                visited_flag[vh(unsafe{*next_edge}) as usize] = true;
+                queue.push(next_edge);
+                unsafe{ next_edge = next_edge.add(1)};
+                next_last_sibling_in_layer += 1;
+            }
+            sibling_counter += 1;
+            if sibling_counter == last_sibling_in_layer{
+                last_sibling_in_layer = next_last_sibling_in_layer;
+                layer += 1;
+            }
+        }
+
+        // bfs(&mut self.edge_storage, start, self.vertices.len(), |v_handle, layer| {
+        //     if vh(*v_handle) == sink_handle {
+        //         found_sink = true;
+        //     }
+        //
+        //     if wgt(*v_handle) == 0 {
+        //         return Continue;
+        //     }
+        //
+        //     self.flow_data[vh(*v_handle) as usize] = layer;
+        //     Resume
+        // });
 
         if !found_sink {
             return Err("Sink not found");
