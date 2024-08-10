@@ -78,7 +78,6 @@ where
                     continue;
                 }
 
-
                 visited_flag[vh(unsafe{*next_edge}) as usize] = true;
                 queue.push(next_edge);
                 unsafe{ next_edge = next_edge.add(1)};
@@ -90,19 +89,6 @@ where
                 layer += 1;
             }
         }
-
-        // bfs(&mut self.edge_storage, start, self.vertices.len(), |v_handle, layer| {
-        //     if vh(*v_handle) == sink_handle {
-        //         found_sink = true;
-        //     }
-        //
-        //     if wgt(*v_handle) == 0 {
-        //         return Continue;
-        //     }
-        //
-        //     self.flow_data[vh(*v_handle) as usize] = layer;
-        //     Resume
-        // });
 
         if !found_sink {
             return Err("Sink not found");
