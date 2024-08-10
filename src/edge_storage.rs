@@ -52,7 +52,11 @@ impl <'a> EdgeStorageIter<'a>{
 impl<'a> Iterator for EdgeStorageIter<'a> {
     type Item = &'a Slot;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index == self.chunk_end {
+        if self.index == self.data_end {
+            return None;
+        }
+
+        while self.index == self.chunk_end && self.next_chunk != self.data_end {
             self.index = self.next_chunk;
             let len = self.edges[self.index + LEN_OFFSET as usize] as usize;
             let capacity = self.edges[ self.index + CAPACITY_OFFSET as usize ] as usize;
@@ -60,9 +64,7 @@ impl<'a> Iterator for EdgeStorageIter<'a> {
             self.chunk_end = self.index + len + HEADER_SIZE as usize;
             self.index = self.index + HEADER_SIZE as usize;
         }
-        if self.index == self.data_end {
-            return None;
-        }
+
         let result = self.edges.get(self.index);
         self.index += 1;
         return result
@@ -106,7 +108,11 @@ impl <'a> EdgeStorageIterMut<'a> {
 impl<'a> Iterator for EdgeStorageIterMut<'a> {
     type Item = &'a mut Slot;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index == self.chunk_end {
+        if self.index == self.data_end {
+            return None;
+        }
+
+        while self.index == self.chunk_end {
             self.index = self.next_chunk;
             let len = self.edges[self.index + LEN_OFFSET as usize] as usize;
             let capacity = self.edges[ self.index + CAPACITY_OFFSET as usize ] as usize;
@@ -114,9 +120,7 @@ impl<'a> Iterator for EdgeStorageIterMut<'a> {
             self.chunk_end = self.index + len + HEADER_SIZE as usize;
             self.index = self.index + HEADER_SIZE as usize;
         }
-        if self.index == self.data_end {
-            return None;
-        }
+
         let result = Some(unsafe{self.edges.as_mut_ptr().add(self.index).as_mut().unwrap()});
         self.index += 1;
         return result
@@ -253,13 +257,13 @@ impl GraphOperate for EdgeStorage {
         *self.len_mut(from) = new_size as Slot;
     }
 
-    fn extend_edge_storage(&mut self, size: Slot) -> Slot {
+    fn create_edges_entry(&mut self, size: Slot) -> VHandle {
         let offset = self.edges.len() as Slot;
         let val = self.calculate_new_edges_size_abs(size);
         self.edges.resize_with(val as usize, Default::default);
         self.edges[ (offset + CAPACITY_OFFSET) as usize] = self.vertex_capacity + size;
         self.indices.push(offset);
-        return (self.indices.len() - 1) as Slot;
+        return (self.indices.len() - 1) as VHandle;
     }
 
     fn disconnect(&mut self, from: VHandle, to: VHandle) {

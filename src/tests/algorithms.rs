@@ -245,16 +245,12 @@ pub fn dinic_test(){
     dinic_graph.finalize_flow_calc(&graph);
 
     let mut snap = vec![
-        0,10,10,20,0,10,10,20,20,20,0
+        0,10,10,0,10,10,20,20,20,20
     ];
 
-    for (index, edge) in dinic_graph.edge_storage.iter().enumerate_as_index() {
-        println!("{index} {} {}", dinic_graph.vertices[vh(*edge)], wgt(*edge));
+    for edge in dinic_graph.edge_storage.iter(){
+        let snap_data = snap.pop().unwrap();
+        assert_eq!(snap_data, wgt(*edge));
     }
 
-    bfs(&mut dinic_graph.edge_storage, vh_pack(a), dinic_graph.vertices.len(), |v_handle, layer|{
-        let snap_data = snap.pop().unwrap();
-        assert_eq!(snap_data, wgt(*v_handle));
-        Resume
-    });
 }

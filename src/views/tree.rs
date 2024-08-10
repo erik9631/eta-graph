@@ -45,7 +45,7 @@ where
 
     fn create_vertex(&mut self, val: VertexType) -> VHandle {
         self.values.push(val);
-        self.nodes.extend_edge_storage(0);
+        self.nodes.create_edges_entry(0);
         let vertex = self.values.len() -1;
         return vertex as VHandle;
     }

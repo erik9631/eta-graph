@@ -5,14 +5,10 @@ edition = "2021"
 build = "build.rs"
 
 [profile.test]
-#inherits = "release"
+inherits = "release"
 debug = true
 
 [dependencies]
 eta-algorithms = "1.2.1"
 firestorm = '0.5.1'
 #firestorm = { version = "0.5.1", features=["enable_system_time"] }
-
-[[bin]]
-path = "src/lib.rs"
-name = "eta-graph"

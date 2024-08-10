@@ -16,7 +16,7 @@ pub trait StoreVertex: Index<VHandle, Output=Self::VertexType> + IndexMut<VHandl
 
 pub trait GraphOperate {
     fn add_edges(&mut self, src: VHandle, targets: &[Edge]);
-    fn extend_edge_storage(&mut self, size: Slot) -> Slot;
+    fn create_edges_entry(&mut self, size: Slot) -> VHandle;
     fn disconnect(&mut self, src_handle: VHandle, handle: VHandle);
     fn connect(&mut self, from: VHandle, to: VHandle);
 }
@@ -28,13 +28,6 @@ pub trait WeightedGraphOperate {
 pub trait EdgeStorageIterator: Iterator<Item=Self::Output>{
     type Output;
     fn edge_index(&self) -> usize;
-    fn enumerate_as_index(&mut self) -> Option<(usize, Self::Output)> {
-        let index = self.edge_index();
-        match self.next() {
-            None => None,
-            Some(next) => Some((index, next))
-        }
-    }
 }
 
 pub trait EdgeStore: Index<Slot, Output=Slot> + IndexMut<Slot, Output=Slot>{

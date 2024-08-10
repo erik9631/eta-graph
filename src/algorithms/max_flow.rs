@@ -99,7 +99,7 @@ where
         EdgeStorageType: WeightedEdgeManipulate,
     {
         let zipped_iters = original_graph.graph.edge_storage.iter().zip(self.edge_storage.iter_mut());
-        for (idx, edges) in zipped_iters.enumerate() {
+        for edges in zipped_iters {
             let (original_edge, dinic_edge) = edges;
             let original_wgt = unsafe { wgt(*original_edge) };
             let current_wgt = wgt(*dinic_edge);
