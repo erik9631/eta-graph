@@ -4,9 +4,9 @@ use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
 use eta_algorithms::data_structs::stack::Stack;
 use firestorm::{profile_fn, profile_section};
-use crate::handles::types::{Edge, Weight};
-use crate::handles::{Slot, vh};
-use crate::traits::{EdgeStore};
+use crate::handles::types::{Edge, VHandle, Weight};
+use crate::handles::{pack, Slot, vh, wgt};
+use crate::traits::{EdgeStore, WeightedEdgeManipulate};
 
 pub enum ControlFlow {
     Resume,
