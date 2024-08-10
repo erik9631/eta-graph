@@ -22,7 +22,7 @@ where
 impl<'a, VertexType, VertexStorageType, EdgeStorageType> DinicGraph<'a, VertexType, VertexStorageType, EdgeStorageType>
 where
     VertexStorageType: StoreVertex<VertexType=VertexType>,
-    EdgeStorageType: WeightedEdgeManipulate, VertexType: std::fmt::Debug + std::fmt::Display
+    EdgeStorageType: WeightedEdgeManipulate
 {
     pub fn from(vertices: &'a VertexStorageType, edge_storage: &EdgeStorageType) -> Self {
         let vertices_len = vertices.len();
