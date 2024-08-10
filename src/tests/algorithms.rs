@@ -4,7 +4,7 @@ use crate::algorithms::max_flow::DinicGraph;
 use crate::graph::Graph;
 use crate::handles::types::{VHandle, Weight};
 use crate::handles::{vh, vh_pack, wgt};
-use crate::traits::{EdgeStore, GraphOperate, WeightedGraphOperate};
+use crate::traits::{EdgeStore, GraphOperate, WeightedGraphOperate, EdgeStorageIterator};
 use crate::weighted_graph::WeightedGraph;
 
 #[test]
@@ -217,7 +217,7 @@ pub fn dinic_level_test(){
     bfs(&mut dinic_graph.edge_storage, vh_pack(a), dinic_graph.vertices.len(), |v_handle, layer|{
         let snap_data = snap.pop().unwrap();
         assert_eq!(dinic_graph.vertices[vh(*v_handle)], snap_data.0);
-        assert_eq!(dinic_graph.flow_data[vh(*v_handle) as usize], snap_data.1);
+        assert_eq!(dinic_graph.layer_data[vh(*v_handle) as usize], snap_data.1);
         Resume
     });
 }
@@ -247,6 +247,10 @@ pub fn dinic_test(){
     let mut snap = vec![
         0,10,10,20,0,10,10,20,20,20,0
     ];
+
+    for (index, edge) in dinic_graph.edge_storage.iter().enumerate_as_index() {
+        println!("{index} {} {}", dinic_graph.vertices[vh(*edge)], wgt(*edge));
+    }
 
     bfs(&mut dinic_graph.edge_storage, vh_pack(a), dinic_graph.vertices.len(), |v_handle, layer|{
         let snap_data = snap.pop().unwrap();

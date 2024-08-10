@@ -3,10 +3,7 @@ use std::cell::{Cell};
 use std::ptr;
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
-use crate::algorithms::general::{ bfs, dfs_custom_flags};
-use crate::algorithms::general::ControlFlow::{Continue, End, Resume};
-use crate::edge_storage::EdgeStorage;
-use crate::graph::Graph;
+use eta_algorithms::data_structs::stack::Stack;
 use crate::handles::types::{Edge, VHandle, Weight};
 use crate::handles::{pack, set_wgt, vh, vh_pack, wgt};
 use crate::traits::{StoreVertex, WeightedEdgeManipulate};
@@ -19,13 +16,13 @@ where
 {
     pub vertices: &'a VertexStorageType,
     pub edge_storage: EdgeStorageType,
-    pub flow_data: Vec<Weight>,
+    pub layer_data: Vec<Weight>,
 }
 
 impl<'a, VertexType, VertexStorageType, EdgeStorageType> DinicGraph<'a, VertexType, VertexStorageType, EdgeStorageType>
 where
     VertexStorageType: StoreVertex<VertexType=VertexType>,
-    EdgeStorageType: WeightedEdgeManipulate,
+    EdgeStorageType: WeightedEdgeManipulate, VertexType: std::fmt::Debug + std::fmt::Display
 {
     pub fn from(vertices: &'a VertexStorageType, edge_storage: &EdgeStorageType) -> Self {
         let vertices_len = vertices.len();
@@ -37,7 +34,7 @@ where
         DinicGraph {
             vertices: &vertices,
             edge_storage: edge_storage.clone(),
-            flow_data,
+            layer_data: flow_data,
         }
     }
 
@@ -59,7 +56,7 @@ where
             if vh(handle) == sink_handle {
                 found_sink = true;
             }
-            self.flow_data[vh(handle) as usize] = layer;
+            self.layer_data[vh(handle) as usize] = layer;
 
             let len = self.edge_storage.len(vh(handle));
             let mut next_edge = self.edge_storage.edges_mut_ptr(vh(handle));
@@ -118,45 +115,102 @@ where
                     break;
                 }
             }
-            loop {
-                let bottleneck_value = Cell::new(Weight::MAX);
-                let mut last_layer = Cell::new(-1);
-                bottleneck_value.set(Weight::MAX);
-                let mut augmenting_path = Cell::new(false);
-                dfs_custom_flags(&mut self.edge_storage,
-                                 vh_pack(src_handle), self.vertices.len(), |edges| {
-                        if last_layer.get() < self.flow_data[vh(edges) as usize] {
-                            return false;
-                        }
-                        return true;
-                    }, |v_handle| {
-                        if vh(*v_handle) == sink_handle {
-                            *v_handle = set_wgt(*v_handle, wgt(*v_handle) - bottleneck_value.get());
-                            augmenting_path.set(true);
-                            return End;
-                        }
 
-                        if wgt(*v_handle) == 0 {
-                            return Continue;
-                        }
+            loop{
+                let mut stack = Stack::new(self.vertices.len());
+                let len = self.edge_storage.len(src_handle);
+                let mut current_edge_offset = self.edge_storage.get_edges_index(src_handle);
+                let mut current_edge = pack(src_handle, Weight::MAX);
+                stack.push((current_edge_offset, current_edge_offset + len, (&mut current_edge) as *mut Edge));
 
-                        let weight = wgt(*v_handle);
-                        if wgt(*v_handle) < bottleneck_value.get() {
-                            bottleneck_value.set(weight);
+                let mut augmented_path_found = false;
+                let mut bottleneck_value = Weight::MAX;
+                let mut current_layer = 0;
+
+                while stack.len() > 0 {
+                    let (current_edge_offset, end_offset, outgoing_edge) = stack.top_mut().unwrap();
+                    let outgoing_edge_val = unsafe{**outgoing_edge};
+                    current_layer = self.layer_data[vh(outgoing_edge_val) as usize];
+                    if vh(outgoing_edge_val) == sink_handle {
+                        augmented_path_found = true;
+                    }
+
+                    if wgt (outgoing_edge_val) < bottleneck_value {
+                        bottleneck_value = wgt(outgoing_edge_val);
+                    }
+
+                    // Backtracking
+                    if *current_edge_offset == *end_offset || augmented_path_found {
+                        if augmented_path_found {
+                            unsafe {
+                                let modified_edge = set_wgt(**outgoing_edge, wgt(**outgoing_edge) - bottleneck_value);
+                                (*outgoing_edge).write(modified_edge);
+                            };
                         }
-                        last_layer.set(self.flow_data[vh(*v_handle) as usize]);
-                        Resume
-                    }, |v_handle| {
-                        last_layer.set(last_layer.get() - 1);
-                        if !augmenting_path.get() {
-                            return;
-                        }
-                        *v_handle = set_wgt(*v_handle, wgt(*v_handle) - bottleneck_value.get());
-                    });
-                if !augmenting_path.get() {
+                        stack.pop();
+                        continue;
+                    }
+
+                    let next_edge_ptr = &mut self.edge_storage[*current_edge_offset] as *mut Edge;
+                    let next_edge = unsafe{*next_edge_ptr };
+                    let next_edge_layer = self.layer_data[vh(next_edge) as usize];
+
+                    *current_edge_offset += 1;
+                    // Exploring deeper
+
+                    if wgt(next_edge) != 0 && next_edge_layer > current_layer {
+                        let next_edge_edges = self.edge_storage.get_edges_index(vh(next_edge));
+                        let next_edge_edges_end = next_edge_edges + self.edge_storage.len(vh(next_edge));
+                        current_layer = next_edge_layer;
+                        stack.push((next_edge_edges, next_edge_edges_end, next_edge_ptr));
+                    }
+                }
+
+                if !augmented_path_found {
                     break;
                 }
             }
+
+
+            // loop {
+            //     let bottleneck_value = Cell::new(Weight::MAX);
+            //     let mut last_layer = Cell::new(-1);
+            //     bottleneck_value.set(Weight::MAX);
+            //     let mut augmenting_path = Cell::new(false);
+            //     dfs_custom_flags(&mut self.edge_storage,
+            //                      vh_pack(src_handle), self.vertices.len(), |edges| {
+            //             if last_layer.get() < self.flow_data[vh(edges) as usize] {
+            //                 return false;
+            //             }
+            //             return true;
+            //         }, |v_handle| {
+            //             if vh(*v_handle) == sink_handle {
+            //                 *v_handle = set_wgt(*v_handle, wgt(*v_handle) - bottleneck_value.get());
+            //                 augmenting_path.set(true);
+            //                 return End;
+            //             }
+            //
+            //             if wgt(*v_handle) == 0 {
+            //                 return Continue;
+            //             }
+            //
+            //             let weight = wgt(*v_handle);
+            //             if wgt(*v_handle) < bottleneck_value.get() {
+            //                 bottleneck_value.set(weight);
+            //             }
+            //             last_layer.set(self.flow_data[vh(*v_handle) as usize]);
+            //             Resume
+            //         }, |v_handle| {
+            //             last_layer.set(last_layer.get() - 1);
+            //             if !augmenting_path.get() {
+            //                 return;
+            //             }
+            //             *v_handle = set_wgt(*v_handle, wgt(*v_handle) - bottleneck_value.get());
+            //         });
+            //     if !augmenting_path.get() {
+            //         break;
+            //     }
+            // }
         }
     }
 }

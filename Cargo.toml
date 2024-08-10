@@ -12,3 +12,7 @@ debug = true
 eta-algorithms = "1.2.1"
 firestorm = '0.5.1'
 #firestorm = { version = "0.5.1", features=["enable_system_time"] }
+
+[[bin]]
+path = "src/lib.rs"
+name = "eta-graph"
