@@ -1,5 +1,5 @@
 [package]
-name = "teo-graph"
+name = "eta-graph"
 version = "0.1.0"
 edition = "2021"
 build = "build.rs"
@@ -9,9 +9,10 @@ build = "build.rs"
 #debug = true
 
 [profile.test]
-#inherits = "release"
+inherits = "release"
 debug = true
 
 [dependencies]
+eta-algorithms = "1.2.1"
 firestorm = '0.5.1'
 #firestorm = { version = "0.5.1", features=["enable_system_time"] }
