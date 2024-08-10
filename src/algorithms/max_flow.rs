@@ -61,11 +61,9 @@ where
             let len = self.edge_storage.len(vh(handle));
             let mut next_edge = self.edge_storage.edges_mut_ptr(vh(handle));
             let edges_end = unsafe{ next_edge.add(len as usize)};
-            if sibling_counter == last_sibling_in_layer {
-
-            }
 
             while next_edge != edges_end {
+
                 if visited_flag[vh(unsafe{*next_edge}) as usize] {
                     unsafe{ next_edge = next_edge.add(1)};
                     continue;
@@ -131,8 +129,19 @@ where
                     let (current_edge_offset, end_offset, outgoing_edge) = stack.top_mut().unwrap();
                     let outgoing_edge_val = unsafe{**outgoing_edge};
                     current_layer = self.layer_data[vh(outgoing_edge_val) as usize];
+
                     if vh(outgoing_edge_val) == sink_handle {
                         augmented_path_found = true;
+                    }
+
+                    // In case of augmented path found, we need to backtrack and ignore everything else
+                    if augmented_path_found{
+                        unsafe {
+                            let modified_edge = set_wgt(**outgoing_edge, wgt(**outgoing_edge) - bottleneck_value);
+                            (*outgoing_edge).write(modified_edge);
+                        };
+                        stack.pop();
+                        continue;
                     }
 
                     if wgt (outgoing_edge_val) < bottleneck_value {
@@ -140,13 +149,7 @@ where
                     }
 
                     // Backtracking
-                    if *current_edge_offset == *end_offset || augmented_path_found {
-                        if augmented_path_found {
-                            unsafe {
-                                let modified_edge = set_wgt(**outgoing_edge, wgt(**outgoing_edge) - bottleneck_value);
-                                (*outgoing_edge).write(modified_edge);
-                            };
-                        }
+                    if *current_edge_offset == *end_offset {
                         stack.pop();
                         continue;
                     }
@@ -156,8 +159,8 @@ where
                     let next_edge_layer = self.layer_data[vh(next_edge) as usize];
 
                     *current_edge_offset += 1;
-                    // Exploring deeper
 
+                    // Exploring deeper
                     if wgt(next_edge) != 0 && next_edge_layer > current_layer {
                         let next_edge_edges = self.edge_storage.get_edges_index(vh(next_edge));
                         let next_edge_edges_end = next_edge_edges + self.edge_storage.len(vh(next_edge));
@@ -170,47 +173,6 @@ where
                     break;
                 }
             }
-
-
-            // loop {
-            //     let bottleneck_value = Cell::new(Weight::MAX);
-            //     let mut last_layer = Cell::new(-1);
-            //     bottleneck_value.set(Weight::MAX);
-            //     let mut augmenting_path = Cell::new(false);
-            //     dfs_custom_flags(&mut self.edge_storage,
-            //                      vh_pack(src_handle), self.vertices.len(), |edges| {
-            //             if last_layer.get() < self.flow_data[vh(edges) as usize] {
-            //                 return false;
-            //             }
-            //             return true;
-            //         }, |v_handle| {
-            //             if vh(*v_handle) == sink_handle {
-            //                 *v_handle = set_wgt(*v_handle, wgt(*v_handle) - bottleneck_value.get());
-            //                 augmenting_path.set(true);
-            //                 return End;
-            //             }
-            //
-            //             if wgt(*v_handle) == 0 {
-            //                 return Continue;
-            //             }
-            //
-            //             let weight = wgt(*v_handle);
-            //             if wgt(*v_handle) < bottleneck_value.get() {
-            //                 bottleneck_value.set(weight);
-            //             }
-            //             last_layer.set(self.flow_data[vh(*v_handle) as usize]);
-            //             Resume
-            //         }, |v_handle| {
-            //             last_layer.set(last_layer.get() - 1);
-            //             if !augmenting_path.get() {
-            //                 return;
-            //             }
-            //             *v_handle = set_wgt(*v_handle, wgt(*v_handle) - bottleneck_value.get());
-            //         });
-            //     if !augmenting_path.get() {
-            //         break;
-            //     }
-            // }
         }
     }
 }
