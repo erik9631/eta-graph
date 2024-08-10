@@ -70,23 +70,6 @@ where
     }
 }
 
-pub fn alloc_flags(vertices_count: usize) -> (&'static mut [bool], Layout) {
-    let flag_layout = Layout::array::<bool>(vertices_count).expect("Failed to create layout"); // Around ~50% faster than vec
-    let flags_ptr = unsafe { alloc(flag_layout) };
-    unsafe { std::ptr::write_bytes(flags_ptr, 0, vertices_count) };
-    let flag_slice = unsafe { from_raw_parts_mut(flags_ptr as *mut bool, vertices_count) };
-    (flag_slice, flag_layout)
-}
-
-pub fn dealloc_flags(flags: (&'static mut [bool], Layout)) {
-    unsafe { dealloc(unsafe { flags.0.as_mut_ptr() as *mut u8 }, flags.1) };
-}
-
-pub fn reset_flags(flags: &mut [bool]) {
-    unsafe { std::ptr::write_bytes(flags.as_mut_ptr(), 0, flags.len()) };
-}
-
-
 #[cfg_attr(not(debug_assertions), inline(always))]
 pub fn dfs<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: Edge, vertices_count: usize, mut pre_order_func: PreOrderFunc,
                                                mut post_order_func: PostOrderFunc)
@@ -95,13 +78,12 @@ where
     PostOrderFunc: FnMut(&mut Edge),
     Edges: EdgeStore,
 {
-    let flags = alloc_flags(vertices_count);
+    let mut flags = Array::new_default_bytes(vertices_count, 0);
     dfs_custom_flags(edge_storage, start, vertices_count, |to_visit| {
-        let was_visited = flags.0[vh(to_visit) as usize];
-        flags.0[vh(to_visit) as usize] = true;
+        let was_visited = flags[vh(to_visit) as usize];
+        flags[vh(to_visit) as usize] = true;
         return was_visited;
     }, pre_order_func, post_order_func);
-    dealloc_flags(flags);
 }
 
 pub fn dfs_custom_flags<VisitedFunc, PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: Edge, vertex_count: usize,

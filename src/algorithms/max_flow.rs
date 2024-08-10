@@ -1,7 +1,7 @@
 use std::alloc::{alloc, Layout};
 use std::cell::{Cell};
 use std::ptr;
-use crate::algorithms::general::{alloc_flags, bfs, dealloc_flags, dfs, dfs_custom_flags, reset_flags};
+use crate::algorithms::general::{ bfs, dfs_custom_flags};
 use crate::algorithms::general::ControlFlow::{Continue, End, Resume};
 use crate::edge_storage::EdgeStorage;
 use crate::graph::Graph;
