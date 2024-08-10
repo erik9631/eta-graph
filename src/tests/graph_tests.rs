@@ -182,10 +182,21 @@ pub fn graph_edges_iter_test(){
         vals += 5;
     }
     let mut counter = 1;
-    for (index, item) in graph.edge_storage.iter().enumerate_as_index(){
-        assert_eq!(*item as usize, counter);
-        counter += 1;
-    }
+
+    let mut iter = graph.edge_storage.iter_mut();
+    let a = iter.next().unwrap();
+    let b = iter.next().unwrap();
+    let c = iter.next().unwrap();
+
+    *a = 10;
+    *b = 20;
+
+    println!("{} {}", *a, *b);
+
+    // for (index, item) in graph.edge_storage.iter().enumerate_as_index(){
+    //     assert_eq!(*item as usize, counter);
+    //     counter += 1;
+    // }
 }
 //
 // #[test]

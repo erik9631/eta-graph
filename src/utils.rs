@@ -1,3 +1,4 @@
+use std::alloc::{alloc, Layout};
 
 pub fn split_to_parts<T>(input: &[T], number_of_parts: usize) -> Vec<&[T]>{
     let (quot, rem) = (input.len() / number_of_parts, input.len() % number_of_parts);
@@ -67,4 +68,15 @@ pub fn extract_from_slice_mut<T>(slice: &mut [T], start: usize, size: usize) -> 
         let end_part = std::slice::from_raw_parts_mut(data_end_ptr, end_part_size);
         return (first_part, mid_part, end_part);
     }
+}
+
+pub fn alloc_array<Type>(size: usize) -> (&'static mut[Type], Layout){
+    let layout = Layout::array::<Type>(size).expect("Failed to create layout");
+    let ptr = unsafe { alloc(layout) };
+    let slice = unsafe { std::slice::from_raw_parts_mut(ptr as *mut Type, size) };
+    return (slice, layout);
+}
+
+pub fn dealloc_array<Type>(slice: (&'static mut[Type], Layout)){
+    unsafe { std::alloc::dealloc(slice.0.as_mut_ptr() as *mut u8, slice.1) };
 }
