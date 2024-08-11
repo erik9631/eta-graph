@@ -3,7 +3,7 @@ use eta_algorithms::data_structs::queue::Queue;
 use crate::algorithms::general::{bfs, dfs};
 use crate::algorithms::general::ControlFlow::{End, Resume};
 use crate::algorithms::max_flow::{DinicGraph, mark_levels};
-use crate::algorithms::path_finding::dijkstra;
+use crate::algorithms::path_finding::{dijkstra};
 use crate::graph::Graph;
 use crate::handles::types::{Edge, Weight};
 use crate::handles::{vh, vh_pack, wgt};
