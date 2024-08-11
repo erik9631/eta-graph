@@ -14,7 +14,7 @@ struct HeapPair{
 #[derive(Clone, Copy)]
 struct PathVertex {
     pub from: VHandle,
-    pub distance: Weight,
+    pub f_score: Weight,
 }
 
 impl HeapPair {
@@ -69,7 +69,7 @@ where
 {
     let mut explore_list = BinaryHeap::<HeapPair>::with_capacity(vertices_count);
 
-    let mut f_scores = Array::<PathVertex>::new_with_default(vertices_count, PathVertex{from: 0, distance: Weight::MAX});
+    let mut f_scores = Array::<PathVertex>::new_with_default(vertices_count, PathVertex{from: 0, f_score: Weight::MAX});
     explore_list.push(HeapPair{vertex: start, f_score: 0});
 
     while let Some(current_vertex) = explore_list.pop() {
@@ -80,11 +80,11 @@ where
         let neighbors = edge_storage.edges(current_vertex.vertex);
         for neighbor in neighbors {
             let neighbor_f_score = wgt(*neighbor) + current_vertex.f_score + h_score(current_vertex.vertex, *neighbor);
-            if f_scores[vh(*neighbor) as usize].distance < neighbor_f_score {
+            if f_scores[vh(*neighbor) as usize].f_score < neighbor_f_score {
                 continue;
             }
             explore_list.push(HeapPair::new(vh(*neighbor), neighbor_f_score));
-            f_scores[vh(*neighbor) as usize] = PathVertex{from: current_vertex.vertex, distance: neighbor_f_score };
+            f_scores[vh(*neighbor) as usize] = PathVertex{from: current_vertex.vertex, f_score: neighbor_f_score };
         }
     }
     None
