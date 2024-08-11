@@ -31,14 +31,14 @@ pub fn graph_basic_test(){
     let b = graph.create_leaf("b");
     graph.create_leaf("c");
 
-    graph.create_and_connect_leaf(a, "a_a");
-    graph.create_and_connect_leaf(a, "a_b");
-    graph.create_and_connect_leaf(a, "a_c");
+    graph.create_and_connect_0(a, "a_a");
+    graph.create_and_connect_0(a, "a_b");
+    graph.create_and_connect_0(a, "a_c");
 
-    let b_a = graph.create_and_connect_leaf(b, "b_a");
-    graph.create_and_connect_leaf(b, "b_b");
+    let b_a = graph.create_and_connect_0(b, "b_a");
+    graph.create_and_connect_0(b, "b_b");
 
-   graph.create_and_connect_leaf(b_a, "b_a_a");
+   graph.create_and_connect_0(b_a, "b_a_a");
 
     let a_edges = graph.edge_storage.edges(a);
     assert_eq!(a_edges.len(), 3);
@@ -109,7 +109,7 @@ pub fn graph_edge_overflow_test(){
     let a = graph.create_leaf(0);
 
     for i in 0..count {
-        graph.create_and_connect_leaf(a, i+1);
+        graph.create_and_connect_0(a, i+1);
     }
 }
 
@@ -121,9 +121,9 @@ pub fn graph_mutability_test(){
     graph.create_leaf("b");
     graph.create_leaf("c");
 
-    graph.create_and_connect_leaf(a, "a_a");
-    graph.create_and_connect_leaf(a, "a_b");
-    graph.create_and_connect_leaf(a, "a_c");
+    graph.create_and_connect_0(a, "a_a");
+    graph.create_and_connect_0(a, "a_b");
+    graph.create_and_connect_0(a, "a_c");
 
 
     let edges = graph.edge_storage.edges(a);
@@ -174,10 +174,10 @@ pub fn graph_edges_iter_test(){
     let mut last = graph.create(0, 5);
     let mut vals = 0;
     for i in 0..test_size {
-        graph.create_and_connect_leaf(last, vals+1);
-        graph.create_and_connect_leaf(last, vals+2);
-        graph.create_and_connect_leaf(last, vals+3);
-        graph.create_and_connect_leaf(last, vals+4);
+        graph.create_and_connect_0(last, vals+1);
+        graph.create_and_connect_0(last, vals+2);
+        graph.create_and_connect_0(last, vals+3);
+        graph.create_and_connect_0(last, vals+4);
        last =  graph.create_and_connect(last, vals+5, 5);
         vals += 5;
     }
@@ -228,12 +228,12 @@ pub fn graph_disconnect_test(){
     graph.create_leaf("b");
     graph.create_leaf("c");
 
-    graph.create_and_connect_leaf(a, "a_a");
-    let ab= graph.create_and_connect_leaf(a, "a_b");
-    graph.create_and_connect_leaf(a, "a_c");
-    let ad= graph.create_and_connect_leaf(a, "a_d");
-    graph.create_and_connect_leaf(a, "a_e");
-    let af= graph.create_and_connect_leaf(a, "a_f");
+    graph.create_and_connect_0(a, "a_a");
+    let ab= graph.create_and_connect_0(a, "a_b");
+    graph.create_and_connect_0(a, "a_c");
+    let ad= graph.create_and_connect_0(a, "a_d");
+    graph.create_and_connect_0(a, "a_e");
+    let af= graph.create_and_connect_0(a, "a_f");
     graph.edge_storage.disconnect(a, af);
 
 

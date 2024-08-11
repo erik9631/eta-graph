@@ -82,7 +82,7 @@ where
         new_vertex
     }
 
-    pub fn create_and_connect_leaf(&mut self, from: VHandle, val: VertexType) -> VHandle {
+    pub fn create_and_connect_0(&mut self, from: VHandle, val: VertexType) -> VHandle {
         self.create_and_connect(from, val, 0)
     }
 

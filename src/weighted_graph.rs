@@ -59,7 +59,7 @@ where
         new_vertex
     }
 
-    pub fn create_and_connect_leaf_weighted(&mut self, src_vertex: VHandle, val: VertexType, weight: Weight) -> VHandle {
+    pub fn create_and_connect_weighted_0(&mut self, src_vertex: VHandle, val: VertexType, weight: Weight) -> VHandle {
         self.create_and_connect_weighted(src_vertex, val, weight, 0)
     }
 

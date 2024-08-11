@@ -305,7 +305,7 @@ impl EdgeStore for EdgeStorage {
         let edge_chunk_index = self.indices[vertex as usize];
         let len = self.edges[ (edge_chunk_index + LEN_OFFSET) as usize];
         
-        (&self.edges[ (offset + edge_chunk_index + HEADER_SIZE) as usize.. (edge_chunk_index + HEADER_SIZE + len) as usize]) as _
+        &self.edges[ (offset + edge_chunk_index + HEADER_SIZE) as usize.. (edge_chunk_index + HEADER_SIZE + len) as usize]
     }
     fn edges_ptr_offset(&self, vertex: VHandle, offset: Slot) -> *const Edge {
         profile_method!(edges_ptr_offset);

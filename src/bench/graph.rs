@@ -15,7 +15,7 @@ pub fn graph_disconnect_bench(){
     let root = graph.create(0, data_size);
     let mut handles = Vec::with_capacity(data_size as usize);
     for i in 0..data_size {
-        handles.push(graph.create_and_connect_leaf(root, i+1));
+        handles.push(graph.create_and_connect_0(root, i+1));
     }
 
     let start = Instant::now();
@@ -33,7 +33,7 @@ pub fn graph_disconnect_safe_bench(){
     let mut graph = graph::Graph::with_reserve(data_size);
     let root = graph.create_leaf(0);
     for i in 0..data_size {
-        graph.create_and_connect_leaf(root, i+1);
+        graph.create_and_connect_0(root, i+1);
     }
 
     let start = Instant::now();
@@ -68,7 +68,7 @@ pub fn bfs_bench(){
         let child = graph.create_and_connect(root, i+1, data_size);
         number_of_nodes += 1;
         for j in 0..data_size {
-            graph.create_and_connect_leaf(child, j*data_size);
+            graph.create_and_connect_0(child, j*data_size);
             number_of_nodes += 1;
         }
     }
@@ -100,7 +100,7 @@ pub fn dfs_bench(){
         let child = graph.create_and_connect(root, i+1, data_size);
         number_of_nodes += 1;
         for j in 0..data_size {
-            graph.create_and_connect_leaf(child, j*data_size);
+            graph.create_and_connect_0(child, j*data_size);
             number_of_nodes += 1;
         }
     }
