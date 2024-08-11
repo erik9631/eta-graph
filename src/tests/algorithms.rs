@@ -203,11 +203,10 @@ pub fn level_test(){
     weighted_graph.graph.edge_storage.connect_weighted(a_b_b, a_a_x, 10);
     weighted_graph.graph.edge_storage.connect_weighted(a_b_c, a_a_x, 10);
 
-    let mut flow_data = Array::new_default_bytes(weighted_graph.graph.vertices.len(), 0);
-    let mut flags = Array::new_default_bytes(weighted_graph.graph.vertices.len(), 0);
-    let mut queue = Queue::<*mut Edge>::new_pow2_sized(weighted_graph.graph.vertices.len()); // Direct pointer access is faster than offsets
+    let mut flow_data = Array::new_with_default(weighted_graph.graph.vertices.len(), Weight::MAX);
+    let mut queue = Queue::<*mut Edge>::new_pow2_sized(weighted_graph.graph.vertices.len());
     let mut edges_copy = weighted_graph.graph.edge_storage.clone();
-    mark_levels(a, a_a_x, &mut edges_copy, &mut queue, &mut flags, &mut flow_data).expect("Sink not found");
+    mark_levels(a, a_a_x, &mut edges_copy, &mut queue, &mut flow_data).expect("Sink not found");
 
     let mut snap = vec![
         ("a_a_x".to_string(), 3),

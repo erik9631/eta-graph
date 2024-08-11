@@ -5,6 +5,8 @@ use eta_algorithms::data_structs::stack::Stack;
 use crate::handles::types::{Edge, VHandle, Weight};
 use crate::handles::{pack, set_wgt, vh, wgt};
 use crate::traits::{StoreVertex, WeightedEdgeManipulate};
+const DUMMY_WEIGHT: Weight = -1;
+
 
 pub struct DinicGraph<'a, VertexType, VertexStorageType, EdgeStorageType>
 where
@@ -26,7 +28,7 @@ where
         let mut dinic_graph = DinicGraph {
             vertices,
             edge_storage: edge_storage.clone(),
-            layer_data: Array::new_default_bytes(vertices_len, 0),
+            layer_data: Array::new(vertices_len),
         };
 
         dinic_graph.perform_search(src_handle, sink_handle);
@@ -51,10 +53,10 @@ where
     pub fn perform_search(&mut self, src_handle: VHandle, sink_handle: VHandle) {
         let mut stack = Stack::new(self.vertices.len());
         let mut queue = Queue::<*mut Edge>::new_pow2_sized(self.vertices.len()); // Direct pointer access is faster than offsets
-        let mut visited_flag = Array::new_default_bytes(self.vertices.len(), 0);
+        self.layer_data.fill(Weight::MAX);
 
         loop {
-            match mark_levels(src_handle, sink_handle, &mut self.edge_storage, &mut queue, &mut visited_flag, &mut self.layer_data) {
+            match mark_levels(src_handle, sink_handle, &mut self.edge_storage, &mut queue,&mut self.layer_data) {
                 Ok(_) => {}
                 Err(_) => {
                     break;
@@ -123,13 +125,11 @@ where
     }
 }
 
-// TODO Visited flags might not be needed
 pub(in crate) fn mark_levels<EdgeStorageType, LayerDataType>(
     src_handle: VHandle,
     sink_handle: VHandle,
     edge_storage: &mut EdgeStorageType,
     queue: &mut Queue<*mut Edge>,
-    visited_flag: &mut Array<bool>,
     layer_data: &mut LayerDataType,
 ) -> Result<(), &'static str>
 where
@@ -137,7 +137,7 @@ where
     LayerDataType: Index<usize, Output=Weight> + IndexMut<usize, Output=Weight>,
 {
     let mut found_sink = false;
-    let mut start = pack(src_handle, -1);
+    let mut start = pack(src_handle, DUMMY_WEIGHT);
     queue.push(&mut start as *mut Edge);
     let mut layer = 0;
 
@@ -158,16 +158,14 @@ where
         let edges_end = unsafe { next_edge.add(len as usize) };
 
         while next_edge != edges_end {
-            if visited_flag[vh(unsafe { *next_edge }) as usize] {
-                unsafe { next_edge = next_edge.add(1) };
+            if layer_data[vh(unsafe { *next_edge }) as usize] <= layer {
                 continue;
             }
+
             if wgt(unsafe { *next_edge }) == 0 {
                 unsafe { next_edge = next_edge.add(1) };
                 continue;
             }
-
-            visited_flag[vh(unsafe { *next_edge }) as usize] = true;
             queue.push(next_edge);
             unsafe { next_edge = next_edge.add(1) };
             next_last_sibling_in_layer += 1;
@@ -184,17 +182,3 @@ where
     }
     Ok(())
 }
-
-// pub fn dinic<VertexType, VertexStorageType, EdgeStorageType>(graph: &mut WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>) -> WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>
-// where
-//     VertexType: Clone,
-//
-// {
-//
-// }
-// pub fn hybrid_dinic<VertexType, VertexStorageType, EdgeStorageType>(graph: WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>) -> DinicGraphView<VertexType, VertexStorageType, EdgeStorageType>
-// where
-//     EdgeStorageType: WeightedManipulate
-// {
-//
-// }
