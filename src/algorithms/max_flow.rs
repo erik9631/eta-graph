@@ -31,7 +31,7 @@ where
 
         dinic_graph.perform_search(src_handle, sink_handle);
         dinic_graph.finalize_flow_calc(edge_storage);
-        return dinic_graph;
+        dinic_graph
     }
 
     fn finalize_flow_calc(&mut self, original_edges: &EdgeStorageType)
@@ -63,7 +63,7 @@ where
 
             loop {
                 let len = self.edge_storage.len(src_handle);
-                let mut current_edge_offset = self.edge_storage.get_edges_index(src_handle);
+                let current_edge_offset = self.edge_storage.get_edges_index(src_handle);
                 let mut current_edge = pack(src_handle, Weight::MAX);
                 stack.push((current_edge_offset, current_edge_offset + len, (&mut current_edge) as *mut Edge));
 
@@ -182,7 +182,7 @@ where
     if !found_sink {
         return Err("Sink not found");
     }
-    return Ok(());
+    Ok(())
 }
 
 // pub fn dinic<VertexType, VertexStorageType, EdgeStorageType>(graph: &mut WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>) -> WeightedGraph<VertexType, VertexStorageType, EdgeStorageType>

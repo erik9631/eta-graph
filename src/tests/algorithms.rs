@@ -171,7 +171,7 @@ pub fn graph_dfs_end_test(){
     ];
 
     dfs(&mut graph.edge_storage, vh_pack(root), graph.vertices.len(), |handle|{
-        if snap.len() == 0 {
+        if snap.is_empty() {
             return End;
         }
         assert_eq!(graph.vertices[vh(*handle)], snap.pop().unwrap());
@@ -240,7 +240,7 @@ pub fn dinic_test(){
     graph.graph.edge_storage.connect_weighted(a_b_b, a_a_x, 10);
     graph.graph.edge_storage.connect_weighted(a_b_c, a_a_x, 10);
 
-    let mut dinic_graph = DinicGraph::from(&graph.graph.vertices, &graph.graph.edge_storage, a, a_a_x);
+    let dinic_graph = DinicGraph::from(&graph.graph.vertices, &graph.graph.edge_storage, a, a_a_x);
 
     let mut snap = vec![
         0,10,10,0,10,10,20,20,20,20

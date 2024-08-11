@@ -2,7 +2,6 @@
 use crate::handles::{NONE, Slot, vh, vh_pack};
 use crate::handles::types::{Edge, VHandle};
 use crate::traits::{GraphOperate, EdgeStore, StoreVertex};
-use crate::vertex_storage::VertexStorage;
 
 pub struct TreeView<'a, VertexType, VertexStorageType, EdgeStorageType>
 where
@@ -24,7 +23,7 @@ where
 {
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn new(edges: &'a mut EdgeStorageType, vertices: &'a mut VertexStorageType) -> Self {
-        return TreeView{
+        TreeView{
             nodes: edges,
             values: vertices,
 
@@ -47,15 +46,15 @@ where
         self.values.push(val);
         self.nodes.create_edges_entry(0);
         let vertex = self.values.len() -1;
-        return vertex as VHandle;
+        vertex as VHandle
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn get_root(&self, vertex: VHandle) -> VHandle {
-        return vh(self.nodes[self.nodes.get_edges_index(vertex) + ROOT_OFFSET]);
+        vh(self.nodes[self.nodes.get_edges_index(vertex) + ROOT_OFFSET])
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn get_parent(&self, vertex: VHandle) -> VHandle {
-        return vh(self.nodes[self.nodes.get_edges_index(vertex) + PARENT_OFFSET]);
+        vh(self.nodes[self.nodes.get_edges_index(vertex) + PARENT_OFFSET])
     }
 
     pub fn create_node(&mut self, val: VertexType) -> VHandle {
@@ -64,13 +63,13 @@ where
         self.nodes.connect(vertex, vertex); // root
         self.nodes.connect(vertex, NONE); // parent
 
-        return vertex;
+        vertex
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn create_child(&mut self, parent: VHandle, val: VertexType) -> VHandle {
         let child = self.create_node(val);
         self.add_child(parent, child);
-        return child;
+        child
     }
 }

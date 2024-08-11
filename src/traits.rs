@@ -1,6 +1,4 @@
-use std::collections::btree_set::Iter;
-use std::ops::{Deref, DerefMut, Index, IndexMut};
-use std::process::Output;
+use std::ops::{Index, IndexMut};
 use crate::handles::Slot;
 use crate::handles::types::{Edge, VHandle, Weight};
 

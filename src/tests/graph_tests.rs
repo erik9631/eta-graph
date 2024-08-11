@@ -1,4 +1,4 @@
-use std::cmp::{max, min};
+use std::cmp::{min};
 use std::mem::size_of;
 use std::time::{Instant};
 use crate::{graph};
@@ -6,7 +6,7 @@ use crate::edge_storage::{HEADER_SIZE};
 use crate::graph::{Graph};
 use crate::handles::types::{VHandle, Weight};
 use crate::handles::{vh, wgt};
-use crate::traits::{GraphOperate, EdgeStore, StoreVertex, EdgeStorageIterator};
+use crate::traits::{GraphOperate, EdgeStore, StoreVertex};
 use crate::weighted_graph::WeightedGraph;
 
 #[test]
@@ -158,7 +158,7 @@ pub fn graph_vertices_iter_test(){
     }
     let start = Instant::now();
     for vertice in graph.vertices.iter_mut(){
-        *vertice = *vertice * 10;
+        *vertice *= 10;
     }
     println!("Time taken: {:?}", start.elapsed());
     for i in 0..test_size {
@@ -181,7 +181,7 @@ pub fn graph_edges_iter_test(){
        last =  graph.create_and_connect(last, vals+5, 5);
         vals += 5;
     }
-    let mut counter = 1;
+    let counter = 1;
 
     let mut iter = graph.edge_storage.iter_mut();
     let a = iter.next().unwrap();

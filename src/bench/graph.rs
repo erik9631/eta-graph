@@ -4,7 +4,7 @@ use crate::algorithms::general::{bfs, dfs};
 use crate::algorithms::general::ControlFlow::Resume;
 use crate::graph;
 use crate::handles::types::VHandle;
-use crate::handles::{pack, vh, vh_pack};
+use crate::handles::{vh, vh_pack};
 use crate::traits::GraphOperate;
 
 #[test]
@@ -19,7 +19,7 @@ pub fn graph_disconnect_bench(){
     }
 
     let start = Instant::now();
-    while handles.len() > 0 {
+    while !handles.is_empty() {
         let handle = handles.pop().unwrap();
         graph.edge_storage.disconnect(root, handle);
     }
@@ -79,7 +79,7 @@ pub fn bfs_bench(){
         profile_fn!("bfs");
         graph.vertices[vh(*vertex)] = 0;
         counter += 1;
-        return Resume;
+        Resume
     });
 
     println!("Time taken: {:?}", start.elapsed());
@@ -111,7 +111,7 @@ pub fn dfs_bench(){
         profile_fn!("dfs");
         graph.vertices[vh(*vertex)] = 0;
         counter += 1;
-        return Resume;
+        Resume
     }, |vertex| {});
 
     println!("Time taken: {:?}", start.elapsed());

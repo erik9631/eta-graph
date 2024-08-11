@@ -19,26 +19,32 @@ where
     VertexType: Clone,
     VertexStorageType: StoreVertex<VertexType=VertexType> + Clone {
     fn clone(&self) -> Self {
-        return WeightedGraph{
+        WeightedGraph{
             graph: self.graph.clone(),
         }
+    }
+}
+
+impl<VertexType> Default for WeightedGraph<VertexType, VertexStorage<VertexType>, EdgeStorage> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
 impl<VertexType> WeightedGraph<VertexType, VertexStorage<VertexType>, EdgeStorage>
 {
     pub fn new() -> Self {
-        return WeightedGraph{
+        WeightedGraph{
             graph: Graph::new(),
         }
     }
     pub fn new_large() -> Self {
-        return WeightedGraph{
+        WeightedGraph{
             graph: Graph::new_large(),
         }
     }
     pub fn with_reserve(reserve: Slot) -> Self {
-        return WeightedGraph{
+        WeightedGraph{
             graph: Graph::with_reserve(reserve),
         }
     }
@@ -50,11 +56,11 @@ where
     pub fn create_and_connect_weighted(&mut self, src_vertex: VHandle, val: VertexType, weight: Weight, edge_count: Slot) -> VHandle {
         let new_vertex = self.graph.create(val, edge_count);
         self.graph.edge_storage.connect_weighted(src_vertex, new_vertex, weight);
-        return new_vertex;
+        new_vertex
     }
 
     pub fn create_and_connect_leaf_weighted(&mut self, src_vertex: VHandle, val: VertexType, weight: Weight) -> VHandle {
-        return self.create_and_connect_weighted(src_vertex, val, weight, 0);
+        self.create_and_connect_weighted(src_vertex, val, weight, 0)
     }
 
 }

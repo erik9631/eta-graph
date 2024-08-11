@@ -6,9 +6,15 @@ use crate::traits::{StoreVertex};
 pub struct VertexStorage<VertexType> {
     data: Vec<VertexType>,
 }
+impl<VertexType> Default for VertexStorage<VertexType> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl <VertexType> VertexStorage<VertexType> {
     pub fn new() -> Self {
-        return VertexStorage {
+        VertexStorage {
             data: Vec::new(),
         }
     }
@@ -18,7 +24,7 @@ impl <VertexType> VertexStorage<VertexType> {
         self.data.push(val);
     }
     pub fn len(&self) -> usize {
-        return self.data.len();
+        self.data.len()
     }
 }
 
@@ -32,23 +38,23 @@ impl<VertexType> Index<VHandle> for VertexStorage<VertexType> {
 
 impl<VertexType> IndexMut<VHandle> for VertexStorage<VertexType> {
     fn index_mut(&mut self, index: VHandle) -> &mut Self::Output {
-        return &mut self.data[index as usize];
+        &mut self.data[index as usize]
     }
 }
 
 impl<VertexType> Clone for VertexStorage<VertexType>
 where VertexType: Clone {
     fn clone(&self) -> Self {
-        return VertexStorage {
+        VertexStorage {
             data: self.data.clone(),
-        };
+        }
     }
 }
 impl <VertexType> StoreVertex for VertexStorage<VertexType>
 {
     type VertexType = VertexType;
     fn len(&self) -> usize {
-        return self.data.len();
+        self.data.len()
     }
 
     fn push(&mut self, val: VertexType) {
@@ -56,7 +62,7 @@ impl <VertexType> StoreVertex for VertexStorage<VertexType>
     }
 
     fn capacity(&self) -> usize {
-        return self.data.capacity();
+        self.data.capacity()
     }
 
     fn iter(&self) -> Iter<VertexType>{

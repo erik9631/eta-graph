@@ -1,12 +1,10 @@
-use std::alloc::{alloc, dealloc, Layout};
-use std::slice::{from_raw_parts_mut};
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
 use eta_algorithms::data_structs::stack::Stack;
 use firestorm::{profile_fn, profile_section};
-use crate::handles::types::{Edge, VHandle, Weight};
-use crate::handles::{pack, Slot, vh, wgt};
-use crate::traits::{EdgeStore, WeightedEdgeManipulate};
+use crate::handles::types::{Edge, Weight};
+use crate::handles::{Slot, vh};
+use crate::traits::{EdgeStore};
 
 pub enum ControlFlow {
     Resume,
@@ -71,8 +69,8 @@ where
 }
 
 #[cfg_attr(not(debug_assertions), inline(always))]
-pub fn dfs<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: Edge, vertices_count: usize, mut pre_order_func: PreOrderFunc,
-                                               mut post_order_func: PostOrderFunc)
+pub fn dfs<PreOrderFunc, PostOrderFunc, Edges>(edge_storage: &mut Edges, start: Edge, vertices_count: usize, pre_order_func: PreOrderFunc,
+                                               post_order_func: PostOrderFunc)
 where
     PreOrderFunc: FnMut(&mut Edge) -> ControlFlow,
     PostOrderFunc: FnMut(&mut Edge),
@@ -82,7 +80,7 @@ where
     dfs_custom_flags(edge_storage, start, vertices_count, |to_visit| {
         let was_visited = flags[vh(to_visit) as usize];
         flags[vh(to_visit) as usize] = true;
-        return was_visited;
+        was_visited
     }, pre_order_func, post_order_func);
 }
 

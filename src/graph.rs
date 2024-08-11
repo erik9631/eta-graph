@@ -24,7 +24,7 @@ where
     VertexType: Clone,
     VertexStorageType: StoreVertex<VertexType=VertexType> + Clone {
     fn clone(&self) -> Self {
-        return Graph{
+        Graph{
             vertices: self.vertices.clone(),
             edge_storage: self.edge_storage.clone(),
         }
@@ -36,27 +36,33 @@ where
     }
 }
 
+impl<VertexType> Default for Graph<VertexType, VertexStorage<VertexType>, EdgeStorage> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<VertexType> Graph<VertexType, VertexStorage<VertexType>, EdgeStorage>
 {
     pub fn new_large() -> Self {
-        return Graph{
+        Graph{
             edge_storage: EdgeStorage::new_large(),
             vertices: VertexStorage::new(),
         }
     }
     pub fn with_reserve(reserve: Slot) -> Self {
-        return Graph{
+        Graph{
             edge_storage: EdgeStorage::with_reserve(reserve),
             vertices: VertexStorage::new(),
-        };
+        }
     }
 
     /// Creates a new graph with the assumption that the graph size is known ahead of time. Small reserve count of 5
     pub fn new() -> Self {
-        return Graph{
+        Graph{
             edge_storage: EdgeStorage::new(),
             vertices: VertexStorage::new(),
-        };
+        }
     }
 
 
@@ -73,19 +79,19 @@ where
     pub fn create_and_connect(&mut self, from: VHandle, val: VertexType, edge_count: Slot) -> VHandle {
         let new_vertex = self.create(val, edge_count);
         self.edge_storage.connect(from, new_vertex);
-        return new_vertex;
+        new_vertex
     }
 
     pub fn create_and_connect_leaf(&mut self, from: VHandle, val: VertexType) -> VHandle {
-        return self.create_and_connect(from, val, 0);
+        self.create_and_connect(from, val, 0)
     }
 
     pub fn create(&mut self, val: VertexType, edge_count: Slot) -> VHandle {
         self.vertices.push(val);
-        return self.edge_storage.create_edges_entry(edge_count);
+        self.edge_storage.create_edges_entry(edge_count)
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn create_leaf(&mut self, val: VertexType) -> VHandle {
-        return self.create(val, 0)
+        self.create(val, 0)
     }
 }

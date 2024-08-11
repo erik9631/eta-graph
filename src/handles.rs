@@ -1,4 +1,3 @@
-use std::ops::AddAssign;
 use crate::handles::types::{MASK, SHIFT, VHandle, Weight, Edge};
 #[cfg(msize_type = "u16")]
 pub mod types{
