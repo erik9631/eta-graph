@@ -1,13 +1,9 @@
-use std::alloc::{alloc, Layout};
-use std::net::test;
-use std::ptr;
+use std::ops::{Index, IndexMut};
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
 use eta_algorithms::data_structs::stack::Stack;
-use crate::edge_storage::EdgeStorage;
 use crate::handles::types::{Edge, VHandle, Weight};
 use crate::handles::{pack, set_wgt, vh, wgt};
-use crate::tests;
 use crate::traits::{StoreVertex, WeightedEdgeManipulate};
 
 pub struct DinicGraph<'a, VertexType, VertexStorageType, EdgeStorageType>
@@ -17,7 +13,7 @@ where
 {
     pub vertices: &'a VertexStorageType,
     pub edge_storage: EdgeStorageType,
-    pub layer_data: Vec<Weight>,
+    pub layer_data: Array<Weight>,
 }
 
 impl<'a, VertexType, VertexStorageType, EdgeStorageType> DinicGraph<'a, VertexType, VertexStorageType, EdgeStorageType>
@@ -27,24 +23,16 @@ where
 {
     pub fn from(vertices: &'a VertexStorageType, edge_storage: &EdgeStorageType, src_handle: VHandle, sink_handle: VHandle) -> Self {
         let vertices_len = vertices.len();
-        let layout = Layout::array::<Weight>(vertices_len).expect("Failed to create layout");
-        // TODO use SIMD
-        let ptr = unsafe { alloc(layout) as *mut Weight };
-        unsafe { ptr::write_bytes(ptr, 0, vertices_len) };
-        let flow_data = unsafe { Vec::from_raw_parts(ptr, vertices_len, vertices_len) };
         let mut dinic_graph = DinicGraph {
             vertices,
             edge_storage: edge_storage.clone(),
-            layer_data: flow_data,
+            layer_data: Array::new_default_bytes(vertices_len, 0),
         };
 
         dinic_graph.perform_search(src_handle, sink_handle);
         dinic_graph.finalize_flow_calc(edge_storage);
         return dinic_graph;
     }
-
-
-
 
     fn finalize_flow_calc(&mut self, original_edges: &EdgeStorageType)
     where
@@ -135,18 +123,18 @@ where
     }
 }
 
-// TODO Optimize this so that it doesn't reinitialize the memory
 // TODO Visited flags might not be needed
-pub(in crate)fn mark_levels<EdgeStorageType>(
+pub(in crate) fn mark_levels<EdgeStorageType, LayerDataType>(
     src_handle: VHandle,
     sink_handle: VHandle,
     edge_storage: &mut EdgeStorageType,
     queue: &mut Queue<*mut Edge>,
     visited_flag: &mut Array<bool>,
-    layer_data: &mut Vec<Weight>,
+    layer_data: &mut LayerDataType,
 ) -> Result<(), &'static str>
 where
     EdgeStorageType: WeightedEdgeManipulate,
+    LayerDataType: Index<usize, Output=Weight> + IndexMut<usize, Output=Weight>,
 {
     let mut found_sink = false;
     let mut start = pack(src_handle, -1);
