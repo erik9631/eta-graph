@@ -1,6 +1,5 @@
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
-use eta_algorithms::data_structs::stack::Stack;
 use crate::algorithms::general::{bfs, dfs};
 use crate::algorithms::general::ControlFlow::{End, Resume};
 use crate::algorithms::max_flow::{DinicGraph, mark_levels};
