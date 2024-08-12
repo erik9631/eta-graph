@@ -1,7 +1,6 @@
 use std::mem::size_of;
 use std::ops::{Index, IndexMut};
 use std::slice::{from_raw_parts, from_raw_parts_mut};
-use firestorm::{profile_method};
 use crate::handles::{pack, Slot, vh};
 use crate::handles::types::{VHandle, Weight, Edge};
 use crate::traits::{EdgeManipulate, GraphOperate, EdgeStore, WeightedEdgeManipulate, WeightedGraphOperate, EdgeStorageIterator};
@@ -155,7 +154,7 @@ impl Header {
         }
     }
     pub fn parse_mut (edges: &mut Vec<Slot>, index: usize) -> (&mut Self, &mut [VHandle]) {
-        profile_method!(parse_mut);
+
         let edges_ptr = edges.as_mut_ptr();
 
         // Return as Result instead of panic
@@ -171,7 +170,7 @@ impl Header {
         }
     }
     pub fn parse (edges: &Vec<Slot>, index: usize) -> (&Self, &[VHandle]) {
-        profile_method!(parse);
+
         // Return as Result instead of panic
         let edges_ptr = edges.as_ptr();
 
@@ -301,14 +300,14 @@ impl WeightedGraphOperate for EdgeStorage{
 }
 impl EdgeStore for EdgeStorage {
     fn edges_offset(&self, vertex: VHandle, offset: Slot) -> &[Edge] {
-        profile_method!(edges_from_offset);
+
         let edge_chunk_index = self.indices[vertex as usize];
         let len = self.edges[ (edge_chunk_index + LEN_OFFSET) as usize];
         
         &self.edges[ (offset + edge_chunk_index + HEADER_SIZE) as usize.. (edge_chunk_index + HEADER_SIZE + len) as usize]
     }
     fn edges_ptr_offset(&self, vertex: VHandle, offset: Slot) -> *const Edge {
-        profile_method!(edges_ptr_offset);
+
         let edge_chunk_index = self.indices[vertex as usize];
         unsafe {self.edges.as_ptr().add((offset + edge_chunk_index + HEADER_SIZE) as usize)}
     }
@@ -339,14 +338,14 @@ impl EdgeStore for EdgeStorage {
     }
 
     fn edges_mut_offset(&mut self, vertex: VHandle, offset: Slot) -> &mut [Edge] {
-        profile_method!(edges_mut_from_offset);
+
         let edge_chunk_index = self.indices[vertex as usize];
         let reserve = self.edges[ (edge_chunk_index + CAPACITY_OFFSET) as usize];
         
         (&mut self.edges[ (offset + edge_chunk_index + HEADER_SIZE) as usize..(edge_chunk_index + HEADER_SIZE + reserve) as usize]) as _
     }
     fn edges_mut_ptr_offset(&mut self, vertex: VHandle, offset: Slot) -> *mut Edge {
-        profile_method!(edges_mut_ptr_offset);
+
         let edge_chunk_index = self.indices[vertex as usize];
         unsafe {self.edges.as_mut_ptr().add((offset + edge_chunk_index + HEADER_SIZE) as usize)}
     }

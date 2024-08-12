@@ -8,7 +8,16 @@ build = "build.rs"
 inherits = "release"
 debug = true
 
+[dev-dependencies]
+criterion = { version = "0.5.1", features = ["html_reports"] }
+
+[[bench]]
+name = "dfs_bfs"
+harness = false
+
+[[bench]]
+name = "general"
+harness = false
+
 [dependencies]
 eta-algorithms = "1.3.3"
-firestorm = '0.5.1'
-#firestorm = { version = "0.5.1", features=["enable_system_time"] }

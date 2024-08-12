@@ -1,7 +1,6 @@
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
 use eta_algorithms::data_structs::stack::Stack;
-use firestorm::{profile_fn, profile_section};
 use crate::handles::types::{Edge, Weight};
 use crate::handles::{Slot, vh};
 use crate::traits::{EdgeStore};
@@ -19,7 +18,7 @@ where
     PreOrderFunc: FnMut(&mut Edge, Weight) -> ControlFlow,
     Edges: EdgeStore,
 {
-    profile_fn!(bfs);
+
     let mut was_queued_flags = Array::new_default_bytes(vertices_count, 0);
     let mut visit_queue = Queue::<*mut Edge>::new_pow2_sized(vertices_count);
     let mut end = 1;
@@ -31,7 +30,6 @@ where
     let mut i = 0;
 
     while visit_queue.len() != 0 {
-        profile_section!(bfs_loop_outer);
         let handle = visit_queue.dequeue().unwrap();
         match pre_order(unsafe { handle.as_mut().unwrap() }, layer) { // the i is a place holder for the layer
             ControlFlow::End => {
@@ -49,7 +47,6 @@ where
         let mut edge = edge_storage.edges_mut_ptr(vh(unsafe { *handle }));
         let edges_end = unsafe { edge.add(edge_storage.len(vh(*handle)) as usize) };
         while edge != edges_end {
-            profile_section!(bfs_loop_inner);
             if was_queued_flags[unsafe { vh(*edge) } as usize] {
                 unsafe { edge = edge.add(1) };
                 continue;
@@ -93,7 +90,7 @@ where
     PostOrderFunc: FnMut(&mut Edge),
     Edges: EdgeStore,
 {
-    profile_fn!(dfs);
+
     let mut start_edge = start;
     let mut stack = Stack::<(Slot, Slot, *mut Slot)>::new(vertex_count);
     stack.push((edge_storage.get_edges_index(vh(start)), edge_storage.get_edges_index(vh(start)) + edge_storage.len(vh(start)), (&mut start_edge) as *mut Edge));
@@ -105,7 +102,6 @@ where
     }
 
     while stack.len() > 0 {
-        profile_section!(dfs_loop);
         let (outgoing_offset_iter, end, current_edge) = stack.top_mut().unwrap();
         let outgoing_offset = *outgoing_offset_iter;
         if outgoing_offset_iter == end {
@@ -145,7 +141,6 @@ where
 
     // Return back to the src without exploring further
     while stack.len() > 0 {
-        profile_section!(dfs_post_loop);
         let (ptr, end, packed_edge) = stack.pop().unwrap();
         post_order_func(unsafe { packed_edge.as_mut().unwrap() });
     }
