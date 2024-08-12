@@ -56,8 +56,6 @@ impl<VertexType> Graph<VertexType, VertexStorage<VertexType>, EdgeStorage>
             vertices: VertexStorage::new(),
         }
     }
-
-    /// Creates a new graph with the assumption that the graph size is known ahead of time. Small reserve count of 5
     pub fn new() -> Self {
         Graph{
             edge_storage: EdgeStorage::new(),
