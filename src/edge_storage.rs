@@ -17,7 +17,7 @@ pub struct Header{
 pub struct EdgeStorage {
     pub(in crate) vertex_capacity: Slot,
     pub edges: Vec<Slot>,
-    pub indices: Vec<Slot>, //Todo, make it contain EHandles which are not compatible with VHandles
+    handle_to_edges: Vec<Slot>, //Todo, make it contain EHandles which are not compatible with VHandles
 }
 
 pub struct EdgeStorageIter<'a> {
@@ -201,7 +201,7 @@ impl EdgeStorage {
         EdgeStorage {
             vertex_capacity: 50,
             edges: Vec::new(),
-            indices: Vec::new(),
+            handle_to_edges: Vec::new(),
         }
     }
     /// Creates a new graph with a custom reserve
@@ -209,7 +209,7 @@ impl EdgeStorage {
         EdgeStorage {
             vertex_capacity: capacity,
             edges: Vec::new(),
-            indices: Vec::new(),
+            handle_to_edges: Vec::new(),
         }
     }
 
@@ -218,22 +218,22 @@ impl EdgeStorage {
         EdgeStorage {
             vertex_capacity: 0,
             edges: Vec::new(),
-            indices: Vec::new(),
+            handle_to_edges: Vec::new(),
         }
     }
 
     fn len_mut_ptr(&mut self, vertex: VHandle) -> *mut Slot {
-        &mut self.edges[ (self.indices[vertex as usize] + LEN_OFFSET) as usize]
+        &mut self.edges[ (self.handle_to_edges[vertex as usize] + LEN_OFFSET) as usize]
     }
 
     #[allow(unused)]
     fn reserve_mut(&mut self, vertex: VHandle) -> &mut Slot {
-        let edge_chunk_index = self.indices[vertex as usize];
+        let edge_chunk_index = self.handle_to_edges[vertex as usize];
         &mut self.edges[ (edge_chunk_index + CAPACITY_OFFSET) as usize]
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     fn len_mut(&mut self, vertex: VHandle) -> &mut Slot {
-        let edge_chunk_index = self.indices[vertex as usize];
+        let edge_chunk_index = self.handle_to_edges[vertex as usize];
         &mut self.edges[ (edge_chunk_index + LEN_OFFSET) as usize]
     }
 
@@ -267,8 +267,8 @@ impl GraphOperate for EdgeStorage {
         let val = self.calculate_new_edges_size_abs(size);
         self.edges.resize_with(val as usize, Default::default);
         self.edges[ (offset + CAPACITY_OFFSET) as usize] = self.vertex_capacity + size;
-        self.indices.push(offset);
-        (self.indices.len() - 1) as VHandle
+        self.handle_to_edges.push(offset);
+        (self.handle_to_edges.len() - 1) as VHandle
     }
 
     fn disconnect(&mut self, from: VHandle, to: VHandle) {
@@ -301,14 +301,14 @@ impl WeightedGraphOperate for EdgeStorage{
 impl EdgeStore for EdgeStorage {
     fn edges_offset(&self, vertex: VHandle, offset: Slot) -> &[Edge] {
 
-        let edge_chunk_index = self.indices[vertex as usize];
+        let edge_chunk_index = self.handle_to_edges[vertex as usize];
         let len = self.edges[ (edge_chunk_index + LEN_OFFSET) as usize];
         
         &self.edges[ (offset + edge_chunk_index + HEADER_SIZE) as usize.. (edge_chunk_index + HEADER_SIZE + len) as usize]
     }
     fn edges_ptr_offset(&self, vertex: VHandle, offset: Slot) -> *const Edge {
 
-        let edge_chunk_index = self.indices[vertex as usize];
+        let edge_chunk_index = self.handle_to_edges[vertex as usize];
         unsafe {self.edges.as_ptr().add((offset + edge_chunk_index + HEADER_SIZE) as usize)}
     }
 
@@ -324,29 +324,29 @@ impl EdgeStore for EdgeStorage {
 
     #[cfg_attr(not(debug_assertions), inline(always))]
     fn len(&self, handle: VHandle) -> Slot {
-        self.edges[ (self.indices[handle as usize] + LEN_OFFSET) as usize]
+        self.edges[ (self.handle_to_edges[handle as usize] + LEN_OFFSET) as usize]
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     fn edge_block_capacity(&self, handle: VHandle) -> Slot {
-        self.edges[ (self.indices[handle as usize] + CAPACITY_OFFSET) as usize]
+        self.edges[ (self.handle_to_edges[handle as usize] + CAPACITY_OFFSET) as usize]
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
     fn get_edges_index(&self, vertex: VHandle) -> Slot {
         
-        self.indices[vertex as usize] + HEADER_SIZE
+        self.handle_to_edges[vertex as usize] + HEADER_SIZE
     }
 
     fn edges_mut_offset(&mut self, vertex: VHandle, offset: Slot) -> &mut [Edge] {
 
-        let edge_chunk_index = self.indices[vertex as usize];
+        let edge_chunk_index = self.handle_to_edges[vertex as usize];
         let reserve = self.edges[ (edge_chunk_index + CAPACITY_OFFSET) as usize];
         
         (&mut self.edges[ (offset + edge_chunk_index + HEADER_SIZE) as usize..(edge_chunk_index + HEADER_SIZE + reserve) as usize]) as _
     }
     fn edges_mut_ptr_offset(&mut self, vertex: VHandle, offset: Slot) -> *mut Edge {
 
-        let edge_chunk_index = self.indices[vertex as usize];
+        let edge_chunk_index = self.handle_to_edges[vertex as usize];
         unsafe {self.edges.as_mut_ptr().add((offset + edge_chunk_index + HEADER_SIZE) as usize)}
     }
 
@@ -372,14 +372,14 @@ impl Clone for EdgeStorage {
         EdgeStorage {
             vertex_capacity: self.vertex_capacity,
             edges: self.edges.clone(),
-            indices: self.indices.clone(),
+            handle_to_edges: self.handle_to_edges.clone(),
         }
     }
 
     fn clone_from(&mut self, source: &Self) {
         self.vertex_capacity = source.vertex_capacity;
         self.edges.clone_from(&source.edges);
-        self.indices.clone_from(&source.indices);
+        self.handle_to_edges.clone_from(&source.handle_to_edges);
     }
 }
 
