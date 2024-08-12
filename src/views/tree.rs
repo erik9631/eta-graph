@@ -9,7 +9,6 @@ where
     pub nodes: &'a mut EdgeStorageType,
     pub values: &'a mut VertexStorageType,
 }
-
 const TREE_HEADER_ELEMENTS: Slot = 2;
 const ROOT_OFFSET: Slot = 0;
 const PARENT_OFFSET: Slot = 1;
@@ -31,7 +30,7 @@ where
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn get_children(&self, parent: VHandle) -> &[Edge] {
-        return self.nodes.edges_offset(parent, TREE_HEADER_ELEMENTS);
+        self.nodes.edges_offset(parent, TREE_HEADER_ELEMENTS)
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]

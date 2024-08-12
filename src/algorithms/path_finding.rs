@@ -6,7 +6,7 @@ use crate::handles::types::{Edge, VHandle, Weight};
 use crate::handles::{vh, wgt};
 use crate::traits::EdgeStore;
 
-struct HeapPair{
+struct MinHeapPair {
     pub vertex: VHandle,
     pub f_score: Weight,
 }
@@ -17,30 +17,30 @@ struct PathVertex {
     pub f_score: Weight,
 }
 
-impl HeapPair {
+impl MinHeapPair {
     pub fn new(vertex: VHandle, f_score: Weight) -> Self {
-        HeapPair {
+        MinHeapPair {
             vertex,
             f_score,
         }
     }
 }
 
-impl Eq for HeapPair {}
+impl Eq for MinHeapPair {}
 
-impl PartialEq<Self> for HeapPair {
+impl PartialEq<Self> for MinHeapPair {
     fn eq(&self, other: &Self) -> bool {
         return self.f_score == other.f_score;
     }
 }
 
-impl PartialOrd<Self> for HeapPair {
+impl PartialOrd<Self> for MinHeapPair {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         other.f_score.partial_cmp(&self.f_score)
     }
 }
 
-impl Ord for HeapPair{
+impl Ord for MinHeapPair {
     fn cmp(&self, other: &Self) -> Ordering {
         other.f_score.cmp(&self.f_score)
     }
@@ -62,15 +62,18 @@ fn reconstruct_path(paths: &mut Array<PathVertex>, start: VHandle, goal: VHandle
 /// f_scores are sums of (distances + heuristic) from start to current vertex
 /// h_scores are heuristic values from start to current vertex
 /// g_scores sums of distances from start to current vertex. Not used purely in this implementation, but summed up to f_scores
+///
+// TODO Parallelization potential. Split the graph into multiple subgraphs, and run A* on each subgraph in parallel.
+// Put together the resulting paths
 pub fn a_star<Edges, Heuristic>(edge_storage: &mut Edges, start: VHandle, goal: VHandle, vertices_count: usize, h_score: Heuristic) -> Option<Stack<VHandle>>
 where
     Edges: EdgeStore,
     Heuristic: Fn(VHandle, Edge) -> Weight,
 {
-    let mut explore_list = BinaryHeap::<HeapPair>::with_capacity(vertices_count);
+    let mut explore_list = BinaryHeap::<MinHeapPair>::with_capacity(vertices_count);
 
     let mut f_scores = Array::<PathVertex>::new_with_default(vertices_count, PathVertex{from: 0, f_score: Weight::MAX});
-    explore_list.push(HeapPair{vertex: start, f_score: 0});
+    explore_list.push(MinHeapPair {vertex: start, f_score: 0});
 
     while let Some(current_vertex) = explore_list.pop() {
         if current_vertex.vertex == goal{
@@ -83,7 +86,7 @@ where
             if f_scores[vh(*neighbor) as usize].f_score < neighbor_f_score {
                 continue;
             }
-            explore_list.push(HeapPair::new(vh(*neighbor), neighbor_f_score));
+            explore_list.push(MinHeapPair::new(vh(*neighbor), neighbor_f_score));
             f_scores[vh(*neighbor) as usize] = PathVertex{from: current_vertex.vertex, f_score: neighbor_f_score };
         }
     }
