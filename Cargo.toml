@@ -10,6 +10,7 @@ debug = true
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }
+petgraph = "0.6.5"
 
 [[bench]]
 name = "dfs_bfs"
@@ -17,6 +18,10 @@ harness = false
 
 [[bench]]
 name = "general"
+harness = false
+
+[[bench]]
+name = "dijkstra"
 harness = false
 
 [dependencies]
