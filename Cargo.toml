@@ -21,7 +21,11 @@ name = "general"
 harness = false
 
 [[bench]]
-name = "dijkstra"
+name = "vs_pet_dijkstra"
+harness = false
+
+[[bench]]
+name = "vs_pet_dfs_bfs"
 harness = false
 
 [dependencies]

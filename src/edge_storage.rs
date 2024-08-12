@@ -360,7 +360,7 @@ impl EdgeStore for EdgeStorage {
         return self.edges_mut_offset(vertex, 0);
     }
     fn iter(&self) -> impl EdgeStorageIterator<Output=&Slot> {
-        return EdgeStorageIter::new(&self.edges);
+        EdgeStorageIter::new(&self.edges)
     }
 
     fn iter_mut(&mut self) -> impl EdgeStorageIterator<Output=&mut Slot> {

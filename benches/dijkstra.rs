@@ -1,15 +1,16 @@
-use std::collections::VecDeque;
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkGroup, Criterion};
-use criterion::measurement::WallTime;
+use std::hint::black_box;
+use criterion::{criterion_group, criterion_main, Criterion};
 use eta_graph::handles::Slot;
 use eta_graph::handles::types::Weight;
 
-fn tree_graph_eta_benchmark(children_count: usize, elements_to_generate: usize, c: &mut BenchmarkGroup<WallTime>){
+fn tree_graph_benchmark(c: &mut Criterion){
     use eta_graph::traits::EdgeStore;
     use eta_graph::weighted_graph::WeightedGraph;
     use eta_algorithms::data_structs::queue::Queue;
     use eta_graph::handles::types::VHandle;
     use eta_graph::algorithms::path_finding::dijkstra;
+    let children_count = 10;
+    let elements_to_generate = 1000000;
 
 
     let mut graph = WeightedGraph::new();
@@ -30,7 +31,7 @@ fn tree_graph_eta_benchmark(children_count: usize, elements_to_generate: usize, 
         }
 
     }
-    c.bench_function("tree_graph_eta_benchmark", |b| {
+    c.bench_function("tree_graph_benchmark", |b| {
         b.iter(|| {
             black_box(dijkstra(&mut graph.graph.edge_storage, root, last_element, generated_elements as usize))
         })
@@ -38,44 +39,5 @@ fn tree_graph_eta_benchmark(children_count: usize, elements_to_generate: usize, 
 
 }
 
-fn tree_graph_petgraph_benchmark(children_count: usize, elements_to_generate: usize, c: &mut BenchmarkGroup<WallTime>){
-    use petgraph::Graph;
-    use petgraph::algo::dijkstra;
-
-    let mut graph = Graph::<(), i32>::new();
-    let root = graph.add_node(());
-    let mut to_expand = VecDeque::with_capacity(elements_to_generate);
-    let mut generated_elements = 1;
-    let mut last_element = root;
-
-    to_expand.push_back(root);
-    while generated_elements < elements_to_generate {
-        let current = to_expand.pop_front().unwrap();
-        for i in 0..children_count {
-            let new_vertex = graph.add_node(());
-            graph.add_edge(current, new_vertex, i as i32);
-            generated_elements += 1;
-            to_expand.push_back(new_vertex);
-            last_element = new_vertex;
-        }
-    }
-
-    c.bench_function("tree_graph_petgraph_benchmark", |b| {
-        b.iter(|| {
-            let _result = dijkstra(&graph, root, Some(last_element), |e| *e.weight());
-
-        })
-    });
-}
-
-fn petgraph_vs_eta_graph(c: &mut Criterion) {
-    let children_count = 10;
-    let elements_to_generate = 1000000;
-    let mut group = c.benchmark_group("petgraph_vs_eta_graph");
-    tree_graph_eta_benchmark(children_count, elements_to_generate, &mut group);
-    tree_graph_petgraph_benchmark(children_count, elements_to_generate, &mut group);
-}
-
-
-criterion_group!(benches, petgraph_vs_eta_graph);
+criterion_group!(benches, tree_graph_benchmark);
 criterion_main!(benches);
