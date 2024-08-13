@@ -42,6 +42,6 @@ fn edge_storage_iter_test_empty(){
     edge_storage.create_edges_entry(10);
 
     for edge in edge_storage.iter(){
-        assert!(true);
+        assert!(false);
     }
 }

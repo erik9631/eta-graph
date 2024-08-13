@@ -9,7 +9,7 @@ use eta_graph::graph;
 use eta_graph::handles::{vh, vh_pack, wgt};
 fn dfs_bench(c: &mut Criterion) {
     // prepare data
-    let data_size = 2000;
+    let data_size = 4000;
     let mut graph = graph::Graph::new();
     let root = graph.create(0, data_size);
     let mut number_of_nodes = 1;
@@ -35,7 +35,7 @@ fn dfs_bench(c: &mut Criterion) {
 
 pub fn bfs_bench(c: &mut Criterion){
     // prepare data
-    let data_size = 2000;
+    let data_size = 4000;
     let mut graph = graph::Graph::new();
     let root = graph.create(0, data_size);
     let mut number_of_nodes = 1;

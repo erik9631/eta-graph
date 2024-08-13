@@ -44,16 +44,13 @@ where
             }
             ControlFlow::Resume => {}
         }
-        let mut edge = edge_storage.edges_mut_ptr(vh(unsafe { *handle }));
-        let edges_end = unsafe { edge.add(edge_storage.len(vh(*handle)) as usize) };
-        while edge != edges_end {
-            if was_queued_flags[unsafe { vh(*edge) } as usize] {
-                unsafe { edge = edge.add(1) };
+        let mut edge_iter = edge_storage.edge_iter_mut(vh(unsafe { *handle }));
+        for edge in edge_iter {
+            if unsafe{*was_queued_flags.index_unchecked(vh(*edge) as usize)} {
                 continue;
             }
-            unsafe { was_queued_flags[vh(*edge) as usize] = true };
-            visit_queue.push(edge);
-            unsafe { edge = edge.add(1) };
+            unsafe{*was_queued_flags.index_unchecked_mut(vh(*edge) as usize) = true};
+            visit_queue.push(edge as *mut Edge);
             end += 1;
         }
         i += 1;

@@ -19,7 +19,7 @@ pub fn graph_init_test() {
     graph.create_leaf(3);
 
     assert_eq!(graph.vertices.len(), 3);
-    assert_eq!(graph.edge_storage.edges.len(), (50)*3);
+    assert_eq!(graph.edge_storage.edges.capacity(), (50)*3);
 
 }
 
@@ -85,7 +85,7 @@ pub fn graph_default_capacity_test(){
     }
 
     assert_eq!(graph.vertices.len(), 50);
-    assert_eq!(graph.edge_storage.edges.len(), 50*count);
+    assert_eq!(graph.edge_storage.edges.capacity(), 50*count);
 }
 
 #[test]
@@ -97,7 +97,7 @@ pub fn graph_with_capacity_test(){
         graph.create_leaf(i);
     }
 
-    assert_eq!(graph.edge_storage.edges.len(), 10*count);
+    assert_eq!(graph.edge_storage.edges.capacity(), 10*count);
 }
 
 #[test]
