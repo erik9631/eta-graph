@@ -3,7 +3,7 @@ use crate::handles::Slot;
 use crate::handles::types::{VHandle};
 use crate::traits::{GraphOperate, EdgeManipulate, StoreVertex};
 use crate::vertex_storage::VertexStorage;
-use crate::views::tree::TreeView;
+use crate::views::tree::Tree;
 
 #[derive(Debug)]
 pub enum Error {
@@ -70,8 +70,8 @@ impl<VertexType, VertexStorageType, EdgeStorageType> Graph<VertexType, VertexSto
 where
     EdgeStorageType: EdgeManipulate,
     VertexStorageType: StoreVertex<VertexType=VertexType>{
-    pub fn tree_view(&mut self) -> TreeView<VertexType, VertexStorageType, EdgeStorageType> {
-        return TreeView::new(&mut self.edge_storage, &mut self.vertices);
+    pub fn tree_view(&mut self) -> Tree<VertexType, VertexStorageType, EdgeStorageType> {
+        return Tree::new(&mut self.edge_storage, &mut self.vertices);
     }
 
     pub fn create_and_connect(&mut self, from: VHandle, val: VertexType, edge_count: Slot) -> VHandle {

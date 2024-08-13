@@ -1,3 +1,4 @@
+use std::hint::black_box;
 use criterion::{criterion_group, criterion_main, BenchmarkGroup, Criterion};
 use criterion::measurement::WallTime;
 use eta_graph::algorithms::general::ControlFlow::Resume;
@@ -22,9 +23,10 @@ pub fn bfs_bench_eta(data_size: usize, c: &mut BenchmarkGroup<WallTime>){
 
     c.bench_function("bfs_eta", |b| b.iter(|| {
         bfs(&mut graph.edge_storage, vh_pack(root), number_of_nodes, |vertex, layer| {
-            graph.vertices[vh(*vertex)] = 0;
+            sum += 1;
             Resume
         });
+        black_box(sum);
     }));
 }
 
@@ -49,11 +51,13 @@ fn bfs_bench_pet(data_size: usize, c: &mut BenchmarkGroup<WallTime>) {
     }
 
     c.bench_function("bfs_pet", |b| {
+        let mut sum = 0;
         b.iter(|| {
             let mut bfs = Bfs::new(&graph, root);
             while let Some(nx) = bfs.next(&graph) {
-                *graph.node_weight_mut(nx).unwrap() = 0;
+                sum += 1;
             }
+            black_box(sum);
         })
     });
 }

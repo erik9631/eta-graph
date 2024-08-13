@@ -37,6 +37,8 @@ pub trait EdgeStore: Index<Slot, Output=Slot> + IndexMut<Slot, Output=Slot>{
     fn edges_mut(&mut self, vertex: VHandle) -> &mut [Edge];
     fn iter (&self) -> impl Iterator<Item=&Slot>;
     fn iter_mut (&mut self) -> impl Iterator<Item=&mut Slot>;
+    fn edge_iter(&self, handle: VHandle) -> impl Iterator<Item=&Slot>;
+    fn edge_iter_mut(&mut self, handle: VHandle) -> impl Iterator<Item=&mut Slot>;
 }
 pub trait EdgeManipulate: EdgeStore + GraphOperate + Clone{}
 pub trait WeightedEdgeManipulate: EdgeManipulate + WeightedGraphOperate {}

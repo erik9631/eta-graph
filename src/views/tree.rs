@@ -3,26 +3,26 @@ use crate::handles::{NONE, Slot, vh, vh_pack};
 use crate::handles::types::{Edge, VHandle};
 use crate::traits::{GraphOperate, EdgeStore, StoreVertex};
 
-pub struct TreeView<'a, VertexType, VertexStorageType, EdgeStorageType>
+pub struct Tree<'a, VertexType, VertexStorageType, EdgeStorageType>
 where
     VertexStorageType: StoreVertex<VertexType=VertexType>,{
     pub nodes: &'a mut EdgeStorageType,
     pub values: &'a mut VertexStorageType,
 }
-const TREE_HEADER_ELEMENTS: Slot = 2;
 const ROOT_OFFSET: Slot = 0;
 const PARENT_OFFSET: Slot = 1;
+const TREE_HEADER_ELEMENTS: Slot = 2;
 
 
 
-impl <'a, VertexType, VertexStorageType, EdgeStorageType> TreeView<'a, VertexType, VertexStorageType, EdgeStorageType>
+impl <'a, VertexType, VertexStorageType, EdgeStorageType> Tree<'a, VertexType, VertexStorageType, EdgeStorageType>
 where
     EdgeStorageType: EdgeStore + GraphOperate,
     VertexStorageType: StoreVertex<VertexType=VertexType>
 {
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn new(edges: &'a mut EdgeStorageType, vertices: &'a mut VertexStorageType) -> Self {
-        TreeView{
+        Tree {
             nodes: edges,
             values: vertices,
 
@@ -32,7 +32,6 @@ where
     pub fn get_children(&self, parent: VHandle) -> &[Edge] {
         self.nodes.edges_offset(parent, TREE_HEADER_ELEMENTS)
     }
-
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn add_child(&mut self, parent: VHandle, child: VHandle){
         self.nodes.connect(parent, child);

@@ -45,6 +45,8 @@ pub fn graph_bfs_test(){
         assert_eq!(layer, val.1);
         Resume
     });
+
+    assert_eq!(snap.len(), 0);
 }
 
 #[test]
@@ -86,6 +88,7 @@ pub fn graph_bfs_test_cyclic(){
         assert_eq!(layer, val.1);
         Resume
     });
+    assert_eq!(snap.len(), 0);
 }
 
 #[test]
@@ -138,6 +141,8 @@ pub fn graph_dfs_test(){
         assert_eq!(graph.vertices[vh(*handle)], snap2.pop().unwrap());
     });
 
+    assert_eq!(snap.len(), 0);
+    assert_eq!(snap2.len(), 0);
 }
 
 #[test]
@@ -183,6 +188,9 @@ pub fn graph_dfs_end_test(){
         assert_eq!(graph.vertices[vh(*handle)], snap2.pop().unwrap());
     });
 
+    assert_eq!(snap.len(), 0);
+    assert_eq!(snap2.len(), 0);
+
 }
 
 #[test]
@@ -225,6 +233,8 @@ pub fn level_test(){
         assert_eq!(flow_data[vh(*v_handle) as usize], snap_data.1);
         Resume
     });
+
+    assert_eq!(snap.len(), 0);
 }
 
 #[test]
@@ -255,7 +265,7 @@ pub fn dinic_test(){
         let snap_data = snap.pop().unwrap();
         assert_eq!(snap_data, wgt(*edge));
     }
-
+    assert_eq!(snap.len(), 0);
 }
 
 
