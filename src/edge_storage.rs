@@ -15,7 +15,7 @@ pub struct Header{
 }
 
 pub struct EdgeStorage {
-    pub(in crate) vertex_capacity: Slot,
+    pub(in crate) reserve: Slot,
     pub edges: Vec<Slot>,
     handle_to_edges: Vec<Slot>, //Todo, make it contain EHandles which are not compatible with VHandles
 }
@@ -199,7 +199,7 @@ impl EdgeStorage {
     /// It will create the graph with high reserve count of 50 to avoid reallocations.
     pub fn new_large() -> Self {
         EdgeStorage {
-            vertex_capacity: 50,
+            reserve: 50,
             edges: Vec::new(),
             handle_to_edges: Vec::new(),
         }
@@ -207,7 +207,7 @@ impl EdgeStorage {
     /// Creates a new graph with a custom reserve
     pub fn with_reserve(capacity: Slot) -> Self {
         EdgeStorage {
-            vertex_capacity: capacity,
+            reserve: capacity,
             edges: Vec::new(),
             handle_to_edges: Vec::new(),
         }
@@ -216,7 +216,7 @@ impl EdgeStorage {
     /// Creates a new graph with the assumption that the graph size is known ahead of time. No reserve.
     pub fn new() -> Self {
         EdgeStorage {
-            vertex_capacity: 0,
+            reserve: 0,
             edges: Vec::new(),
             handle_to_edges: Vec::new(),
         }
@@ -240,7 +240,7 @@ impl EdgeStorage {
     #[cfg_attr(not(debug_assertions), inline(always))]
     fn calculate_new_edges_size_abs(&self, size: Slot) -> Slot {
         let header_size = HEADER_SIZE;
-        (self.edges.len() as Slot + self.vertex_capacity + header_size + size) as Slot
+        (self.edges.len() as Slot + self.reserve + header_size + size) as Slot
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn capacity(&self) -> Slot {
@@ -266,7 +266,7 @@ impl GraphOperate for EdgeStorage {
         let offset = self.edges.len() as Slot;
         let val = self.calculate_new_edges_size_abs(size);
         self.edges.resize_with(val as usize, Default::default);
-        self.edges[ (offset + CAPACITY_OFFSET) as usize] = self.vertex_capacity + size;
+        self.edges[ (offset + CAPACITY_OFFSET) as usize] = self.reserve + size;
         self.handle_to_edges.push(offset);
         (self.handle_to_edges.len() - 1) as VHandle
     }
@@ -363,14 +363,14 @@ impl EdgeStore for EdgeStorage {
 impl Clone for EdgeStorage {
     fn clone(&self) -> Self {
         EdgeStorage {
-            vertex_capacity: self.vertex_capacity,
+            reserve: self.reserve,
             edges: self.edges.clone(),
             handle_to_edges: self.handle_to_edges.clone(),
         }
     }
 
     fn clone_from(&mut self, source: &Self) {
-        self.vertex_capacity = source.vertex_capacity;
+        self.reserve = source.reserve;
         self.edges.clone_from(&source.edges);
         self.handle_to_edges.clone_from(&source.handle_to_edges);
     }
