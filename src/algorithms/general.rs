@@ -1,9 +1,9 @@
+use crate::handles::types::{Edge, Weight};
+use crate::handles::{vh, Slot};
+use crate::traits::EdgeStore;
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
 use eta_algorithms::data_structs::stack::Stack;
-use crate::handles::types::{Edge, Weight};
-use crate::handles::{Slot, vh};
-use crate::traits::{EdgeStore};
 
 pub enum ControlFlow {
     Resume,
@@ -18,7 +18,6 @@ where
     PreOrderFunc: FnMut(&mut Edge, Weight) -> ControlFlow,
     Edges: EdgeStore,
 {
-
     let mut was_queued_flags = Array::new_default_bytes(vertices_count, 0);
     let mut visit_queue = Queue::<*mut Edge>::new_pow2_sized(vertices_count);
     let mut end = 1;
@@ -46,10 +45,10 @@ where
         }
         let mut edge_iter = edge_storage.edge_iter_mut(vh(unsafe { *handle }));
         for edge in edge_iter {
-            if unsafe{*was_queued_flags.index_unchecked(vh(*edge) as usize)} {
+            if unsafe { *was_queued_flags.index_unchecked(vh(*edge) as usize) } {
                 continue;
             }
-            unsafe{*was_queued_flags.index_unchecked_mut(vh(*edge) as usize) = true};
+            unsafe { *was_queued_flags.index_unchecked_mut(vh(*edge) as usize) = true };
             visit_queue.push(edge as *mut Edge);
             end += 1;
         }
@@ -87,7 +86,6 @@ where
     PostOrderFunc: FnMut(&mut Edge),
     Edges: EdgeStore,
 {
-
     let mut start_edge = start;
     let mut stack = Stack::<(Slot, Slot, *mut Slot)>::new(vertex_count);
     stack.push((edge_storage.get_edges_index(vh(start)), edge_storage.get_edges_index(vh(start)) + edge_storage.len(vh(start)), (&mut start_edge) as *mut Edge));
@@ -109,7 +107,6 @@ where
         *outgoing_offset_iter += 1;
 
         let outgoing_edge = &mut edge_storage[outgoing_offset];
-
         if is_visited(*outgoing_edge) {
             continue;
         }
