@@ -21,6 +21,12 @@ name = "general"
 harness = false
 
 [[bench]]
+path = "benches/dijkstra.rs"
+name = "dijkstra"
+harness = false
+
+[[bench]]
+path = "benches/vs_pet_dijkstra.rs"
 name = "vs_pet_dijkstra"
 harness = false
 

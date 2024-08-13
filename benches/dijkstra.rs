@@ -39,5 +39,5 @@ fn tree_graph_benchmark(c: &mut Criterion){
 
 }
 
-criterion_group!(benches, tree_graph_benchmark);
-criterion_main!(benches);
+criterion_group!(dijkstra, tree_graph_benchmark);
+criterion_main!(dijkstra);

@@ -1,3 +1,4 @@
+use std::collections::btree_map::Iter;
 use std::ops::{Index, IndexMut};
 use crate::handles::Slot;
 use crate::handles::types::{Edge, VHandle, Weight};
@@ -22,12 +23,6 @@ pub trait GraphOperate {
 pub trait WeightedGraphOperate {
     fn connect_weighted(&mut self, from: VHandle, to: VHandle, weight: Weight);
 }
-
-pub trait EdgeStorageIterator: Iterator<Item=Self::Output>{
-    type Output;
-    fn edge_index(&self) -> usize;
-}
-
 pub trait EdgeStore: Index<Slot, Output=Slot> + IndexMut<Slot, Output=Slot>{
     fn edges_offset(&self, vertex: VHandle, offset: Slot) -> &[Edge];
     fn edges_ptr_offset(&self, vertex: VHandle, offset: Slot) -> *const Edge;
@@ -40,8 +35,8 @@ pub trait EdgeStore: Index<Slot, Output=Slot> + IndexMut<Slot, Output=Slot>{
     fn edges_mut_ptr_offset(&mut self, vertex: VHandle, offset: Slot) -> *mut Edge;
     fn edges_mut_ptr(&mut self, vertex: VHandle) -> *mut Edge;
     fn edges_mut(&mut self, vertex: VHandle) -> &mut [Edge];
-    fn iter (&self) -> impl EdgeStorageIterator<Output=&Slot>;
-    fn iter_mut (&mut self) -> impl EdgeStorageIterator<Output=&mut Slot>;
+    fn iter (&self) -> impl Iterator<Item=&Slot>;
+    fn iter_mut (&mut self) -> impl Iterator<Item=&mut Slot>;
 }
 pub trait EdgeManipulate: EdgeStore + GraphOperate + Clone{}
 pub trait WeightedEdgeManipulate: EdgeManipulate + WeightedGraphOperate {}

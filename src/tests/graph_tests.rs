@@ -2,7 +2,6 @@ use std::cmp::{min};
 use std::mem::size_of;
 use std::time::{Instant};
 use crate::{graph};
-use crate::edge_storage::{HEADER_SIZE};
 use crate::graph::{Graph};
 use crate::handles::types::{VHandle, Weight};
 use crate::handles::{vh, wgt};
@@ -13,14 +12,14 @@ use crate::weighted_graph::WeightedGraph;
 pub fn graph_init_test() {
     let mut graph = Graph::new_large();
     assert_eq!(graph.vertices.len(), 0);
-    assert_eq!(graph.edge_storage.capacity(), 0);
+    assert_eq!(graph.edge_storage.edges.capacity(), 0);
 
     graph.create_leaf(1);
     graph.create_leaf(2);
     graph.create_leaf(3);
 
     assert_eq!(graph.vertices.len(), 3);
-    assert_eq!(graph.edge_storage.capacity(), (50+ HEADER_SIZE)*3);
+    assert_eq!(graph.edge_storage.edges.len(), (50)*3);
 
 }
 
@@ -86,7 +85,7 @@ pub fn graph_default_capacity_test(){
     }
 
     assert_eq!(graph.vertices.len(), 50);
-    assert_eq!(graph.edge_storage.capacity(), (50+ HEADER_SIZE)*count);
+    assert_eq!(graph.edge_storage.edges.len(), 50*count);
 }
 
 #[test]
@@ -98,7 +97,7 @@ pub fn graph_with_capacity_test(){
         graph.create_leaf(i);
     }
 
-    assert_eq!(graph.edge_storage.capacity(), (10+ HEADER_SIZE)*count);
+    assert_eq!(graph.edge_storage.edges.len(), 10*count);
 }
 
 #[test]

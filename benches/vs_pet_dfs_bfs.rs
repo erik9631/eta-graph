@@ -66,5 +66,5 @@ fn vs_pet_bfs_bench(c: &mut Criterion) {
     bfs_bench_pet(data_size, &mut group);
 }
 
-criterion_group!(benches, vs_pet_bfs_bench);
-criterion_main!(benches);
+criterion_group!(vs_pet_dfs, vs_pet_bfs_bench);
+criterion_main!(vs_pet_dfs);

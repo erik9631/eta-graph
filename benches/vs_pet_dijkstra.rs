@@ -76,13 +76,5 @@ fn petgraph_vs_eta_graph(c: &mut Criterion) {
     tree_graph_petgraph_benchmark(children_count, elements_to_generate, &mut group);
 }
 
-fn eta_dijkstra(c: &mut Criterion) {
-    let children_count = 10;
-    let elements_to_generate = 1000000;
-    let mut group = c.benchmark_group("dijkstra");
-    tree_graph_eta_benchmark(children_count, elements_to_generate, &mut group);
-}
-
-
-criterion_group!(benches, petgraph_vs_eta_graph, eta_dijkstra);
-criterion_main!(benches);
+criterion_group!(vs_pet_dijkstra, petgraph_vs_eta_graph);
+criterion_main!(vs_pet_dijkstra);
