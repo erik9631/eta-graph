@@ -1,4 +1,4 @@
-use crate::handles::types::{MASK, SHIFT, VHandle, Weight, Edge};
+use crate::handles::types::{MASK, SHIFT, EHandle, Weight, Edge};
 #[cfg(msize_type = "u16")]
 pub mod types{
     pub type PackedEdge = u16;
@@ -27,18 +27,18 @@ pub mod types{
 pub mod types {
     pub type Edge = u64;
     pub type Weight = i32;
-    pub type VHandle = u32;
+    pub type EHandle = u32;
     pub(in crate::handles) const SHIFT: usize = 32;
     pub(in crate::handles) const MASK: u32 = 0xFFFFFFFF;
 }
 
 pub type Slot = Edge;
 
-pub const NONE: VHandle = VHandle::MAX;
+pub const NONE: EHandle = EHandle::MAX;
 
 #[inline(always)]
-pub fn vh(handle: Edge) -> VHandle {
-    handle as VHandle
+pub fn eh(handle: Edge) -> EHandle {
+    handle as EHandle
 }
 
 #[inline(always)]
@@ -46,11 +46,11 @@ pub fn wgt(handle: Edge) -> Weight {
     (handle >> SHIFT) as Weight
 }
 #[inline(always)]
-pub fn vh_pack(handle: VHandle) -> Edge {
+pub fn eh_pack(handle: EHandle) -> Edge {
     handle as Edge
 }
 #[inline(always)]
-pub fn pack(node_id: VHandle, weight: Weight) -> Edge {
+pub fn pack(node_id: EHandle, weight: Weight) -> Edge {
     (node_id as Edge) | ((weight as Edge) << SHIFT)
 }
 #[inline(always)]
@@ -58,6 +58,6 @@ pub fn set_wgt(handle: Edge, weight: Weight) -> Edge {
     (handle & !((MASK as Edge) << SHIFT)) | ((weight as Edge) << SHIFT)
 }
 #[inline(always)]
-pub fn set_vid(handle: Edge, vert_id: VHandle) -> Edge {
+pub fn set_eh(handle: Edge, vert_id: EHandle) -> Edge {
     (handle & !(MASK as Edge)) | (vert_id as Edge)
 }

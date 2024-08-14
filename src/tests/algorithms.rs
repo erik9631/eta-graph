@@ -6,8 +6,8 @@ use crate::algorithms::max_flow::{DinicGraph, mark_levels};
 use crate::algorithms::path_finding::{dijkstra};
 use crate::graph::Graph;
 use crate::handles::types::{Edge, Weight};
-use crate::handles::{vh, vh_pack, wgt};
-use crate::traits::{EdgeStore, GraphOperate, WeightedGraphOperate};
+use crate::handles::{eh, eh_pack, wgt};
+use crate::traits::{EdgeStore, EdgeConnect, WeightedEdgeConnect};
 use crate::weighted_graph::WeightedGraph;
 
 #[test]
@@ -39,9 +39,9 @@ pub fn graph_bfs_test(){
         ("root".to_string(), 0),
     ];
 
-    bfs(&mut graph.edge_storage, vh_pack(root), graph.vertices.len(), |handle, layer|{
+    bfs(&mut graph.edge_storage, eh_pack(root), graph.vertices.len(), |handle, layer|{
         let val = snap.pop().unwrap();
-        assert_eq!(graph.vertices[vh(*handle)], val.0);
+        assert_eq!(graph.vertices[eh(*handle)], val.0);
         assert_eq!(layer, val.1);
         Resume
     });
@@ -82,9 +82,9 @@ pub fn graph_bfs_test_cyclic(){
         ("root".to_string(), 0),
     ];
 
-    bfs(&mut graph.edge_storage, vh_pack(root), graph.vertices.len(), |handle, layer|{
+    bfs(&mut graph.edge_storage, eh_pack(root), graph.vertices.len(), |handle, layer|{
         let val = snap.pop().unwrap();
-        assert_eq!(graph.vertices[vh(*handle)], val.0);
+        assert_eq!(graph.vertices[eh(*handle)], val.0);
         assert_eq!(layer, val.1);
         Resume
     });
@@ -134,11 +134,11 @@ pub fn graph_dfs_test(){
         "a_a".to_string(),
     ];
 
-    dfs(&mut graph.edge_storage, vh_pack(root), graph.vertices.len(), |handle|{
-        assert_eq!(graph.vertices[vh(*handle)], snap.pop().unwrap());
+    dfs(&mut graph.edge_storage, eh_pack(root), graph.vertices.len(), |handle|{
+        assert_eq!(graph.vertices[eh(*handle)], snap.pop().unwrap());
         Resume
     }, |handle|{
-        assert_eq!(graph.vertices[vh(*handle)], snap2.pop().unwrap());
+        assert_eq!(graph.vertices[eh(*handle)], snap2.pop().unwrap());
     });
 
     assert_eq!(snap.len(), 0);
@@ -178,14 +178,14 @@ pub fn graph_dfs_end_test(){
         "a_a".to_string(),
     ];
 
-    dfs(&mut graph.edge_storage, vh_pack(root), graph.vertices.len(), |handle|{
+    dfs(&mut graph.edge_storage, eh_pack(root), graph.vertices.len(), |handle|{
         if snap.is_empty() {
             return End;
         }
-        assert_eq!(graph.vertices[vh(*handle)], snap.pop().unwrap());
+        assert_eq!(graph.vertices[eh(*handle)], snap.pop().unwrap());
         Resume
     }, |handle|{
-        assert_eq!(graph.vertices[vh(*handle)], snap2.pop().unwrap());
+        assert_eq!(graph.vertices[eh(*handle)], snap2.pop().unwrap());
     });
 
     assert_eq!(snap.len(), 0);
@@ -227,10 +227,10 @@ pub fn level_test(){
         ("a".to_string(), 0),
     ];
 
-    bfs(&mut edges_copy, vh_pack(a), weighted_graph.graph.vertices.len(), |v_handle, layer|{
+    bfs(&mut edges_copy, eh_pack(a), weighted_graph.graph.vertices.len(), |v_handle, layer|{
         let snap_data = snap.pop().unwrap();
-        assert_eq!(weighted_graph.graph.vertices[vh(*v_handle)], snap_data.0);
-        assert_eq!(flow_data[vh(*v_handle) as usize], snap_data.1);
+        assert_eq!(weighted_graph.graph.vertices[eh(*v_handle)], snap_data.0);
+        assert_eq!(flow_data[eh(*v_handle) as usize], snap_data.1);
         Resume
     });
 

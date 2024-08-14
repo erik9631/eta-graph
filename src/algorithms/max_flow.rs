@@ -2,8 +2,8 @@ use std::ops::{Index, IndexMut};
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
 use eta_algorithms::data_structs::stack::Stack;
-use crate::handles::types::{Edge, VHandle, Weight};
-use crate::handles::{pack, set_wgt, vh, wgt};
+use crate::handles::types::{Edge, EHandle, Weight};
+use crate::handles::{pack, set_wgt, eh, wgt};
 use crate::traits::{StoreVertex, WeightedEdgeManipulate};
 const DUMMY_WEIGHT: Weight = -1;
 
@@ -23,7 +23,7 @@ where
     VertexStorageType: StoreVertex<VertexType=VertexType>,
     EdgeStorageType: WeightedEdgeManipulate,
 {
-    pub fn from(vertices: &'a VertexStorageType, edge_storage: &EdgeStorageType, src_handle: VHandle, sink_handle: VHandle) -> Self {
+    pub fn from(vertices: &'a VertexStorageType, edge_storage: &EdgeStorageType, src_handle: EHandle, sink_handle: EHandle) -> Self {
         let vertices_len = vertices.len();
         let mut dinic_graph = DinicGraph {
             vertices,
@@ -50,7 +50,7 @@ where
         }
     }
 
-    pub fn perform_search(&mut self, src_handle: VHandle, sink_handle: VHandle) {
+    pub fn perform_search(&mut self, src_handle: EHandle, sink_handle: EHandle) {
         let mut stack = Stack::new(self.vertices.len());
         let mut queue = Queue::<*mut Edge>::new_pow2_sized(self.vertices.len()); // Direct pointer access is faster than offsets
         self.layer_data.fill(Weight::MAX);
@@ -64,8 +64,8 @@ where
             }
 
             loop {
-                let len = self.edge_storage.len(src_handle);
-                let current_edge_offset = self.edge_storage.get_edges_index(src_handle);
+                let len = self.edge_storage.entry_len(src_handle);
+                let current_edge_offset = self.edge_storage.entry_index(src_handle);
                 let mut current_edge = pack(src_handle, Weight::MAX);
                 stack.push((current_edge_offset, current_edge_offset + len, (&mut current_edge) as *mut Edge));
 
@@ -76,9 +76,9 @@ where
                 while stack.len() > 0 {
                     let (current_edge_offset, end_offset, outgoing_edge) = stack.top_mut().unwrap();
                     let outgoing_edge_val = unsafe { **outgoing_edge };
-                    current_layer = self.layer_data[vh(outgoing_edge_val) as usize];
+                    current_layer = self.layer_data[eh(outgoing_edge_val) as usize];
 
-                    if vh(outgoing_edge_val) == sink_handle {
+                    if eh(outgoing_edge_val) == sink_handle {
                         augmented_path_found = true;
                     }
 
@@ -104,14 +104,14 @@ where
 
                     let next_edge_ptr = &mut self.edge_storage[*current_edge_offset] as *mut Edge;
                     let next_edge = unsafe { *next_edge_ptr };
-                    let next_edge_layer = self.layer_data[vh(next_edge) as usize];
+                    let next_edge_layer = self.layer_data[eh(next_edge) as usize];
 
                     *current_edge_offset += 1;
 
                     // Exploring deeper
                     if wgt(next_edge) != 0 && next_edge_layer > current_layer {
-                        let next_edge_edges = self.edge_storage.get_edges_index(vh(next_edge));
-                        let next_edge_edges_end = next_edge_edges + self.edge_storage.len(vh(next_edge));
+                        let next_edge_edges = self.edge_storage.entry_index(eh(next_edge));
+                        let next_edge_edges_end = next_edge_edges + self.edge_storage.entry_len(eh(next_edge));
                         current_layer = next_edge_layer;
                         stack.push((next_edge_edges, next_edge_edges_end, next_edge_ptr));
                     }
@@ -126,8 +126,8 @@ where
 }
 
 pub(in crate) fn mark_levels<EdgeStorageType, LayerDataType>(
-    src_handle: VHandle,
-    sink_handle: VHandle,
+    src_handle: EHandle,
+    sink_handle: EHandle,
     edge_storage: &mut EdgeStorageType,
     queue: &mut Queue<*mut Edge>,
     layer_data: &mut LayerDataType,
@@ -148,17 +148,17 @@ where
     while queue.len() > 0 {
         let handle_ptr = unsafe { queue.dequeue().unwrap() };
         let handle = unsafe { *handle_ptr };
-        if vh(handle) == sink_handle {
+        if eh(handle) == sink_handle {
             found_sink = true;
         }
-        layer_data[vh(handle) as usize] = layer;
+        layer_data[eh(handle) as usize] = layer;
 
-        let len = edge_storage.len(vh(handle));
-        let mut next_edge = edge_storage.edges_mut_ptr(vh(handle));
+        let len = edge_storage.entry_len(eh(handle));
+        let mut next_edge = edge_storage.entry_as_mut_ptr(eh(handle));
         let edges_end = unsafe { next_edge.add(len as usize) };
 
         while next_edge != edges_end {
-            if layer_data[vh(unsafe { *next_edge }) as usize] <= layer {
+            if layer_data[eh(unsafe { *next_edge }) as usize] <= layer {
                 continue;
             }
 

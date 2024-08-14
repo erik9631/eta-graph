@@ -1,7 +1,7 @@
 use crate::edge_storage::{EdgeStorage};
 use crate::handles::Slot;
-use crate::handles::types::{VHandle};
-use crate::traits::{GraphOperate, EdgeManipulate, StoreVertex};
+use crate::handles::types::{EHandle};
+use crate::traits::{EdgeConnect, EdgeManipulate, StoreVertex};
 use crate::vertex_storage::VertexStorage;
 use crate::views::tree::Tree;
 
@@ -74,22 +74,22 @@ where
         return Tree::new(&mut self.edge_storage, &mut self.vertices);
     }
 
-    pub fn create_and_connect(&mut self, from: VHandle, val: VertexType, edge_count: Slot) -> VHandle {
+    pub fn create_and_connect(&mut self, from: EHandle, val: VertexType, edge_count: Slot) -> EHandle {
         let new_vertex = self.create(val, edge_count);
         self.edge_storage.connect(from, new_vertex);
         new_vertex
     }
 
-    pub fn create_and_connect_0(&mut self, from: VHandle, val: VertexType) -> VHandle {
+    pub fn create_and_connect_0(&mut self, from: EHandle, val: VertexType) -> EHandle {
         self.create_and_connect(from, val, 0)
     }
 
-    pub fn create(&mut self, val: VertexType, edge_count: Slot) -> VHandle {
+    pub fn create(&mut self, val: VertexType, edge_count: Slot) -> EHandle {
         self.vertices.push(val);
-        self.edge_storage.create_edges_entry(edge_count)
+        self.edge_storage.create_entry(edge_count)
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn create_leaf(&mut self, val: VertexType) -> VHandle {
+    pub fn create_leaf(&mut self, val: VertexType) -> EHandle {
         self.create(val, 0)
     }
 }

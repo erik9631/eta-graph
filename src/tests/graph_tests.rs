@@ -3,9 +3,9 @@ use std::mem::size_of;
 use std::time::{Instant};
 use crate::{graph};
 use crate::graph::{Graph};
-use crate::handles::types::{VHandle, Weight};
-use crate::handles::{vh, wgt};
-use crate::traits::{GraphOperate, EdgeStore, StoreVertex};
+use crate::handles::types::{EHandle, Weight};
+use crate::handles::{eh, wgt};
+use crate::traits::{EdgeConnect, EdgeStore, StoreVertex};
 use crate::weighted_graph::WeightedGraph;
 
 #[test]
@@ -39,35 +39,35 @@ pub fn graph_basic_test(){
 
    graph.create_and_connect_0(b_a, "b_a_a");
 
-    let a_edges = graph.edge_storage.edges(a);
+    let a_edges = graph.edge_storage.entry_as_slice(a);
     assert_eq!(a_edges.len(), 3);
 
     for edge in a_edges {
         match *edge{
-            0 => assert_eq!(graph.vertices[vh(*edge)], "a_a"),
-            1 => assert_eq!(graph.vertices[vh(*edge)], "a_b"),
-            2 => assert_eq!(graph.vertices[vh(*edge)], "a_c"),
+            0 => assert_eq!(graph.vertices[eh(*edge)], "a_a"),
+            1 => assert_eq!(graph.vertices[eh(*edge)], "a_b"),
+            2 => assert_eq!(graph.vertices[eh(*edge)], "a_c"),
             _ => continue,
         }
     }
 
-    let b_edges = graph.edge_storage.edges(b);
+    let b_edges = graph.edge_storage.entry_as_slice(b);
     assert_eq!(b_edges.len(), 2);
 
     for edge in b_edges {
         match *edge{
-            0 => assert_eq!(graph.vertices[vh(*edge)], "b_a"),
-            1 => assert_eq!(graph.vertices[vh(*edge)], "b_b"),
+            0 => assert_eq!(graph.vertices[eh(*edge)], "b_a"),
+            1 => assert_eq!(graph.vertices[eh(*edge)], "b_b"),
             _ => continue,
         }
     }
 
-    let b_a_a_edges = graph.edge_storage.edges(b_a);
+    let b_a_a_edges = graph.edge_storage.entry_as_slice(b_a);
     assert_eq!(b_a_a_edges.len(), 1);
 
     for edge in b_a_a_edges {
         match *edge{
-            0 => assert_eq!(graph.vertices[vh(*edge)], "b_a_a"),
+            0 => assert_eq!(graph.vertices[eh(*edge)], "b_a_a"),
             _ => continue,
         }
     }
@@ -125,22 +125,22 @@ pub fn graph_mutability_test(){
     graph.create_and_connect_0(a, "a_c");
 
 
-    let edges = graph.edge_storage.edges(a);
+    let edges = graph.edge_storage.entry_as_slice(a);
     assert_eq!(edges.len(), 3);
 
     for edge in edges {
         match *edge{
             0 => {
-                graph.vertices[vh(*edge)] = "a_a_edited";
-                graph.vertices[vh(*edge)] = "a_a_edited"
+                graph.vertices[eh(*edge)] = "a_a_edited";
+                graph.vertices[eh(*edge)] = "a_a_edited"
             },
             1 => {
-                graph.vertices[vh(*edge)] = "a_b_edited";
-                graph.vertices[vh(*edge)] = "a_b_edited"
+                graph.vertices[eh(*edge)] = "a_b_edited";
+                graph.vertices[eh(*edge)] = "a_b_edited"
             },
             2 => {
-                graph.vertices[vh(*edge)] = "a_c_edited";
-                graph.vertices[vh(*edge)] = "a_c_edited"
+                graph.vertices[eh(*edge)] = "a_c_edited";
+                graph.vertices[eh(*edge)] = "a_c_edited"
             },
             _ => continue,
         }
@@ -150,7 +150,7 @@ pub fn graph_mutability_test(){
 #[test]
 pub fn graph_vertices_iter_test(){
     let mut graph = Graph::new_large();
-    let test_size = min(size_of::<VHandle>(), 10000000) as VHandle;
+    let test_size = min(size_of::<EHandle>(), 10000000) as EHandle;
 
     for i in 0..test_size {
         graph.create_leaf(i);
@@ -236,16 +236,16 @@ pub fn graph_disconnect_test(){
     graph.edge_storage.disconnect(a, af);
 
 
-    assert_eq!(graph.edge_storage.len(a), 5);
-    let edges = graph.edge_storage.edges(a);
+    assert_eq!(graph.edge_storage.entry_len(a), 5);
+    let edges = graph.edge_storage.entry_as_slice(a);
 
     for edge in edges {
         match *edge{
-            3 => assert_eq!(graph.vertices[vh(*edge)], "a_a"),
-            4 => assert_eq!(graph.vertices[vh(*edge)], "a_b"),
-            5 => assert_eq!(graph.vertices[vh(*edge)], "a_c"),
-            6 => assert_eq!(graph.vertices[vh(*edge)], "a_d"),
-            7 => assert_eq!(graph.vertices[vh(*edge)], "a_e"),
+            3 => assert_eq!(graph.vertices[eh(*edge)], "a_a"),
+            4 => assert_eq!(graph.vertices[eh(*edge)], "a_b"),
+            5 => assert_eq!(graph.vertices[eh(*edge)], "a_c"),
+            6 => assert_eq!(graph.vertices[eh(*edge)], "a_d"),
+            7 => assert_eq!(graph.vertices[eh(*edge)], "a_e"),
             _ => continue,
         }
     }
@@ -253,14 +253,14 @@ pub fn graph_disconnect_test(){
     graph.edge_storage.disconnect(a, ad);
     graph.edge_storage.disconnect(a, ab);
 
-    assert_eq!(graph.edge_storage.len(a), 3);
+    assert_eq!(graph.edge_storage.entry_len(a), 3);
 
-    let edges = graph.edge_storage.edges(a);
+    let edges = graph.edge_storage.entry_as_slice(a);
     for edge in edges {
         match *edge{
-            3 => assert_eq!(graph.vertices[vh(*edge)], "a_a"),
-            5 => assert_eq!(graph.vertices[vh(*edge)], "a_c"),
-            7 => assert_eq!(graph.vertices[vh(*edge)], "a_e"),
+            3 => assert_eq!(graph.vertices[eh(*edge)], "a_a"),
+            5 => assert_eq!(graph.vertices[eh(*edge)], "a_c"),
+            7 => assert_eq!(graph.vertices[eh(*edge)], "a_e"),
             _ => continue,
         }
     }
@@ -272,23 +272,23 @@ pub fn graph_static_test(){
     let mut graph = Graph::new();
     let root = graph.create("root", 5);
     let a = graph.create_and_connect(root,"a", 1);
-    assert_eq!(graph.edge_storage.edge_block_capacity(root), 5);
+    assert_eq!(graph.edge_storage.entry_capacity(root), 5);
     graph.create_and_connect(root, "b", 0);
-    assert_eq!(graph.edge_storage.edge_block_capacity(root), 5);
+    assert_eq!(graph.edge_storage.entry_capacity(root), 5);
     graph.create_and_connect(root,"c", 0);
-    assert_eq!(graph.edge_storage.edge_block_capacity(root), 5);
+    assert_eq!(graph.edge_storage.entry_capacity(root), 5);
     let d = graph.create_and_connect(root, "d", 1);
-    assert_eq!(graph.edge_storage.edge_block_capacity(root), 5);
+    assert_eq!(graph.edge_storage.entry_capacity(root), 5);
     let e = graph.create_and_connect(root, "e", 1);
-    assert_eq!(graph.edge_storage.edge_block_capacity(root), 5);
+    assert_eq!(graph.edge_storage.entry_capacity(root), 5);
 
     graph.create_and_connect(a, "a_a", 0);
-    assert_eq!(graph.edge_storage.edge_block_capacity(root), 5);
+    assert_eq!(graph.edge_storage.entry_capacity(root), 5);
     graph.create_and_connect(d, "a_d", 0);
-    assert_eq!(graph.edge_storage.edge_block_capacity(root), 5);
+    assert_eq!(graph.edge_storage.entry_capacity(root), 5);
     graph.create_and_connect(e, "a_e", 0);
-    assert_eq!(graph.edge_storage.edge_block_capacity(root), 5);
-    assert_eq!(graph.edge_storage.edge_block_capacity(root), 5);
+    assert_eq!(graph.edge_storage.entry_capacity(root), 5);
+    assert_eq!(graph.edge_storage.entry_capacity(root), 5);
 }
 
 
@@ -302,29 +302,29 @@ pub fn graph_weight_test(){
     wgraph.create_and_connect_weighted(root, "d", Weight::MAX, 0);
     wgraph.create_and_connect_weighted(root, "e", -Weight::MAX, 0);
 
-    assert_eq!(wgraph.graph.edge_storage.len(root), 5);
+    assert_eq!(wgraph.graph.edge_storage.entry_len(root), 5);
 
-    for edge in wgraph.graph.edge_storage.edges(root){
+    for edge in wgraph.graph.edge_storage.entry_as_slice(root){
         match *edge{
             0 => {
                 assert_eq!(wgt(*edge), 5);
-                assert_eq!(vh(*edge), 1);
+                assert_eq!(eh(*edge), 1);
             },
             1 => {
                 assert_eq!(wgt(*edge), 7);
-                assert_eq!(vh(*edge), 2);
+                assert_eq!(eh(*edge), 2);
             },
             2 => {
                 assert_eq!(wgt(*edge), 1052);
-                assert_eq!(vh(*edge), 3);
+                assert_eq!(eh(*edge), 3);
             },
             3 => {
                 assert_eq!(wgt(*edge), Weight::MAX);
-                assert_eq!(vh(*edge), 4);
+                assert_eq!(eh(*edge), 4);
             },
             4 => {
                 assert_eq!(wgt(*edge), -Weight::MAX);
-                assert_eq!(vh(*edge), 5);
+                assert_eq!(eh(*edge), 5);
             },
             _ => continue,
         }

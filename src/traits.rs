@@ -1,9 +1,9 @@
 use std::collections::btree_map::Iter;
 use std::ops::{Index, IndexMut};
 use crate::handles::Slot;
-use crate::handles::types::{Edge, VHandle, Weight};
+use crate::handles::types::{Edge, EHandle, Weight};
 
-pub trait StoreVertex: Index<VHandle, Output=Self::VertexType> + IndexMut<VHandle, Output=Self::VertexType>{
+pub trait StoreVertex: Index<EHandle, Output=Self::VertexType> + IndexMut<EHandle, Output=Self::VertexType>{
     type VertexType;
     fn len(&self) -> usize;
     fn push(&mut self, val: Self::VertexType);
@@ -13,32 +13,29 @@ pub trait StoreVertex: Index<VHandle, Output=Self::VertexType> + IndexMut<VHandl
     fn as_slice(&self) -> &[Self::VertexType];
 }
 
-pub trait GraphOperate {
-    fn add_edges(&mut self, src: VHandle, targets: &[Edge]);
-    fn create_edges_entry(&mut self, size: Slot) -> VHandle;
-    fn disconnect(&mut self, src_handle: VHandle, handle: VHandle);
-    fn connect(&mut self, from: VHandle, to: VHandle);
+pub trait EdgeConnect {
+    fn connect_edges(&mut self, src: EHandle, targets: &[Edge]);
+    fn disconnect(&mut self, src_handle: EHandle, handle: EHandle);
+    fn connect(&mut self, from: EHandle, to: EHandle);
 }
 
-pub trait WeightedGraphOperate {
-    fn connect_weighted(&mut self, from: VHandle, to: VHandle, weight: Weight);
+pub trait WeightedEdgeConnect {
+    fn connect_weighted(&mut self, from: EHandle, to: EHandle, weight: Weight);
 }
+
 pub trait EdgeStore: Index<Slot, Output=Slot> + IndexMut<Slot, Output=Slot>{
-    fn edges_offset(&self, vertex: VHandle, offset: Slot) -> &[Edge];
-    fn edges_ptr_offset(&self, vertex: VHandle, offset: Slot) -> *const Edge;
-    fn edges(&self, vertex: VHandle) -> &[Edge];
-    fn edges_ptr(&self, vertex: VHandle) -> *const Edge;
-    fn len(&self, handle: VHandle) -> Slot;
-    fn edge_block_capacity(&self, handle: VHandle) -> Slot;
-    fn get_edges_index(&self, vertex: VHandle) -> Slot;
-    fn edges_mut_offset(&mut self, vertex: VHandle, offset: Slot) -> &mut [Edge];
-    fn edges_mut_ptr_offset(&mut self, vertex: VHandle, offset: Slot) -> *mut Edge;
-    fn edges_mut_ptr(&mut self, vertex: VHandle) -> *mut Edge;
-    fn edges_mut(&mut self, vertex: VHandle) -> &mut [Edge];
+    fn create_entry(&mut self, size: Slot) -> EHandle;
+    fn entry_as_slice(&self, handle: EHandle) -> &[Edge];
+    fn entry_as_mut_slice(&mut self, handle: EHandle) -> &mut [Edge];
+    fn entry_as_ptr(&self, handle: EHandle) -> *const Edge;
+    fn entry_as_mut_ptr(&mut self, handle: EHandle) -> *mut Edge;
+    fn entry_len(&self, handle: EHandle) -> Slot;
+    fn entry_capacity(&self, handle: EHandle) -> Slot;
+    fn entry_index(&self, handle: EHandle) -> Slot;
     fn iter (&self) -> impl Iterator<Item=&Slot>;
     fn iter_mut (&mut self) -> impl Iterator<Item=&mut Slot>;
-    fn edge_iter(&self, handle: VHandle) -> impl Iterator<Item=&Slot>;
-    fn edge_iter_mut(&mut self, handle: VHandle) -> impl Iterator<Item=&mut Slot>;
+    fn entry_iter(&self, handle: EHandle) -> impl Iterator<Item=&Slot>;
+    fn entry_iter_mut(&mut self, handle: EHandle) -> impl Iterator<Item=&mut Slot>;
 }
-pub trait EdgeManipulate: EdgeStore + GraphOperate + Clone{}
-pub trait WeightedEdgeManipulate: EdgeManipulate + WeightedGraphOperate {}
+pub trait EdgeManipulate: EdgeStore + EdgeConnect + Clone{}
+pub trait WeightedEdgeManipulate: EdgeManipulate + WeightedEdgeConnect {}

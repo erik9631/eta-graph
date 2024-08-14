@@ -1,7 +1,7 @@
 
-use crate::handles::{NONE, Slot, vh, vh_pack};
-use crate::handles::types::{Edge, VHandle};
-use crate::traits::{GraphOperate, EdgeStore, StoreVertex};
+use crate::handles::{NONE, Slot, eh_pack, eh};
+use crate::handles::types::{Edge, EHandle};
+use crate::traits::{EdgeConnect, EdgeStore, StoreVertex};
 
 pub struct Tree<'a, VertexType, VertexStorageType, EdgeStorageType>
 where
@@ -17,7 +17,7 @@ const TREE_HEADER_ELEMENTS: Slot = 2;
 
 impl <'a, VertexType, VertexStorageType, EdgeStorageType> Tree<'a, VertexType, VertexStorageType, EdgeStorageType>
 where
-    EdgeStorageType: EdgeStore + GraphOperate,
+    EdgeStorageType: EdgeStore + EdgeConnect,
     VertexStorageType: StoreVertex<VertexType=VertexType>
 {
     #[cfg_attr(not(debug_assertions), inline(always))]
@@ -29,33 +29,33 @@ where
         }
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn get_children(&self, parent: VHandle) -> &[Edge] {
-        self.nodes.edges_offset(parent, TREE_HEADER_ELEMENTS)
+    pub fn get_children(&self, parent: EHandle) -> &[Edge] {
+        &self.nodes.entry_as_slice(parent)[TREE_HEADER_ELEMENTS as usize..]
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn add_child(&mut self, parent: VHandle, child: VHandle){
+    pub fn add_child(&mut self, parent: EHandle, child: EHandle){
         self.nodes.connect(parent, child);
-        let child_edge = self.nodes.get_edges_index(child);
-        self.nodes[child_edge + PARENT_OFFSET] = vh_pack(parent);
-        self.nodes[child_edge + ROOT_OFFSET] = vh_pack(self.get_root(parent));
+        let child_edge = self.nodes.entry_index(child);
+        self.nodes[child_edge + PARENT_OFFSET] = eh_pack(parent);
+        self.nodes[child_edge + ROOT_OFFSET] = eh_pack(self.get_root(parent));
     }
 
-    fn create_vertex(&mut self, val: VertexType) -> VHandle {
+    fn create_vertex(&mut self, val: VertexType) -> EHandle {
         self.values.push(val);
-        self.nodes.create_edges_entry(0);
+        self.nodes.create_entry(0);
         let vertex = self.values.len() -1;
-        vertex as VHandle
+        vertex as EHandle
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn get_root(&self, vertex: VHandle) -> VHandle {
-        vh(self.nodes[self.nodes.get_edges_index(vertex) + ROOT_OFFSET])
+    pub fn get_root(&self, vertex: EHandle) -> EHandle {
+        eh(self.nodes[self.nodes.entry_index(vertex) + ROOT_OFFSET])
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn get_parent(&self, vertex: VHandle) -> VHandle {
-        vh(self.nodes[self.nodes.get_edges_index(vertex) + PARENT_OFFSET])
+    pub fn get_parent(&self, vertex: EHandle) -> EHandle {
+        eh(self.nodes[self.nodes.entry_index(vertex) + PARENT_OFFSET])
     }
 
-    pub fn create_node(&mut self, val: VertexType) -> VHandle {
+    pub fn create_node(&mut self, val: VertexType) -> EHandle {
         let vertex = self.create_vertex(val);
 
         self.nodes.connect(vertex, vertex); // root
@@ -65,7 +65,7 @@ where
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn create_child(&mut self, parent: VHandle, val: VertexType) -> VHandle {
+    pub fn create_child(&mut self, parent: EHandle, val: VertexType) -> EHandle {
         let child = self.create_node(val);
         self.add_child(parent, child);
         child

@@ -1,6 +1,6 @@
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 use eta_graph::graph;
-use eta_graph::traits::GraphOperate;
+use eta_graph::traits::EdgeConnect;
 
 fn graph_disconnect_bench(c: &mut criterion::Criterion) {
     c.bench_function("graph_disconnect", |b| b.iter_batched(|| {
@@ -24,7 +24,7 @@ fn graph_disconnect_bench(c: &mut criterion::Criterion) {
 
 criterion_group!{
     name = general;
-    config = Criterion::default().sample_size(20);
+    config = Criterion::default().sample_size(50);
     targets = graph_disconnect_bench
 }
 
