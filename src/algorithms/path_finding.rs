@@ -2,23 +2,23 @@ use std::cmp::Ordering;
 use std::collections::{BinaryHeap};
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::stack::Stack;
-use crate::handles::types::{Edge, EHandle, Weight};
+use crate::handles::types::{Edge, VHandle, Weight};
 use crate::handles::{eh, wgt};
 use crate::traits::EdgeStore;
 
 struct MinHeapPair {
-    pub vertex: EHandle,
+    pub vertex: VHandle,
     pub f_score: Weight,
 }
 
 #[derive(Clone, Copy)]
 struct PathVertex {
-    pub from: EHandle,
+    pub from: VHandle,
     pub f_score: Weight,
 }
 
 impl MinHeapPair {
-    pub fn new(vertex: EHandle, f_score: Weight) -> Self {
+    pub fn new(vertex: VHandle, f_score: Weight) -> Self {
         MinHeapPair {
             vertex,
             f_score,
@@ -46,7 +46,7 @@ impl Ord for MinHeapPair {
     }
 }
 
-fn reconstruct_path(paths: &mut Array<PathVertex>, start: EHandle, goal: EHandle) -> Stack<EHandle> {
+fn reconstruct_path(paths: &mut Array<PathVertex>, start: VHandle, goal: VHandle) -> Stack<VHandle> {
     let mut path = Stack::new(paths.capacity());
     let mut current = goal;
     path.push(current);
@@ -65,10 +65,10 @@ fn reconstruct_path(paths: &mut Array<PathVertex>, start: EHandle, goal: EHandle
 ///
 // TODO Parallelization potential. Split the graph into multiple subgraphs, and run A* on each subgraph in parallel.
 // Put together the resulting paths
-pub fn a_star<Edges, Heuristic>(edge_storage: &mut Edges, start: EHandle, goal: EHandle, vertices_count: usize, h_score: Heuristic) -> Option<Stack<EHandle>>
+pub fn a_star<Edges, Heuristic>(edge_storage: &mut Edges, start: VHandle, goal: VHandle, vertices_count: usize, h_score: Heuristic) -> Option<Stack<VHandle>>
 where
     Edges: EdgeStore,
-    Heuristic: Fn(EHandle, Edge) -> Weight,
+    Heuristic: Fn(VHandle, Edge) -> Weight,
 {
     let mut explore_list = BinaryHeap::<MinHeapPair>::with_capacity(vertices_count);
 
@@ -80,7 +80,7 @@ where
             return Some(reconstruct_path(&mut f_scores, start, goal))
         }
 
-        let neighbors = edge_storage.entry_as_slice(current_vertex.vertex);
+        let neighbors = edge_storage.vertex_as_slice(current_vertex.vertex);
         for neighbor in neighbors {
             let neighbor_f_score = wgt(*neighbor) + current_vertex.f_score + h_score(current_vertex.vertex, *neighbor);
             if f_scores[eh(*neighbor) as usize].f_score < neighbor_f_score {
@@ -94,7 +94,7 @@ where
 }
 
 #[inline(always)]
-pub fn dijkstra<Edges>(edge_storage: &mut Edges, start: EHandle, goal: EHandle, vertices_count: usize) -> Option<Stack<EHandle>>
+pub fn dijkstra<Edges>(edge_storage: &mut Edges, start: VHandle, goal: VHandle, vertices_count: usize) -> Option<Stack<VHandle>>
 where
     Edges: EdgeStore
 {

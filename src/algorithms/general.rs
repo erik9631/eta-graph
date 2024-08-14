@@ -1,5 +1,5 @@
-use crate::handles::types::{Edge, Weight};
-use crate::handles::{eh, Slot};
+use crate::handles::types::{Ci, Edge, Weight};
+use crate::handles::{eh};
 use crate::traits::EdgeStore;
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
@@ -43,7 +43,7 @@ where
             }
             ControlFlow::Resume => {}
         }
-        let mut edge_iter = edge_storage.entry_iter_mut(eh(unsafe { *handle }));
+        let mut edge_iter = edge_storage.vertex_iter_mut(eh(unsafe { *handle }));
         for edge in edge_iter {
             if unsafe { *was_queued_flags.index_unchecked(eh(*edge) as usize) } {
                 continue;
@@ -87,8 +87,8 @@ where
     Edges: EdgeStore,
 {
     let mut start_edge = start;
-    let mut stack = Stack::<(Slot, Slot, *mut Slot)>::new(vertex_count);
-    stack.push((edge_storage.entry_index(eh(start)), edge_storage.entry_index(eh(start)) + edge_storage.entry_len(eh(start)), (&mut start_edge) as *mut Edge));
+    let mut stack = Stack::<(usize, usize, *mut Edge)>::new(vertex_count);
+    stack.push((edge_storage.vertex_index(eh(start)), edge_storage.vertex_index(eh(start)) + edge_storage.vertex_len(eh(start)), (&mut start_edge) as *mut Edge));
     match pre_order_func(&mut start_edge) {
         ControlFlow::End => {
             return;
@@ -124,8 +124,8 @@ where
             ControlFlow::Resume => {}
         }
 
-        let outgoing_edge_edges_start = edge_storage.entry_index(eh(edge_storage[outgoing_offset]));
-        let outgoing_edge_edges_end = outgoing_edge_edges_start + edge_storage.entry_len(eh(edge_storage[outgoing_offset]));
+        let outgoing_edge_edges_start = edge_storage.vertex_index(eh(edge_storage[outgoing_offset]));
+        let outgoing_edge_edges_end = outgoing_edge_edges_start + edge_storage.vertex_len(eh(edge_storage[outgoing_offset]));
         let outgoing_edge = &mut edge_storage[outgoing_offset];
 
         stack.push((outgoing_edge_edges_start,

@@ -1,5 +1,5 @@
 use crate::handles::{pack, set_eh, set_wgt, eh, eh_pack, wgt};
-use crate::handles::types::{EHandle, Weight};
+use crate::handles::types::{VHandle, Weight};
 
 #[test]
 pub fn handle_test_vert_id(){
@@ -11,8 +11,8 @@ pub fn handle_test_vert_id(){
     assert_eq!(eh(handle), 7);
     assert_eq!(wgt(handle), 2);
 
-    let handle = pack(EHandle::MAX, 2);
-    assert_eq!(eh(handle), EHandle::MAX);
+    let handle = pack(VHandle::MAX, 2);
+    assert_eq!(eh(handle), VHandle::MAX);
     assert_eq!(wgt(handle), 2);
 }
 #[test]
@@ -43,8 +43,8 @@ pub fn handle_test_weight_combined(){
     assert_eq!(eh(handle), 1);
     assert_eq!(wgt(handle), 7);
 
-    let handle = pack(EHandle::MAX, Weight::MAX);
-    assert_eq!(eh(handle), EHandle::MAX);
+    let handle = pack(VHandle::MAX, Weight::MAX);
+    assert_eq!(eh(handle), VHandle::MAX);
     assert_eq!(wgt(handle), Weight::MAX);
 }
 #[test]
@@ -54,8 +54,8 @@ pub fn set_vert_id_test(){
     assert_eq!(eh(handle), 8);
     assert_eq!(wgt(handle), 7);
 
-    handle = set_eh(handle, EHandle::MAX);
-    assert_eq!(eh(handle), EHandle::MAX);
+    handle = set_eh(handle, VHandle::MAX);
+    assert_eq!(eh(handle), VHandle::MAX);
     assert_eq!(wgt(handle), 7);
 
     handle = set_eh(handle, 8);
@@ -112,10 +112,10 @@ pub fn combined_set_test(){
     assert_eq!(eh(handle), 8);
     assert_eq!(wgt(handle), 8);
 
-    handle = set_eh(handle, EHandle::MAX);
+    handle = set_eh(handle, VHandle::MAX);
     handle = set_wgt(handle, Weight::MAX);
 
-    assert_eq!(eh(handle), EHandle::MAX);
+    assert_eq!(eh(handle), VHandle::MAX);
     assert_eq!(wgt(handle), Weight::MAX);
 
     handle = set_eh(handle, 1231);
@@ -124,10 +124,10 @@ pub fn combined_set_test(){
     assert_eq!(eh(handle), 1231);
     assert_eq!(wgt(handle), 8997);
 
-    handle = set_eh(handle, EHandle::MAX);
+    handle = set_eh(handle, VHandle::MAX);
     handle = set_wgt(handle, -Weight::MAX);
 
-    assert_eq!(eh(handle), EHandle::MAX);
+    assert_eq!(eh(handle), VHandle::MAX);
     assert_eq!(wgt(handle), -Weight::MAX);
 }
 

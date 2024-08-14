@@ -5,6 +5,9 @@ mod tree_tests;
 #[cfg(test)]
 mod handle;
 #[cfg(test)]
-mod algorithms;
+mod dijkstra;
 #[cfg(test)]
 mod edge_storage;
+mod bfs;
+mod dfs;
+mod dinic;

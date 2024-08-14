@@ -1,7 +1,6 @@
 use crate::edge_storage::EdgeStorage;
 use crate::graph::{Graph};
-use crate::handles::Slot;
-use crate::handles::types::{EHandle, Weight};
+use crate::handles::types::{VHandle, Ci, Weight};
 use crate::traits::{StoreVertex, WeightedEdgeManipulate, WeightedEdgeConnect};
 use crate::vertex_storage::VertexStorage;
 
@@ -43,7 +42,7 @@ impl<VertexType> WeightedGraph<VertexType, VertexStorage<VertexType>, EdgeStorag
             graph: Graph::new_large(),
         }
     }
-    pub fn with_reserve(reserve: Slot) -> Self {
+    pub fn with_reserve(reserve: Ci) -> Self {
         WeightedGraph{
             graph: Graph::with_reserve(reserve),
         }
@@ -53,13 +52,13 @@ impl<VertexType, StoreVertexType, EdgeStorageType> WeightedGraph<VertexType, Sto
 where
     EdgeStorageType: WeightedEdgeManipulate,
     StoreVertexType: StoreVertex<VertexType=VertexType> {
-    pub fn create_and_connect_weighted(&mut self, src_vertex: EHandle, val: VertexType, weight: Weight, edge_count: Slot) -> EHandle {
+    pub fn create_and_connect_weighted(&mut self, src_vertex: VHandle, val: VertexType, weight: Weight, edge_count: Ci) -> VHandle {
         let new_vertex = self.graph.create(val, edge_count);
         self.graph.edge_storage.connect_weighted(src_vertex, new_vertex, weight);
         new_vertex
     }
 
-    pub fn create_and_connect_weighted_0(&mut self, src_vertex: EHandle, val: VertexType, weight: Weight) -> EHandle {
+    pub fn create_and_connect_weighted_0(&mut self, src_vertex: VHandle, val: VertexType, weight: Weight) -> VHandle {
         self.create_and_connect_weighted(src_vertex, val, weight, 0)
     }
 

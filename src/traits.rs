@@ -1,9 +1,7 @@
-use std::collections::btree_map::Iter;
 use std::ops::{Index, IndexMut};
-use crate::handles::Slot;
-use crate::handles::types::{Edge, EHandle, Weight};
+use crate::handles::types::{Edge, VHandle, Weight, Ci};
 
-pub trait StoreVertex: Index<EHandle, Output=Self::VertexType> + IndexMut<EHandle, Output=Self::VertexType>{
+pub trait StoreVertex: Index<VHandle, Output=Self::VertexType> + IndexMut<VHandle, Output=Self::VertexType>{
     type VertexType;
     fn len(&self) -> usize;
     fn push(&mut self, val: Self::VertexType);
@@ -14,28 +12,28 @@ pub trait StoreVertex: Index<EHandle, Output=Self::VertexType> + IndexMut<EHandl
 }
 
 pub trait EdgeConnect {
-    fn connect_edges(&mut self, src: EHandle, targets: &[Edge]);
-    fn disconnect(&mut self, src_handle: EHandle, handle: EHandle);
-    fn connect(&mut self, from: EHandle, to: EHandle);
+    fn connect_edges(&mut self, src: VHandle, targets: &[Edge]);
+    fn disconnect(&mut self, src_handle: VHandle, handle: VHandle);
+    fn connect(&mut self, from: VHandle, to: VHandle);
 }
 
 pub trait WeightedEdgeConnect {
-    fn connect_weighted(&mut self, from: EHandle, to: EHandle, weight: Weight);
+    fn connect_weighted(&mut self, from: VHandle, to: VHandle, weight: Weight);
 }
 
-pub trait EdgeStore: Index<Slot, Output=Slot> + IndexMut<Slot, Output=Slot>{
-    fn create_entry(&mut self, size: Slot) -> EHandle;
-    fn entry_as_slice(&self, handle: EHandle) -> &[Edge];
-    fn entry_as_mut_slice(&mut self, handle: EHandle) -> &mut [Edge];
-    fn entry_as_ptr(&self, handle: EHandle) -> *const Edge;
-    fn entry_as_mut_ptr(&mut self, handle: EHandle) -> *mut Edge;
-    fn entry_len(&self, handle: EHandle) -> Slot;
-    fn entry_capacity(&self, handle: EHandle) -> Slot;
-    fn entry_index(&self, handle: EHandle) -> Slot;
-    fn iter (&self) -> impl Iterator<Item=&Slot>;
-    fn iter_mut (&mut self) -> impl Iterator<Item=&mut Slot>;
-    fn entry_iter(&self, handle: EHandle) -> impl Iterator<Item=&Slot>;
-    fn entry_iter_mut(&mut self, handle: EHandle) -> impl Iterator<Item=&mut Slot>;
+pub trait EdgeStore: Index<usize, Output=Edge> + IndexMut<usize, Output=Edge>{
+    fn create_vertex(&mut self, size: Ci) -> VHandle;
+    fn vertex_as_slice(&self, handle: VHandle) -> &[Edge];
+    fn vertex_as_slice_mut(&mut self, handle: VHandle) -> &mut [Edge];
+    fn vertex_as_ptr(&self, handle: VHandle) -> *const Edge;
+    fn vertex_as_mut_ptr(&mut self, handle: VHandle) -> *mut Edge;
+    fn vertex_len(&self, handle: VHandle) -> usize;
+    fn vertex_capacity(&self, handle: VHandle) -> usize;
+    fn vertex_index(&self, handle: VHandle) -> usize;
+    fn iter (&self) -> impl Iterator<Item=&Edge>;
+    fn iter_mut (&mut self) -> impl Iterator<Item=&mut Edge>;
+    fn vertex_iter(&self, handle: VHandle) -> impl Iterator<Item=&Edge>;
+    fn vertex_iter_mut(&mut self, handle: VHandle) -> impl Iterator<Item=&mut Edge>;
 }
 pub trait EdgeManipulate: EdgeStore + EdgeConnect + Clone{}
 pub trait WeightedEdgeManipulate: EdgeManipulate + WeightedEdgeConnect {}

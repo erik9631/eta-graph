@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 use std::slice::{Iter, IterMut};
-use crate::handles::types::EHandle;
+use crate::handles::types::VHandle;
 use crate::traits::{StoreVertex};
 
 pub struct VertexStorage<VertexType> {
@@ -28,16 +28,16 @@ impl <VertexType> VertexStorage<VertexType> {
     }
 }
 
-impl<VertexType> Index<EHandle> for VertexStorage<VertexType> {
+impl<VertexType> Index<VHandle> for VertexStorage<VertexType> {
     type Output = VertexType;
 
-    fn index(&self, index: EHandle) -> &Self::Output {
+    fn index(&self, index: VHandle) -> &Self::Output {
         return self.data.index(index as usize);
     }
 }
 
-impl<VertexType> IndexMut<EHandle> for VertexStorage<VertexType> {
-    fn index_mut(&mut self, index: EHandle) -> &mut Self::Output {
+impl<VertexType> IndexMut<VHandle> for VertexStorage<VertexType> {
+    fn index_mut(&mut self, index: VHandle) -> &mut Self::Output {
         &mut self.data[index as usize]
     }
 }

@@ -8,14 +8,14 @@ fn tree_graph_eta_benchmark(children_count: usize, elements_to_generate: usize, 
     use eta_graph::traits::EdgeStore;
     use eta_graph::weighted_graph::WeightedGraph;
     use eta_algorithms::data_structs::queue::Queue;
-    use eta_graph::handles::types::EHandle;
+    use eta_graph::handles::types::VHandle;
     use eta_graph::algorithms::path_finding::dijkstra;
 
 
     let mut graph = WeightedGraph::new();
 
     let root = graph.graph.create((), children_count as Slot);
-    let mut to_expand = Queue::<EHandle>::new_pow2_sized(elements_to_generate as usize);
+    let mut to_expand = Queue::<VHandle>::new_pow2_sized(elements_to_generate as usize);
     let mut generated_elements = 1;
     let mut last_element = 0;
 
