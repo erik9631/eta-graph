@@ -1,12 +1,8 @@
-use std::thread;
-use std::thread::sleep;
-use std::time::Duration;
 use criterion::{Criterion, criterion_group, criterion_main, black_box};
-use petgraph::visit::Time;
 use eta_graph::algorithms::general::ControlFlow::Resume;
 use eta_graph::algorithms::general::{bfs, dfs};
 use eta_graph::graph;
-use eta_graph::handles::{eh, eh_pack, wgt};
+use eta_graph::handles::{eh_pack};
 fn dfs_bench(c: &mut Criterion) {
     // prepare data
     let data_size = 4000;

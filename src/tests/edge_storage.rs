@@ -199,9 +199,15 @@ fn entry_as_slice_mut_test() {
     edge_storage.connect_edges(c, &[7, 8, 9]);
 
     for edge in edge_storage.vertex_as_slice_mut(a).iter_mut() {
-        *edge = 100;
+        *edge = 0;
+    }
+
+    for edge in edge_storage.vertex_as_slice(a).iter(){
+        assert_eq!(*edge as usize, 0);
     }
 }
+
+
 
 #[test]
 fn edge_storage_iter_test(){
@@ -245,15 +251,5 @@ fn edge_storage_iter_test_empty(){
 
     for edge in edge_storage.iter(){
         assert!(false);
-    }
-}
-
-#[test]
-fn fuck(){
-    let vector = vec![1,2,3,4,5,6,7,8,9,10];
-    let mut iter = vector.iter();
-    let data = iter.nth(5);
-    for i in iter{
-        println!("{}", i);
     }
 }

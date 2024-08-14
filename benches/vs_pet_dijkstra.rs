@@ -1,8 +1,7 @@
 use std::collections::VecDeque;
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkGroup, Criterion};
 use criterion::measurement::WallTime;
-use eta_graph::handles::Slot;
-use eta_graph::handles::types::Weight;
+use eta_graph::handles::types::{Ci, Weight};
 
 fn tree_graph_eta_benchmark(children_count: usize, elements_to_generate: usize, c: &mut BenchmarkGroup<WallTime>){
     use eta_graph::traits::EdgeStore;
@@ -14,7 +13,7 @@ fn tree_graph_eta_benchmark(children_count: usize, elements_to_generate: usize, 
 
     let mut graph = WeightedGraph::new();
 
-    let root = graph.graph.create((), children_count as Slot);
+    let root = graph.graph.create((), children_count as Ci);
     let mut to_expand = Queue::<VHandle>::new_pow2_sized(elements_to_generate as usize);
     let mut generated_elements = 1;
     let mut last_element = 0;
@@ -23,7 +22,7 @@ fn tree_graph_eta_benchmark(children_count: usize, elements_to_generate: usize, 
     while generated_elements < elements_to_generate {
         let current = to_expand.dequeue().unwrap();
         for i in 0 .. children_count {
-            let new_vertex = graph.create_and_connect_weighted(current, (), i as Weight, children_count as Slot);
+            let new_vertex = graph.create_and_connect_weighted(current, (), i as Weight, children_count as Ci);
             generated_elements += 1;
             to_expand.push(new_vertex);
             last_element = new_vertex;

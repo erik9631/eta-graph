@@ -2,17 +2,18 @@ use std::hint::black_box;
 use criterion::{criterion_group, criterion_main, BenchmarkGroup, Criterion};
 use criterion::measurement::WallTime;
 use eta_graph::algorithms::general::ControlFlow::Resume;
-use eta_graph::handles::{eh, eh_pack, Slot};
+use eta_graph::handles::{eh, eh_pack};
+use eta_graph::handles::types::Ci;
 
 pub fn bfs_bench_eta(data_size: usize, c: &mut BenchmarkGroup<WallTime>){
     use eta_graph::graph;
     use eta_graph::algorithms::general::bfs;
 
     let mut graph = graph::Graph::new();
-    let root = graph.create(0, data_size as Slot);
+    let root = graph.create(0, data_size as Ci);
     let mut number_of_nodes = 1;
     for i in 0..data_size {
-        let child = graph.create_and_connect(root, i+1, data_size as Slot);
+        let child = graph.create_and_connect(root, i+1, data_size as Ci);
         number_of_nodes += 1;
         for j in 0..data_size {
             graph.create_and_connect_0(child, j*data_size);
