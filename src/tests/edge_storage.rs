@@ -253,3 +253,51 @@ fn edge_storage_iter_test_empty(){
         assert!(false);
     }
 }
+
+#[test]
+#[should_panic]
+fn invalid_handle_test(){
+    let mut edge_storage = EdgeStorage::new();
+    let a= edge_storage.create_vertex(3);
+    let index = edge_storage.vertex_index(5);
+}
+
+#[test]
+#[should_panic]
+fn invalid_handle_test_iter(){
+    let mut edge_storage = EdgeStorage::new();
+    let a= edge_storage.create_vertex(3);
+    let iter = edge_storage.vertex_iter(5);
+}
+
+#[test]
+#[should_panic]
+fn invalid_handle_test_iter_mut(){
+    let mut edge_storage = EdgeStorage::new();
+    let a= edge_storage.create_vertex(3);
+    let iter = edge_storage.vertex_iter_mut(5);
+}
+
+#[test]
+#[should_panic]
+fn invalid_handle_test_vertex_as_slice(){
+    let mut edge_storage = EdgeStorage::new();
+    let a= edge_storage.create_vertex(3);
+    let slice = edge_storage.vertex_as_slice(5);
+}
+
+#[test]
+#[should_panic]
+fn invalid_handle_test_vertex_as_slice_mut(){
+    let mut edge_storage = EdgeStorage::new();
+    let a= edge_storage.create_vertex(3);
+    let slice = edge_storage.vertex_as_slice_mut(5);
+}
+
+#[test]
+#[should_panic]
+fn invalid_handle_test_vertex_as_ptr(){
+    let mut edge_storage = EdgeStorage::new();
+    let a= edge_storage.create_vertex(3);
+    let slice = edge_storage.vertex_as_ptr(5);
+}
