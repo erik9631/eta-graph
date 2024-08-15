@@ -1,5 +1,5 @@
-use crate::handles::types::{Ci, Edge, Weight};
-use crate::handles::{vh};
+use crate::handles::types::{Ci, Edge, VHandle, Weight};
+use crate::handles::{vh, vh_pack};
 use crate::traits::EdgeStore;
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
@@ -18,38 +18,55 @@ where
     PreOrderFunc: FnMut(&mut Edge, Weight) -> ControlFlow,
     Edges: EdgeStore,
 {
-    let mut was_queued_flags = Array::new_default_bytes(vertices_count, 0);
-    let mut visit_queue = Queue::<*mut Edge>::new_pow2_sized(vertices_count);
+    let mut was_queued_flags = Array::new_default_bytes(vertices_count, 0); // TODO Use a bit array for flags. Make such data structure for this.
+
+    // Uses more memory than necessary. But rotates very quickly. Might be worth considering version with smaller memory footprint.
+    let mut visit_queue = Queue::<VHandle>::new_pow2_sized(vertices_count); // TODO Use a bit queue
     let mut end = 1;
     let mut next_layer = 1;
     let mut layer = 0;
-    let mut start_edge = start;
-    visit_queue.push((&mut start_edge) as *mut Edge);
+    visit_queue.push(vh(start));
     was_queued_flags[0] = true;
     let mut i = 0;
 
+    //Initial call
+    let mut start_edge = start;
+    match pre_order(&mut start_edge, layer) {
+        ControlFlow::End => {
+            return;
+        }
+        ControlFlow::Exit => {
+            return;
+        }
+        ControlFlow::Continue => {
+        }
+        ControlFlow::Resume => {}
+    }
+
     while visit_queue.len() != 0 {
         let handle = visit_queue.dequeue().unwrap();
-        match pre_order(unsafe { handle.as_mut().unwrap() }, layer) { // the i is a place holder for the layer
-            ControlFlow::End => {
-                break;
-            }
-            ControlFlow::Exit => {
-                break;
-            }
-            ControlFlow::Continue => {
-                i += 1;
-                continue;
-            }
-            ControlFlow::Resume => {}
-        }
-        let mut edge_iter = edge_storage.vertex_iter_mut(vh(unsafe { *handle }));
-        for edge in edge_iter {
+
+        for edge in edge_storage.vertex_iter_mut(handle) {
             if unsafe { *was_queued_flags.index_unchecked(vh(*edge) as usize) } {
                 continue;
             }
             unsafe { *was_queued_flags.index_unchecked_mut(vh(*edge) as usize) = true };
-            visit_queue.push(edge as *mut Edge);
+
+            match pre_order(edge, layer + 1) {
+                ControlFlow::End => {
+                    break;
+                }
+                ControlFlow::Exit => {
+                    break;
+                }
+                ControlFlow::Continue => {
+                    i += 1;
+                    continue;
+                }
+                ControlFlow::Resume => {}
+            }
+
+            visit_queue.push(vh(*edge));
             end += 1;
         }
         i += 1;
