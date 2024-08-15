@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::edge_storage::EdgeStorage;
-use crate::handles::{eh, eh_pack, pack};
+use crate::handles::{vh, vh_pack, pack};
 use crate::handles::types::{VHandle, Edge};
 use crate::traits::{EdgeStore, EdgeConnect, WeightedEdgeConnect};
 
@@ -29,19 +29,19 @@ fn edge_storage_add_edge_test() {
     let snap: Vec<VHandle> = vec![1, 2, 3];
     let index = edge_storage.vertex_index(a);
     for i in 0..3 {
-        assert_eq!(eh(edge_storage[index + i]), snap[i]);
+        assert_eq!(vh(edge_storage[index + i]), snap[i]);
     }
 
     let snap:Vec<VHandle>  = vec![3, 2, 1];
     let index = edge_storage.vertex_index(b);
     for i in 0..3 {
-        assert_eq!(eh(edge_storage[index + i]), snap[i]);
+        assert_eq!(vh(edge_storage[index + i]), snap[i]);
     }
 
     let snap:Vec<VHandle>  = vec![2, 3, 1];
     let index = edge_storage.vertex_index(c);
     for i in 0..3 {
-        assert_eq!(eh(edge_storage[index + i]), snap[i]);
+        assert_eq!(vh(edge_storage[index + i]), snap[i]);
     }
 }
 
@@ -71,15 +71,15 @@ fn edge_storage_connect_test() {
     assert_eq!(edge_storage.vertex_len(d), 0);
 
     let index = edge_storage.vertex_index(root);
-    assert_eq!(eh(edge_storage[index]), b);
-    assert_eq!(eh(edge_storage[index + 1]), c);
-    assert_eq!(eh(edge_storage[index + 2]), d);
+    assert_eq!(vh(edge_storage[index]), b);
+    assert_eq!(vh(edge_storage[index + 1]), c);
+    assert_eq!(vh(edge_storage[index + 2]), d);
 
     let index = edge_storage.vertex_index(b);
-    assert_eq!(eh(edge_storage[index]), c);
+    assert_eq!(vh(edge_storage[index]), c);
 
     let index = edge_storage.vertex_index(c);
-    assert_eq!(eh(edge_storage[index]), d);
+    assert_eq!(vh(edge_storage[index]), d);
 }
 
 #[test]
@@ -143,7 +143,7 @@ fn edge_storage_disconnect_test() {
     let mut snap: HashMap::<VHandle, ()> = HashMap::from([(3, ()), (2, ())]);
     let index = edge_storage.vertex_index(a);
     for i in 0..2 {
-        let val = eh(edge_storage[index + i]);
+        let val = vh(edge_storage[index + i]);
         assert!(snap.remove(&val).is_some());
     }
     assert!(snap.is_empty());
@@ -152,7 +152,7 @@ fn edge_storage_disconnect_test() {
     let mut snap2: HashMap::<VHandle, ()> = HashMap::from([(1, ()), (3, ())]);
     let index2 = edge_storage.vertex_index(b);
     for i in 0..2 {
-        let val = eh(edge_storage[index2 + i]);
+        let val = vh(edge_storage[index2 + i]);
         assert!(snap2.remove(&val).is_some());
     }
     assert!(snap2.is_empty());
@@ -160,7 +160,7 @@ fn edge_storage_disconnect_test() {
     let mut snap3: HashMap::<VHandle, ()> = HashMap::from([(1, ()), (2, ())]);
     let index3 = edge_storage.vertex_index(c);
     for i in 0..2 {
-        let val = eh(edge_storage[index3 + i]);
+        let val = vh(edge_storage[index3 + i]);
         assert!(snap3.remove(&val).is_some());
     }
     assert!(snap3.is_empty());

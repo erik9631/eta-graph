@@ -2,7 +2,7 @@ use criterion::{Criterion, criterion_group, criterion_main, black_box};
 use eta_graph::algorithms::general::ControlFlow::Resume;
 use eta_graph::algorithms::general::{bfs, dfs};
 use eta_graph::graph;
-use eta_graph::handles::{eh_pack};
+use eta_graph::handles::{vh_pack};
 fn dfs_bench(c: &mut Criterion) {
     // prepare data
     let data_size = 4000;
@@ -21,7 +21,7 @@ fn dfs_bench(c: &mut Criterion) {
 
     c.bench_function("dfs", |b| b.iter(|| {
         let mut sum = 0;
-        dfs(&mut graph.edge_storage, eh_pack(root), number_of_nodes, |vertex| {
+        dfs(&mut graph.edge_storage, vh_pack(root), number_of_nodes, |vertex| {
             sum += 1;
             Resume
         }, |vertex| {});
@@ -46,7 +46,7 @@ pub fn bfs_bench(c: &mut Criterion){
 
     c.bench_function("bfs", |b| b.iter(|| {
         let mut sum = 0;
-        bfs(&mut graph.edge_storage, eh_pack(root), number_of_nodes, |vertex, layer| {
+        bfs(&mut graph.edge_storage, vh_pack(root), number_of_nodes, |vertex, layer| {
             sum += 1;
             Resume
         });

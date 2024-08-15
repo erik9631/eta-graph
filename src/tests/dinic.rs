@@ -1,11 +1,14 @@
+use std::collections::HashMap;
+use std::fmt::format;
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
 use crate::algorithms::general::bfs;
 use crate::algorithms::general::ControlFlow::Resume;
 use crate::algorithms::max_flow::{mark_levels, DinicGraph};
-use crate::handles::{eh, eh_pack, wgt};
-use crate::handles::types::{Edge, Weight};
-use crate::traits::{EdgeStore, WeightedEdgeConnect};
+use crate::handles::{vh, vh_pack, wgt};
+use crate::handles::types::{Edge, VHandle, Weight};
+use crate::traits::{EdgeStore, StoreVertex, WeightedEdgeConnect};
+use crate::utils::print_graph;
 use crate::weighted_graph::WeightedGraph;
 
 #[test]
@@ -42,10 +45,10 @@ pub fn level_test(){
         ("a".to_string(), 0),
     ];
 
-    bfs(&mut edges_copy, eh_pack(a), weighted_graph.graph.vertices.len(), |v_handle, layer|{
+    bfs(&mut edges_copy, vh_pack(a), weighted_graph.graph.vertices.len(), |v_handle, layer|{
         let snap_data = snap.pop().unwrap();
-        assert_eq!(weighted_graph.graph.vertices[eh(*v_handle)], snap_data.0);
-        assert_eq!(flow_data[eh(*v_handle) as usize], snap_data.1);
+        assert_eq!(weighted_graph.graph.vertices[vh(*v_handle)], snap_data.0);
+        assert_eq!(flow_data[vh(*v_handle) as usize], snap_data.1);
         Resume
     });
 
@@ -53,7 +56,27 @@ pub fn level_test(){
 }
 
 #[test]
-pub fn dinic_test(){
+/**
+       ┌───┐20 ┌─────┐   30
+   ┌──►│A_A├──►│A_A_A├──────┐
+100│   └───┘   └─────┘      │
+   │                        │
+  ┌┴┐                    ┌──▼──┐
+  │A│                    │A_A_X│
+  └┬┘                    └─────┘
+   │       10  ┌─────┐ 10 ▲▲▲
+ 20│      ┌───►│A_B_A├────┘││
+   │      │    └─────┘     ││
+   │      │                ││
+   │    ┌─┴─┐10┌─────┐  10 ││
+   └───►│A_B├─►│A_B_B├─────┘│
+        └─┬─┘  └─────┘      │
+          │                 │
+          │10  ┌─────┐ 10   │
+          └───►│A_B_C├──────┘
+               └─────┘
+**/
+pub fn dinic_test_basic(){
     let mut graph = WeightedGraph::new();
     // Write test for layering
     let a = graph.graph.create("a", 2);
@@ -79,6 +102,83 @@ pub fn dinic_test(){
     for edge in dinic_graph.edge_storage.iter(){
         let snap_data = snap.pop().unwrap();
         assert_eq!(snap_data, wgt(*edge));
+    }
+    assert_eq!(snap.len(), 0);
+}
+
+#[test]
+/**
+          ┌─┐ 10    ┌─┐ 10     ┌─┐  5
+  ┌──────►│A├──────►│B├───────►│C├───────┐
+  │       └─┘       └┬┘        └─┘       │
+5 │        ▲      25 │    15             │
+  │      15│         ├──────────┐        │
+ ┌┼┐ 10   ┌┼┐  20   ┌▼┐ 30     ┌▼┐ 15   ┌▼┐
+ │S├─────►│D├──────►│E├───────►│F├─────►│T│
+ └┬┘      └─┘       └┬┘    ┌──►└┬┘      └─┘
+  │             5    │  20 │    │ 15     ▲
+  │ 15    ┌──────────┘     │    ▼        │
+  │      ┌▼┐         ┌─┐───┘   ┌─┐       │
+  └─────►│G├────────►│H│──────►│I├───────┘
+         └─┘  25     └─┘   10  └─┘    10
+**/
+
+fn dinic_test_advanced(){
+    let mut weighted_graph = WeightedGraph::new();
+    let s = weighted_graph.graph.create("s", 3);
+    let a = weighted_graph.create_and_connect_weighted(s, "a", 5, 1);
+    let b = weighted_graph.create_and_connect_weighted(a, "b", 10, 3);
+    let c = weighted_graph.create_and_connect_weighted(b, "c", 10, 1);
+    let t = weighted_graph.create_and_connect_weighted(c, "t", 5, 0);
+    let d = weighted_graph.create_and_connect_weighted(s, "d", 10, 2);
+    let e = weighted_graph.create_and_connect_weighted(d, "e", 20, 2);
+    let f = weighted_graph.create_and_connect_weighted(e, "f", 30, 2);
+
+    let g = weighted_graph.create_and_connect_weighted(s, "g", 15, 1);
+    let h = weighted_graph.create_and_connect_weighted(g, "h", 25, 2);
+    let i = weighted_graph.create_and_connect_weighted(h, "i", 10, 1);
+
+
+    weighted_graph.graph.edge_storage.connect_weighted(b, e, 25);
+    weighted_graph.graph.edge_storage.connect_weighted(b, f, 15);
+
+    weighted_graph.graph.edge_storage.connect_weighted(d, a, 15);
+    weighted_graph.graph.edge_storage.connect_weighted(e, g, 5);
+    weighted_graph.graph.edge_storage.connect_weighted(f, t, 15);
+    weighted_graph.graph.edge_storage.connect_weighted(f, i, 15);
+
+
+    weighted_graph.graph.edge_storage.connect_weighted(h, f, 20);
+    weighted_graph.graph.edge_storage.connect_weighted(i, t, 10);
+
+    let dinic_graph = DinicGraph::from(&weighted_graph.graph.vertices, &weighted_graph.graph.edge_storage, s, t);
+
+    let mut snap = HashMap::new();
+    snap.insert("sa".to_string(), 5);
+    snap.insert("sd".to_string(), 10);
+    snap.insert("sg".to_string(), 15);
+    snap.insert("ab".to_string(), 5);
+    snap.insert("bc".to_string(), 5);
+    snap.insert("be".to_string(), 0);
+    snap.insert("bf".to_string(), 0);
+    snap.insert("ct".to_string(), 5);
+    snap.insert("de".to_string(), 10);
+    snap.insert("da".to_string(), 0);
+    snap.insert("ef".to_string(), 10);
+    snap.insert("eg".to_string(), 0);
+    snap.insert("ft".to_string(), 15);
+    snap.insert("fi".to_string(), 0);
+    snap.insert("gh".to_string(), 15);
+    snap.insert("hi".to_string(), 10);
+    snap.insert("hf".to_string(), 5);
+    snap.insert("it".to_string(), 10);
+
+    for (vertex, val) in dinic_graph.vertices.iter().enumerate(){
+        for edge in dinic_graph.edge_storage.vertex_iter(vertex as VHandle){
+            let key = format!("{}{}", *val, weighted_graph.graph.vertices[vh(*edge)]);
+            let weight = wgt(*edge);
+            assert_eq!(snap.remove(&key), Some(weight));
+        }
     }
     assert_eq!(snap.len(), 0);
 }

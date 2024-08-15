@@ -1,5 +1,5 @@
 
-use crate::handles::{NONE, eh_pack, eh};
+use crate::handles::{NONE, vh_pack, vh};
 use crate::handles::types::{Edge, VHandle};
 use crate::traits::{EdgeConnect, EdgeStore, StoreVertex};
 
@@ -36,8 +36,8 @@ where
     pub fn add_child(&mut self, parent: VHandle, child: VHandle){
         self.nodes.connect(parent, child);
         let child_edge = self.nodes.vertex_index(child);
-        self.nodes[child_edge + PARENT_OFFSET] = eh_pack(parent);
-        self.nodes[child_edge + ROOT_OFFSET] = eh_pack(self.get_root(parent));
+        self.nodes[child_edge + PARENT_OFFSET] = vh_pack(parent);
+        self.nodes[child_edge + ROOT_OFFSET] = vh_pack(self.get_root(parent));
     }
 
     fn create_vertex(&mut self, val: VertexType) -> VHandle {
@@ -48,11 +48,11 @@ where
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn get_root(&self, vertex: VHandle) -> VHandle {
-        eh(self.nodes[self.nodes.vertex_index(vertex) + ROOT_OFFSET])
+        vh(self.nodes[self.nodes.vertex_index(vertex) + ROOT_OFFSET])
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn get_parent(&self, vertex: VHandle) -> VHandle {
-        eh(self.nodes[self.nodes.vertex_index(vertex) + PARENT_OFFSET])
+        vh(self.nodes[self.nodes.vertex_index(vertex) + PARENT_OFFSET])
     }
 
     pub fn create_node(&mut self, val: VertexType) -> VHandle {

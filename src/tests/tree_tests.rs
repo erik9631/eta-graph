@@ -1,5 +1,5 @@
 use crate::graph;
-use crate::handles::eh;
+use crate::handles::vh;
 
 
 #[test]
@@ -105,9 +105,9 @@ pub fn get_children_test(){
     assert_eq!(children.len(), 3);
     for (i, child) in children.iter().enumerate() {
         match i {
-            0 => assert_eq!(tree_view.values[eh(*child)], "child1"),
-            1 => assert_eq!(tree_view.values[eh(*child)], "child2"),
-            2 => assert_eq!(tree_view.values[eh(*child)], "child3"),
+            0 => assert_eq!(tree_view.values[vh(*child)], "child1"),
+            1 => assert_eq!(tree_view.values[vh(*child)], "child2"),
+            2 => assert_eq!(tree_view.values[vh(*child)], "child3"),
             _ => continue,
         }
     }

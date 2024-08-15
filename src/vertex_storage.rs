@@ -66,7 +66,7 @@ impl <VertexType> StoreVertex for VertexStorage<VertexType>
     }
 
     fn iter(&self) -> Iter<VertexType>{
-        return self.data.iter();
+        self.data.iter()
     }
 
     fn iter_mut(&mut self) -> IterMut<VertexType> {

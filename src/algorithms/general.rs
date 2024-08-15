@@ -1,5 +1,5 @@
 use crate::handles::types::{Ci, Edge, Weight};
-use crate::handles::{eh};
+use crate::handles::{vh};
 use crate::traits::EdgeStore;
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
@@ -43,12 +43,12 @@ where
             }
             ControlFlow::Resume => {}
         }
-        let mut edge_iter = edge_storage.vertex_iter_mut(eh(unsafe { *handle }));
+        let mut edge_iter = edge_storage.vertex_iter_mut(vh(unsafe { *handle }));
         for edge in edge_iter {
-            if unsafe { *was_queued_flags.index_unchecked(eh(*edge) as usize) } {
+            if unsafe { *was_queued_flags.index_unchecked(vh(*edge) as usize) } {
                 continue;
             }
-            unsafe { *was_queued_flags.index_unchecked_mut(eh(*edge) as usize) = true };
+            unsafe { *was_queued_flags.index_unchecked_mut(vh(*edge) as usize) = true };
             visit_queue.push(edge as *mut Edge);
             end += 1;
         }
@@ -71,8 +71,8 @@ where
 {
     let mut flags = Array::new_default_bytes(vertices_count, 0);
     dfs_custom_flags(edge_storage, start, vertices_count, |to_visit| {
-        let was_visited = flags[eh(to_visit) as usize];
-        flags[eh(to_visit) as usize] = true;
+        let was_visited = flags[vh(to_visit) as usize];
+        flags[vh(to_visit) as usize] = true;
         was_visited
     }, pre_order_func, post_order_func);
 }
@@ -88,7 +88,7 @@ where
 {
     let mut start_edge = start;
     let mut stack = Stack::<(usize, usize, *mut Edge)>::new(vertex_count);
-    stack.push((edge_storage.vertex_index(eh(start)), edge_storage.vertex_index(eh(start)) + edge_storage.vertex_len(eh(start)), (&mut start_edge) as *mut Edge));
+    stack.push((edge_storage.vertex_index(vh(start)), edge_storage.vertex_index(vh(start)) + edge_storage.vertex_len(vh(start)), (&mut start_edge) as *mut Edge));
     match pre_order_func(&mut start_edge) {
         ControlFlow::End => {
             return;
@@ -124,8 +124,8 @@ where
             ControlFlow::Resume => {}
         }
 
-        let outgoing_edge_edges_start = edge_storage.vertex_index(eh(edge_storage[outgoing_offset]));
-        let outgoing_edge_edges_end = outgoing_edge_edges_start + edge_storage.vertex_len(eh(edge_storage[outgoing_offset]));
+        let outgoing_edge_edges_start = edge_storage.vertex_index(vh(edge_storage[outgoing_offset]));
+        let outgoing_edge_edges_end = outgoing_edge_edges_start + edge_storage.vertex_len(vh(edge_storage[outgoing_offset]));
         let outgoing_edge = &mut edge_storage[outgoing_offset];
 
         stack.push((outgoing_edge_edges_start,

@@ -1,7 +1,7 @@
 use crate::algorithms::general::bfs;
 use crate::algorithms::general::ControlFlow::Resume;
 use crate::graph::Graph;
-use crate::handles::{eh, eh_pack};
+use crate::handles::{vh, vh_pack};
 use crate::handles::types::Weight;
 use crate::traits::EdgeConnect;
 
@@ -34,9 +34,9 @@ pub fn graph_bfs_test(){
         ("root".to_string(), 0),
     ];
 
-    bfs(&mut graph.edge_storage, eh_pack(root), graph.vertices.len(), |handle, layer|{
+    bfs(&mut graph.edge_storage, vh_pack(root), graph.vertices.len(), |handle, layer|{
         let val = snap.pop().unwrap();
-        assert_eq!(graph.vertices[eh(*handle)], val.0);
+        assert_eq!(graph.vertices[vh(*handle)], val.0);
         assert_eq!(layer, val.1);
         Resume
     });
@@ -77,9 +77,9 @@ pub fn graph_bfs_test_cyclic(){
         ("root".to_string(), 0),
     ];
 
-    bfs(&mut graph.edge_storage, eh_pack(root), graph.vertices.len(), |handle, layer|{
+    bfs(&mut graph.edge_storage, vh_pack(root), graph.vertices.len(), |handle, layer|{
         let val = snap.pop().unwrap();
-        assert_eq!(graph.vertices[eh(*handle)], val.0);
+        assert_eq!(graph.vertices[vh(*handle)], val.0);
         assert_eq!(layer, val.1);
         Resume
     });

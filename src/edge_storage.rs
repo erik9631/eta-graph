@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 use eta_algorithms::data_structs::array::Array;
-use crate::handles::{pack, eh};
+use crate::handles::{pack, vh};
 use crate::handles::types::{VHandle, Weight, Edge, Ci};
 use crate::traits::{EdgeManipulate, EdgeConnect, EdgeStore, WeightedEdgeManipulate, WeightedEdgeConnect};
 #[derive(Copy, Clone)]
@@ -153,7 +153,7 @@ impl EdgeConnect for EdgeStorage {
             let mut iter = data;
             let end = iter.add(*len as usize);
             while iter != end {
-                if eh(*iter) == to {
+                if vh(*iter) == to {
                     *iter = *end.offset(-1); // Swap the last element for the empty one
                     *len -= 1;
                     break;

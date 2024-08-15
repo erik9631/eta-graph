@@ -4,7 +4,7 @@ use std::time::{Instant};
 use crate::{graph};
 use crate::graph::{Graph};
 use crate::handles::types::{VHandle, Weight};
-use crate::handles::{eh, wgt};
+use crate::handles::{vh, wgt};
 use crate::traits::{EdgeConnect, EdgeStore, StoreVertex};
 use crate::weighted_graph::WeightedGraph;
 
@@ -44,9 +44,9 @@ pub fn graph_basic_test(){
 
     for edge in a_edges {
         match *edge{
-            0 => assert_eq!(graph.vertices[eh(*edge)], "a_a"),
-            1 => assert_eq!(graph.vertices[eh(*edge)], "a_b"),
-            2 => assert_eq!(graph.vertices[eh(*edge)], "a_c"),
+            0 => assert_eq!(graph.vertices[vh(*edge)], "a_a"),
+            1 => assert_eq!(graph.vertices[vh(*edge)], "a_b"),
+            2 => assert_eq!(graph.vertices[vh(*edge)], "a_c"),
             _ => continue,
         }
     }
@@ -56,8 +56,8 @@ pub fn graph_basic_test(){
 
     for edge in b_edges {
         match *edge{
-            0 => assert_eq!(graph.vertices[eh(*edge)], "b_a"),
-            1 => assert_eq!(graph.vertices[eh(*edge)], "b_b"),
+            0 => assert_eq!(graph.vertices[vh(*edge)], "b_a"),
+            1 => assert_eq!(graph.vertices[vh(*edge)], "b_b"),
             _ => continue,
         }
     }
@@ -67,7 +67,7 @@ pub fn graph_basic_test(){
 
     for edge in b_a_a_edges {
         match *edge{
-            0 => assert_eq!(graph.vertices[eh(*edge)], "b_a_a"),
+            0 => assert_eq!(graph.vertices[vh(*edge)], "b_a_a"),
             _ => continue,
         }
     }
@@ -131,16 +131,16 @@ pub fn graph_mutability_test(){
     for edge in edges {
         match *edge{
             0 => {
-                graph.vertices[eh(*edge)] = "a_a_edited";
-                graph.vertices[eh(*edge)] = "a_a_edited"
+                graph.vertices[vh(*edge)] = "a_a_edited";
+                graph.vertices[vh(*edge)] = "a_a_edited"
             },
             1 => {
-                graph.vertices[eh(*edge)] = "a_b_edited";
-                graph.vertices[eh(*edge)] = "a_b_edited"
+                graph.vertices[vh(*edge)] = "a_b_edited";
+                graph.vertices[vh(*edge)] = "a_b_edited"
             },
             2 => {
-                graph.vertices[eh(*edge)] = "a_c_edited";
-                graph.vertices[eh(*edge)] = "a_c_edited"
+                graph.vertices[vh(*edge)] = "a_c_edited";
+                graph.vertices[vh(*edge)] = "a_c_edited"
             },
             _ => continue,
         }
@@ -241,11 +241,11 @@ pub fn graph_disconnect_test(){
 
     for edge in edges {
         match *edge{
-            3 => assert_eq!(graph.vertices[eh(*edge)], "a_a"),
-            4 => assert_eq!(graph.vertices[eh(*edge)], "a_b"),
-            5 => assert_eq!(graph.vertices[eh(*edge)], "a_c"),
-            6 => assert_eq!(graph.vertices[eh(*edge)], "a_d"),
-            7 => assert_eq!(graph.vertices[eh(*edge)], "a_e"),
+            3 => assert_eq!(graph.vertices[vh(*edge)], "a_a"),
+            4 => assert_eq!(graph.vertices[vh(*edge)], "a_b"),
+            5 => assert_eq!(graph.vertices[vh(*edge)], "a_c"),
+            6 => assert_eq!(graph.vertices[vh(*edge)], "a_d"),
+            7 => assert_eq!(graph.vertices[vh(*edge)], "a_e"),
             _ => continue,
         }
     }
@@ -258,9 +258,9 @@ pub fn graph_disconnect_test(){
     let edges = graph.edge_storage.vertex_as_slice(a);
     for edge in edges {
         match *edge{
-            3 => assert_eq!(graph.vertices[eh(*edge)], "a_a"),
-            5 => assert_eq!(graph.vertices[eh(*edge)], "a_c"),
-            7 => assert_eq!(graph.vertices[eh(*edge)], "a_e"),
+            3 => assert_eq!(graph.vertices[vh(*edge)], "a_a"),
+            5 => assert_eq!(graph.vertices[vh(*edge)], "a_c"),
+            7 => assert_eq!(graph.vertices[vh(*edge)], "a_e"),
             _ => continue,
         }
     }
@@ -308,23 +308,23 @@ pub fn graph_weight_test(){
         match *edge{
             0 => {
                 assert_eq!(wgt(*edge), 5);
-                assert_eq!(eh(*edge), 1);
+                assert_eq!(vh(*edge), 1);
             },
             1 => {
                 assert_eq!(wgt(*edge), 7);
-                assert_eq!(eh(*edge), 2);
+                assert_eq!(vh(*edge), 2);
             },
             2 => {
                 assert_eq!(wgt(*edge), 1052);
-                assert_eq!(eh(*edge), 3);
+                assert_eq!(vh(*edge), 3);
             },
             3 => {
                 assert_eq!(wgt(*edge), Weight::MAX);
-                assert_eq!(eh(*edge), 4);
+                assert_eq!(vh(*edge), 4);
             },
             4 => {
                 assert_eq!(wgt(*edge), -Weight::MAX);
-                assert_eq!(eh(*edge), 5);
+                assert_eq!(vh(*edge), 5);
             },
             _ => continue,
         }

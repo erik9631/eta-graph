@@ -1,7 +1,7 @@
 use crate::algorithms::general::ControlFlow::{End, Resume};
 use crate::algorithms::general::dfs;
 use crate::graph::Graph;
-use crate::handles::{eh, eh_pack};
+use crate::handles::{vh, vh_pack};
 
 #[test]
 pub fn graph_dfs_test(){
@@ -46,11 +46,11 @@ pub fn graph_dfs_test(){
         "a_a".to_string(),
     ];
 
-    dfs(&mut graph.edge_storage, eh_pack(root), graph.vertices.len(), |handle|{
-        assert_eq!(graph.vertices[eh(*handle)], snap.pop().unwrap());
+    dfs(&mut graph.edge_storage, vh_pack(root), graph.vertices.len(), |handle|{
+        assert_eq!(graph.vertices[vh(*handle)], snap.pop().unwrap());
         Resume
     }, |handle|{
-        assert_eq!(graph.vertices[eh(*handle)], snap2.pop().unwrap());
+        assert_eq!(graph.vertices[vh(*handle)], snap2.pop().unwrap());
     });
 
     assert_eq!(snap.len(), 0);
@@ -90,14 +90,14 @@ pub fn graph_dfs_end_test(){
         "a_a".to_string(),
     ];
 
-    dfs(&mut graph.edge_storage, eh_pack(root), graph.vertices.len(), |handle|{
+    dfs(&mut graph.edge_storage, vh_pack(root), graph.vertices.len(), |handle|{
         if snap.is_empty() {
             return End;
         }
-        assert_eq!(graph.vertices[eh(*handle)], snap.pop().unwrap());
+        assert_eq!(graph.vertices[vh(*handle)], snap.pop().unwrap());
         Resume
     }, |handle|{
-        assert_eq!(graph.vertices[eh(*handle)], snap2.pop().unwrap());
+        assert_eq!(graph.vertices[vh(*handle)], snap2.pop().unwrap());
     });
 
     assert_eq!(snap.len(), 0);

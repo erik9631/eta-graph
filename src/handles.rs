@@ -38,7 +38,7 @@ pub mod types {
 pub const NONE: VHandle = VHandle::MAX;
 
 #[inline(always)]
-pub fn eh(handle: Edge) -> VHandle {
+pub fn vh(handle: Edge) -> VHandle {
     handle as VHandle
 }
 
@@ -47,7 +47,7 @@ pub fn wgt(handle: Edge) -> Weight {
     (handle >> SHIFT) as Weight
 }
 #[inline(always)]
-pub fn eh_pack(handle: VHandle) -> Edge {
+pub fn vh_pack(handle: VHandle) -> Edge {
     handle as Edge
 }
 #[inline(always)]
@@ -59,6 +59,6 @@ pub fn set_wgt(handle: Edge, weight: Weight) -> Edge {
     (handle & !((MASK as Edge) << SHIFT)) | ((weight as Edge) << SHIFT)
 }
 #[inline(always)]
-pub fn set_eh(handle: Edge, vert_id: VHandle) -> Edge {
+pub fn set_vh(handle: Edge, vert_id: VHandle) -> Edge {
     (handle & !(MASK as Edge)) | (vert_id as Edge)
 }

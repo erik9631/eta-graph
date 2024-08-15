@@ -3,7 +3,7 @@ use std::collections::{BinaryHeap};
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::stack::Stack;
 use crate::handles::types::{Edge, VHandle, Weight};
-use crate::handles::{eh, wgt};
+use crate::handles::{vh, wgt};
 use crate::traits::EdgeStore;
 
 struct MinHeapPair {
@@ -83,11 +83,11 @@ where
         let neighbors = edge_storage.vertex_as_slice(current_vertex.vertex);
         for neighbor in neighbors {
             let neighbor_f_score = wgt(*neighbor) + current_vertex.f_score + h_score(current_vertex.vertex, *neighbor);
-            if f_scores[eh(*neighbor) as usize].f_score < neighbor_f_score {
+            if f_scores[vh(*neighbor) as usize].f_score < neighbor_f_score {
                 continue;
             }
-            explore_list.push(MinHeapPair::new(eh(*neighbor), neighbor_f_score));
-            f_scores[eh(*neighbor) as usize] = PathVertex{from: current_vertex.vertex, f_score: neighbor_f_score };
+            explore_list.push(MinHeapPair::new(vh(*neighbor), neighbor_f_score));
+            f_scores[vh(*neighbor) as usize] = PathVertex{from: current_vertex.vertex, f_score: neighbor_f_score };
         }
     }
     None
