@@ -30,7 +30,7 @@ pub fn level_test(){
     weighted_graph.graph.edge_storage.connect_weighted(a_b_c, a_a_x, 10);
 
     let mut flow_data = Array::new_with_default(weighted_graph.graph.vertices.len(), Weight::MAX);
-    let mut queue = Queue::<*mut Edge>::new_pow2_sized(weighted_graph.graph.vertices.len());
+    let mut queue = Queue::<VHandle>::new_pow2_sized(weighted_graph.graph.vertices.len());
     let mut edges_copy = weighted_graph.graph.edge_storage.clone();
     mark_levels(a, a_a_x, &mut edges_copy, &mut queue, &mut flow_data).expect("Sink not found");
 

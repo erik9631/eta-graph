@@ -37,6 +37,11 @@ pub mod types {
 
 pub const NONE: VHandle = VHandle::MAX;
 
+///Casts to usize for convenient indexing
+#[inline(always)]
+pub fn vhu(handle: Edge) -> usize {
+    (handle as VHandle) as usize
+}
 #[inline(always)]
 pub fn vh(handle: Edge) -> VHandle {
     handle as VHandle

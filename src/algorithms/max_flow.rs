@@ -4,7 +4,7 @@ use eta_algorithms::data_structs::queue::Queue;
 use eta_algorithms::data_structs::stack::Stack;
 use crate::algorithms::general::dfs;
 use crate::handles::types::{Edge, VHandle, Weight};
-use crate::handles::{pack, set_wgt, vh, wgt};
+use crate::handles::{pack, set_wgt, vh, vh_pack, vhu, wgt};
 use crate::traits::{StoreVertex, WeightedEdgeManipulate};
 const DUMMY_WEIGHT: Weight = -1;
 
@@ -55,11 +55,11 @@ where
 
     pub fn perform_search(&mut self, src_handle: VHandle, sink_handle: VHandle) {
         let mut stack = Stack::new(self.vertices.len());
-        let mut queue = Queue::<*mut Edge>::new_pow2_sized(self.vertices.len()); // Direct pointer access is faster than offsets
+        let mut queue = Queue::<VHandle>::new_pow2_sized(self.vertices.len()); // Direct pointer access is faster than offsets
         self.layer_data.fill(Weight::MAX);
 
         loop {
-            match mark_levels(src_handle, sink_handle, &mut self.edge_storage, &mut queue,&mut self.layer_data) {
+            match mark_levels(src_handle, sink_handle, &mut self.edge_storage, &mut queue, &mut self.layer_data) {
                 Ok(_) => {}
                 Err(_) => {
                     break;
@@ -90,7 +90,6 @@ where
                     // In case of augmented path found, we need to backtrack and ignore everything else
                     if augmented_path_found {
                         unsafe {
-                            let original = wgt(**outgoing_edge);
                             let modified_edge = set_wgt(**outgoing_edge, wgt(**outgoing_edge) - bottleneck_value);
                             (*outgoing_edge).write(modified_edge);
                         };
@@ -131,20 +130,18 @@ where
     }
 }
 
-pub(in crate) fn mark_levels<EdgeStorageType, LayerDataType>(
+pub(in crate) fn mark_levels<EdgeStorageType>(
     src_handle: VHandle,
     sink_handle: VHandle,
     edge_storage: &mut EdgeStorageType,
-    queue: &mut Queue<*mut Edge>,
-    layer_data: &mut LayerDataType,
+    queue: &mut Queue<VHandle>,
+    layer_data: &mut Array<Weight>,
 ) -> Result<(), &'static str>
 where
     EdgeStorageType: WeightedEdgeManipulate,
-    LayerDataType: Index<usize, Output=Weight> + IndexMut<usize, Output=Weight>,
 {
     let mut found_sink = false;
-    let mut start = pack(src_handle, DUMMY_WEIGHT);
-    queue.push(&mut start as *mut Edge);
+    queue.push(src_handle);
     let mut layer = 0;
 
     let mut sibling_counter = 0;
@@ -153,27 +150,19 @@ where
     layer_data[src_handle as usize] = 0;
 
     while queue.len() > 0 {
-        let handle_ptr = unsafe { queue.dequeue().unwrap() };
-        let handle = unsafe { *handle_ptr };
-        if vh(handle) == sink_handle {
+        let v_handle = queue.dequeue().unwrap();
+        if v_handle == sink_handle {
             found_sink = true;
         }
 
-        let len = edge_storage.vertex_len(vh(handle));
-        let mut next_edge = edge_storage.vertex_as_mut_ptr(vh(handle));
-        let edges_end = unsafe { next_edge.add(len as usize) };
-
-        while next_edge != edges_end {
-
-            let next_edge_layer = layer_data[vh(unsafe { *next_edge }) as usize];
+        for next_edge in edge_storage.vertex_iter_mut(v_handle){
+            let next_edge_layer = unsafe{*layer_data.index_unchecked(vhu(*next_edge))};
 
             if next_edge_layer != Weight::MAX {
-                unsafe { next_edge = next_edge.add(1) };
                 continue;
             }
 
-            if wgt(unsafe { *next_edge }) == 0 {
-                unsafe { next_edge = next_edge.add(1) };
+            if wgt(*next_edge) == 0 {
                 continue;
             }
 
@@ -182,8 +171,7 @@ where
             }
 
 
-            queue.push(next_edge);
-            unsafe { next_edge = next_edge.add(1) };
+            queue.push(vh(*next_edge));
             next_last_sibling_in_layer += 1;
         }
         sibling_counter += 1;
