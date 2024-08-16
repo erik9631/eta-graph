@@ -80,7 +80,7 @@ where
             return Some(reconstruct_path(&mut f_scores, start, goal))
         }
 
-        let neighbors = edge_storage.vertex_as_slice(current_vertex.vertex);
+        let neighbors = edge_storage.edges_as_slice(current_vertex.vertex);
         for neighbor in neighbors {
             let neighbor_f_score = wgt(*neighbor) + current_vertex.f_score + h_score(current_vertex.vertex, *neighbor);
             if f_scores[vh(*neighbor) as usize].f_score < neighbor_f_score {

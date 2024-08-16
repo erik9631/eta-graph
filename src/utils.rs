@@ -11,7 +11,7 @@ where
     VertexType: std::fmt::Debug + std::fmt::Display,
 {
     for (vertex, val) in vertices.iter().enumerate(){
-        for edge in edges.vertex_iter(vertex as VHandle){
+        for edge in edges.edges_iter(vertex as VHandle){
             println!("{} --{}-> {}", *val ,wgt(*edge), vertices[vh(*edge)]);
         }
         println!("---");

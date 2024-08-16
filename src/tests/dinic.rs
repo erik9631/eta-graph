@@ -174,7 +174,7 @@ fn dinic_test_advanced(){
     snap.insert("it".to_string(), 10);
 
     for (vertex, val) in dinic_graph.vertices.iter().enumerate(){
-        for edge in dinic_graph.edge_storage.vertex_iter(vertex as VHandle){
+        for edge in dinic_graph.edge_storage.edges_iter(vertex as VHandle){
             let key = format!("{}{}", *val, weighted_graph.graph.vertices[vh(*edge)]);
             let weight = wgt(*edge);
             assert_eq!(snap.remove(&key), Some(weight));

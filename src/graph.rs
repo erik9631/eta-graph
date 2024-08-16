@@ -85,7 +85,7 @@ where
 
     pub fn create(&mut self, val: VertexType, edge_count: Ci) -> VHandle {
         self.vertices.push(val);
-        self.edge_storage.create_vertex(edge_count)
+        self.edge_storage.create_vertex_entry(edge_count)
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn create_leaf(&mut self, val: VertexType) -> VHandle {

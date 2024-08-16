@@ -39,7 +39,7 @@ pub fn graph_basic_test(){
 
    graph.create_and_connect_0(b_a, "b_a_a");
 
-    let a_edges = graph.edge_storage.vertex_as_slice(a);
+    let a_edges = graph.edge_storage.edges_as_slice(a);
     assert_eq!(a_edges.len(), 3);
 
     for edge in a_edges {
@@ -51,7 +51,7 @@ pub fn graph_basic_test(){
         }
     }
 
-    let b_edges = graph.edge_storage.vertex_as_slice(b);
+    let b_edges = graph.edge_storage.edges_as_slice(b);
     assert_eq!(b_edges.len(), 2);
 
     for edge in b_edges {
@@ -62,7 +62,7 @@ pub fn graph_basic_test(){
         }
     }
 
-    let b_a_a_edges = graph.edge_storage.vertex_as_slice(b_a);
+    let b_a_a_edges = graph.edge_storage.edges_as_slice(b_a);
     assert_eq!(b_a_a_edges.len(), 1);
 
     for edge in b_a_a_edges {
@@ -125,7 +125,7 @@ pub fn graph_mutability_test(){
     graph.create_and_connect_0(a, "a_c");
 
 
-    let edges = graph.edge_storage.vertex_as_slice(a);
+    let edges = graph.edge_storage.edges_as_slice(a);
     assert_eq!(edges.len(), 3);
 
     for edge in edges {
@@ -236,8 +236,8 @@ pub fn graph_disconnect_test(){
     graph.edge_storage.disconnect(a, af);
 
 
-    assert_eq!(graph.edge_storage.vertex_len(a), 5);
-    let edges = graph.edge_storage.vertex_as_slice(a);
+    assert_eq!(graph.edge_storage.edges_len(a), 5);
+    let edges = graph.edge_storage.edges_as_slice(a);
 
     for edge in edges {
         match *edge{
@@ -253,9 +253,9 @@ pub fn graph_disconnect_test(){
     graph.edge_storage.disconnect(a, ad);
     graph.edge_storage.disconnect(a, ab);
 
-    assert_eq!(graph.edge_storage.vertex_len(a), 3);
+    assert_eq!(graph.edge_storage.edges_len(a), 3);
 
-    let edges = graph.edge_storage.vertex_as_slice(a);
+    let edges = graph.edge_storage.edges_as_slice(a);
     for edge in edges {
         match *edge{
             3 => assert_eq!(graph.vertices[vh(*edge)], "a_a"),
@@ -272,23 +272,23 @@ pub fn graph_static_test(){
     let mut graph = Graph::new();
     let root = graph.create("root", 5);
     let a = graph.create_and_connect(root,"a", 1);
-    assert_eq!(graph.edge_storage.vertex_capacity(root), 5);
+    assert_eq!(graph.edge_storage.edges_capacity(root), 5);
     graph.create_and_connect(root, "b", 0);
-    assert_eq!(graph.edge_storage.vertex_capacity(root), 5);
+    assert_eq!(graph.edge_storage.edges_capacity(root), 5);
     graph.create_and_connect(root,"c", 0);
-    assert_eq!(graph.edge_storage.vertex_capacity(root), 5);
+    assert_eq!(graph.edge_storage.edges_capacity(root), 5);
     let d = graph.create_and_connect(root, "d", 1);
-    assert_eq!(graph.edge_storage.vertex_capacity(root), 5);
+    assert_eq!(graph.edge_storage.edges_capacity(root), 5);
     let e = graph.create_and_connect(root, "e", 1);
-    assert_eq!(graph.edge_storage.vertex_capacity(root), 5);
+    assert_eq!(graph.edge_storage.edges_capacity(root), 5);
 
     graph.create_and_connect(a, "a_a", 0);
-    assert_eq!(graph.edge_storage.vertex_capacity(root), 5);
+    assert_eq!(graph.edge_storage.edges_capacity(root), 5);
     graph.create_and_connect(d, "a_d", 0);
-    assert_eq!(graph.edge_storage.vertex_capacity(root), 5);
+    assert_eq!(graph.edge_storage.edges_capacity(root), 5);
     graph.create_and_connect(e, "a_e", 0);
-    assert_eq!(graph.edge_storage.vertex_capacity(root), 5);
-    assert_eq!(graph.edge_storage.vertex_capacity(root), 5);
+    assert_eq!(graph.edge_storage.edges_capacity(root), 5);
+    assert_eq!(graph.edge_storage.edges_capacity(root), 5);
 }
 
 
@@ -302,9 +302,9 @@ pub fn graph_weight_test(){
     wgraph.create_and_connect_weighted(root, "d", Weight::MAX, 0);
     wgraph.create_and_connect_weighted(root, "e", -Weight::MAX, 0);
 
-    assert_eq!(wgraph.graph.edge_storage.vertex_len(root), 5);
+    assert_eq!(wgraph.graph.edge_storage.edges_len(root), 5);
 
-    for edge in wgraph.graph.edge_storage.vertex_as_slice(root){
+    for edge in wgraph.graph.edge_storage.edges_as_slice(root){
         match *edge{
             0 => {
                 assert_eq!(wgt(*edge), 5);

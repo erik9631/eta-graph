@@ -69,8 +69,8 @@ where
 
             loop {
                 dfs_search += 1;
-                let len = self.edge_storage.vertex_len(src_handle);
-                let current_edge_offset = self.edge_storage.vertex_index(src_handle);
+                let len = self.edge_storage.edges_len(src_handle);
+                let current_edge_offset = self.edge_storage.edges_index(src_handle);
                 let mut current_edge = pack(src_handle, Weight::MAX);
                 stack.push((current_edge_offset, current_edge_offset + len, (&mut current_edge) as *mut Edge));
 
@@ -115,8 +115,8 @@ where
 
                     // Exploring deeper
                     if wgt(next_edge) != 0 && next_edge_layer > current_layer {
-                        let next_edge_edges = self.edge_storage.vertex_index(vh(next_edge));
-                        let next_edge_edges_end = next_edge_edges + self.edge_storage.vertex_len(vh(next_edge));
+                        let next_edge_edges = self.edge_storage.edges_index(vh(next_edge));
+                        let next_edge_edges_end = next_edge_edges + self.edge_storage.edges_len(vh(next_edge));
                         current_layer = next_edge_layer;
                         stack.push((next_edge_edges, next_edge_edges_end, next_edge_ptr));
                     }
@@ -155,7 +155,7 @@ where
             found_sink = true;
         }
 
-        for next_edge in edge_storage.vertex_iter_mut(v_handle){
+        for next_edge in edge_storage.edges_iter_mut(v_handle){
             let next_edge_layer = unsafe{*layer_data.index_unchecked(vhu(*next_edge))};
 
             if next_edge_layer != Weight::MAX {

@@ -46,7 +46,7 @@ where
     while visit_queue.len() != 0 {
         let handle = visit_queue.dequeue().unwrap();
 
-        for edge in edge_storage.vertex_iter_mut(handle) {
+        for edge in edge_storage.edges_iter_mut(handle) {
             if unsafe { *was_queued_flags.index_unchecked(vh(*edge) as usize) } {
                 continue;
             }
@@ -105,7 +105,7 @@ where
 {
     let mut start_edge = start;
     let mut stack = Stack::<(usize, usize, *mut Edge)>::new(vertex_count);
-    stack.push((edge_storage.vertex_index(vh(start)), edge_storage.vertex_index(vh(start)) + edge_storage.vertex_len(vh(start)), (&mut start_edge) as *mut Edge));
+    stack.push((edge_storage.edges_index(vh(start)), edge_storage.edges_index(vh(start)) + edge_storage.edges_len(vh(start)), (&mut start_edge) as *mut Edge));
     match pre_order_func(&mut start_edge) {
         ControlFlow::End => {
             return;
@@ -141,8 +141,8 @@ where
             ControlFlow::Resume => {}
         }
 
-        let outgoing_edge_edges_start = edge_storage.vertex_index(vh(edge_storage[outgoing_offset]));
-        let outgoing_edge_edges_end = outgoing_edge_edges_start + edge_storage.vertex_len(vh(edge_storage[outgoing_offset]));
+        let outgoing_edge_edges_start = edge_storage.edges_index(vh(edge_storage[outgoing_offset]));
+        let outgoing_edge_edges_end = outgoing_edge_edges_start + edge_storage.edges_len(vh(edge_storage[outgoing_offset]));
         let outgoing_edge = &mut edge_storage[outgoing_offset];
 
         stack.push((outgoing_edge_edges_start,

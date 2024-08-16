@@ -4,7 +4,7 @@ use crate::handles::{pack, vh};
 use crate::handles::types::{VHandle, Weight, Edge, Ci};
 use crate::traits::{EdgeManipulate, EdgeConnect, EdgeStore, WeightedEdgeManipulate, WeightedEdgeConnect};
 #[derive(Copy, Clone)]
-pub struct Vertex {
+pub struct VertexEntry {
     pub len: Ci,
     pub capacity: Ci,
     pub offset: Ci,
@@ -14,11 +14,11 @@ pub struct EdgeStorageIter<'a> {
     edges: &'a Array<Edge>,
     current: *const Edge,
     end: *const Edge,
-    entries_iter: core::slice::Iter<'a, Vertex>,
+    entries_iter: core::slice::Iter<'a, VertexEntry>,
 }
 impl<'a> EdgeStorageIter<'a> {
     pub fn new(edge_storage: &'a EdgeStorage) -> Self {
-        let mut entries_iter = edge_storage.edges_entries.iter();
+        let mut entries_iter = edge_storage.vertex_entries.iter();
         let next = entries_iter.next().unwrap();
         let current = unsafe { edge_storage.edges.as_ptr().add(next.offset as usize) };
         let end = unsafe { current.add(next.len as usize) };
@@ -73,11 +73,11 @@ pub struct EdgeStorageIterMut<'a> {
     edges: &'a mut Array<Edge>,
     current: *mut Edge,
     end: *mut Edge,
-    entries_iter: core::slice::Iter<'a, Vertex>,
+    entries_iter: core::slice::Iter<'a, VertexEntry>,
 }
 impl<'a> EdgeStorageIterMut<'a> {
     pub fn new(edge_storage: & 'a mut EdgeStorage) -> Self {
-        let mut entries_iter = edge_storage.edges_entries.iter();
+        let mut entries_iter = edge_storage.vertex_entries.iter();
         let next = entries_iter.next().unwrap();
         let current = unsafe { edge_storage.edges.as_mut_ptr().add(next.offset as usize) };
         let end = unsafe { current.add(next.len as usize) };
@@ -94,7 +94,7 @@ edge_storage_iter_impl!(EdgeStorageIterMut, mut);
 pub struct EdgeStorage {
     pub(in crate) reserve: Ci,
     pub edges: Array<Edge>,
-    edges_entries: Vec<Vertex>,
+    vertex_entries: Vec<VertexEntry>,
 }
 
 impl Default for EdgeStorage {
@@ -110,7 +110,7 @@ impl EdgeStorage {
         EdgeStorage {
             reserve: 50,
             edges: Array::new(0),
-            edges_entries: Vec::new(),
+            vertex_entries: Vec::new(),
         }
     }
     /// Creates a new graph with a custom reserve
@@ -118,7 +118,7 @@ impl EdgeStorage {
         EdgeStorage {
             reserve: capacity,
             edges: Array::new(0),
-            edges_entries: Vec::new(),
+            vertex_entries: Vec::new(),
         }
     }
 
@@ -127,28 +127,28 @@ impl EdgeStorage {
         EdgeStorage {
             reserve: 0,
             edges: Array::new(0),
-            edges_entries: Vec::new(),
+            vertex_entries: Vec::new(),
         }
     }
 }
 
 impl EdgeConnect for EdgeStorage {
     fn connect_edges(&mut self, from: VHandle, to: &[Edge]) {
-        let len = self.vertex_len(from) as usize;
+        let len = self.edges_len(from) as usize;
         let new_size = len + to.len();
 
-        if new_size > self.vertex_capacity(from) as usize {
+        if new_size > self.edges_capacity(from) as usize {
             panic!("Edge size is greater than the allocated size");
         }
 
-        let data = self.vertex_as_slice_mut(from);
+        let data = self.edges_as_slice_mut(from);
         data[len..new_size].copy_from_slice(to);
-        self.edges_entries[from as usize].len = new_size as Ci;
+        self.vertex_entries[from as usize].len = new_size as Ci;
     }
 
     fn disconnect(&mut self, from: VHandle, to: VHandle) {
-        let data = self.vertex_as_mut_ptr(from);
-        let len = &mut self.edges_entries[from as usize].len;
+        let data = self.edges_as_mut_ptr(from);
+        let len = &mut self.vertex_entries[from as usize].len;
         unsafe {
             let mut iter = data;
             let end = iter.add(*len as usize);
@@ -174,51 +174,51 @@ impl WeightedEdgeConnect for EdgeStorage {
     }
 }
 impl EdgeStore for EdgeStorage {
-    fn create_vertex(&mut self, size: Ci) -> VHandle {
+    fn create_vertex_entry(&mut self, size: Ci) -> VHandle {
         let offset = self.edges.capacity() as Ci;
         self.edges.extend_by((size + self.reserve) as usize);
-        self.edges_entries.push(Vertex {
+        self.vertex_entries.push(VertexEntry {
             len: 0,
             capacity: self.reserve + size,
             offset: offset,
         });
-        (self.edges_entries.len() - 1) as VHandle
+        (self.vertex_entries.len() - 1) as VHandle
     }
     #[inline(always)]
-    fn vertex_as_slice(&self, vertex: VHandle) -> &[Edge] {
-        let edge_chunk_meta = self.edges_entries[vertex as usize];
+    fn edges_as_slice(&self, vertex: VHandle) -> &[Edge] {
+        let edge_chunk_meta = self.vertex_entries[vertex as usize];
         &self.edges.as_slice()[edge_chunk_meta.offset as usize..(edge_chunk_meta.offset + edge_chunk_meta.len) as usize]
     }
 
     #[inline(always)]
-    fn vertex_as_slice_mut(&mut self, vertex: VHandle) -> &mut [Edge] {
-        let edge_chunk_meta = self.edges_entries[vertex as usize];
+    fn edges_as_slice_mut(&mut self, vertex: VHandle) -> &mut [Edge] {
+        let edge_chunk_meta = self.vertex_entries[vertex as usize];
         &mut self.edges.as_slice_mut()[ edge_chunk_meta.offset as usize..(edge_chunk_meta.offset + edge_chunk_meta.capacity) as usize]
     }
 
     #[inline(always)]
-    fn vertex_as_ptr(&self, vertex: VHandle) -> *const Edge {
-        let edge_chunk_meta = self.edges_entries[vertex as usize];
+    fn edges_as_ptr(&self, vertex: VHandle) -> *const Edge {
+        let edge_chunk_meta = self.vertex_entries[vertex as usize];
         unsafe { self.edges.as_ptr().add(edge_chunk_meta.offset as usize) }
     }
 
     #[inline(always)]
-    fn vertex_as_mut_ptr(&mut self, vertex: VHandle) -> *mut Edge {
-        let edge_chunk_meta = self.edges_entries[vertex as usize];
+    fn edges_as_mut_ptr(&mut self, vertex: VHandle) -> *mut Edge {
+        let edge_chunk_meta = self.vertex_entries[vertex as usize];
         unsafe { self.edges.as_mut_ptr().add(edge_chunk_meta.offset as usize) }
     }
 
     #[inline(always)]
-    fn vertex_len(&self, handle: VHandle) -> usize {
-        self.edges_entries[handle as usize].len as usize
+    fn edges_len(&self, handle: VHandle) -> usize {
+        self.vertex_entries[handle as usize].len as usize
     }
 
-    fn vertex_capacity(&self, handle: VHandle) -> usize {
-        self.edges_entries[handle as usize].capacity as usize
+    fn edges_capacity(&self, handle: VHandle) -> usize {
+        self.vertex_entries[handle as usize].capacity as usize
     }
 
-    fn vertex_index(&self, vertex: VHandle) -> usize {
-        self.edges_entries[vertex as usize].offset as usize
+    fn edges_index(&self, vertex: VHandle) -> usize {
+        self.vertex_entries[vertex as usize].offset as usize
     }
 
     fn iter(&self) -> impl Iterator<Item=&Edge> {
@@ -231,13 +231,13 @@ impl EdgeStore for EdgeStorage {
     }
 
     #[inline(always)]
-    fn vertex_iter(&self, handle: VHandle) -> impl Iterator<Item=&Edge> {
-        self.edges.iter_range(self.vertex_index(handle), self.vertex_len(handle))
+    fn edges_iter(&self, handle: VHandle) -> impl Iterator<Item=&Edge> {
+        self.edges.iter_range(self.edges_index(handle), self.edges_len(handle))
     }
 
     #[inline(always)]
-    fn vertex_iter_mut(&mut self, handle: VHandle) -> impl Iterator<Item=&mut Edge> {
-        self.edges.iter_range_mut(self.vertex_index(handle), self.vertex_len(handle))
+    fn edges_iter_mut(&mut self, handle: VHandle) -> impl Iterator<Item=&mut Edge> {
+        self.edges.iter_range_mut(self.edges_index(handle), self.edges_len(handle))
     }
 }
 impl Clone for EdgeStorage {
@@ -245,14 +245,14 @@ impl Clone for EdgeStorage {
         EdgeStorage {
             reserve: self.reserve,
             edges: self.edges.clone(),
-            edges_entries: self.edges_entries.clone(),
+            vertex_entries: self.vertex_entries.clone(),
         }
     }
 
     fn clone_from(&mut self, source: &Self) {
         self.reserve = source.reserve;
         self.edges.clone_from(&source.edges);
-        self.edges_entries.clone_from(&source.edges_entries);
+        self.vertex_entries.clone_from(&source.vertex_entries);
     }
 }
 
