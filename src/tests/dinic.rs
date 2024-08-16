@@ -4,7 +4,7 @@ use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
 use crate::algorithms::general::bfs;
 use crate::algorithms::general::ControlFlow::Resume;
-use crate::algorithms::max_flow::{mark_levels, DinicGraph};
+use crate::algorithms::dinic::{mark_levels, DinicGraph};
 use crate::handles::{vh, vh_pack, wgt};
 use crate::handles::types::{Edge, VHandle, Weight};
 use crate::traits::{EdgeStore, StoreVertex, WeightedEdgeConnect};
