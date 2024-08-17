@@ -157,7 +157,6 @@ where
 
         for next_edge in edge_storage.edges_iter_mut(v_handle){
             let next_edge_layer = unsafe{*layer_data.index_unchecked(vhu(*next_edge))};
-
             if next_edge_layer != Weight::MAX {
                 continue;
             }
@@ -169,7 +168,6 @@ where
             unsafe {
                 layer_data[vh(*next_edge) as usize] = layer + 1;
             }
-
 
             queue.push(vh(*next_edge));
             next_last_sibling_in_layer += 1;
