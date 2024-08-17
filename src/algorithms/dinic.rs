@@ -69,18 +69,17 @@ where
 
             loop {
                 dfs_search += 1;
-                let len = self.edge_storage.edges_len(src_handle);
-                let current_edge_offset = self.edge_storage.edges_index(src_handle);
-                let mut current_edge = pack(src_handle, Weight::MAX);
-                stack.push((current_edge_offset, current_edge_offset + len, (&mut current_edge) as *mut Edge));
+                let start_edges = self.edge_storage.edges_as_mut_ptr(src_handle);
+                let mut root_edge = pack(src_handle, Weight::MAX);
+                stack.push((start_edges, (&mut root_edge) as *mut Edge));
 
                 let mut augmented_path_found = false;
                 let mut bottleneck_value = Weight::MAX;
                 let mut current_layer = 0;
 
                 while stack.len() > 0 {
-                    let (current_edge_offset, end_offset, outgoing_edge) = stack.top_mut().unwrap();
-                    let outgoing_edge_val = unsafe { **outgoing_edge };
+                    let (next_edges_ptr, edge_ptr) = stack.top_mut().unwrap();
+                    let outgoing_edge_val = unsafe { **edge_ptr };
                     current_layer = self.layer_data[vh(outgoing_edge_val) as usize];
 
                     if vh(outgoing_edge_val) == sink_handle {
@@ -90,8 +89,8 @@ where
                     // In case of augmented path found, we need to backtrack and ignore everything else
                     if augmented_path_found {
                         unsafe {
-                            let modified_edge = set_wgt(**outgoing_edge, wgt(**outgoing_edge) - bottleneck_value);
-                            (*outgoing_edge).write(modified_edge);
+                            let modified_edge = set_wgt(**edge_ptr, wgt(**edge_ptr) - bottleneck_value);
+                            (*edge_ptr).write(modified_edge);
                         };
                         stack.pop();
                         continue;
@@ -101,24 +100,21 @@ where
                         bottleneck_value = wgt(outgoing_edge_val);
                     }
 
+                    let next = next_edges_ptr.next();
                     // Backtracking
-                    if *current_edge_offset == *end_offset {
+                    if next.is_none() {
                         stack.pop();
                         continue;
                     }
+                    let next = next.unwrap();
 
-                    let next_edge_ptr = &mut self.edge_storage[*current_edge_offset] as *mut Edge;
-                    let next_edge = unsafe { *next_edge_ptr };
-                    let next_edge_layer = self.layer_data[vh(next_edge) as usize];
-
-                    *current_edge_offset += 1;
+                    let next_edges = self.edge_storage.edges_as_mut_ptr(vh(*next));
+                    let next_edge_layer = self.layer_data[vh(*next) as usize];
 
                     // Exploring deeper
-                    if wgt(next_edge) != 0 && next_edge_layer > current_layer {
-                        let next_edge_edges = self.edge_storage.edges_index(vh(next_edge));
-                        let next_edge_edges_end = next_edge_edges + self.edge_storage.edges_len(vh(next_edge));
+                    if wgt(*next) != 0 && next_edge_layer > current_layer {
                         current_layer = next_edge_layer;
-                        stack.push((next_edge_edges, next_edge_edges_end, next_edge_ptr));
+                        stack.push((next_edges, next));
                     }
                 }
 

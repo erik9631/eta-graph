@@ -115,8 +115,8 @@ where
     }
 
     while stack.len() > 0 {
-        let (outgoing_offset_iter, current_edge) = stack.top_mut().unwrap();
-        let next = outgoing_offset_iter.next();
+        let (next_edges_ptr, current_edge) = stack.top_mut().unwrap();
+        let next = next_edges_ptr.next();
         if next.is_none() {
             post_order_func(unsafe { (*current_edge).as_mut().unwrap() });
             stack.pop();
