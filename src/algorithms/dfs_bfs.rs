@@ -2,6 +2,7 @@ use crate::handles::types::{Ci, Edge, VHandle, Weight};
 use crate::handles::{vh, vh_pack};
 use crate::traits::EdgeStore;
 use eta_algorithms::data_structs::array::Array;
+use eta_algorithms::data_structs::fat_ptr::{FatPtr, FatPtrMut};
 use eta_algorithms::data_structs::queue::Queue;
 use eta_algorithms::data_structs::stack::Stack;
 
@@ -18,10 +19,10 @@ where
     PreOrderFunc: FnMut(&mut Edge, Weight) -> ControlFlow,
     Edges: EdgeStore,
 {
-    let mut was_queued_flags = Array::new_default_bytes(vertices_count, 0); // TODO Use a bit array for flags. Make such data structure for this.
+    let mut was_queued_flags = Array::new_default_bytes(vertices_count, 0);
 
     // Uses more memory than necessary. But rotates very quickly. Might be worth considering version with smaller memory footprint.
-    let mut visit_queue = Queue::<VHandle>::new_pow2_sized(vertices_count); // TODO Use a bit queue
+    let mut visit_queue = Queue::<VHandle>::new_pow2_sized(vertices_count);
     let mut end = 1;
     let mut next_layer = 1;
     let mut layer = 0;
@@ -104,8 +105,8 @@ where
     Edges: EdgeStore,
 {
     let mut start_edge = start;
-    let mut stack = Stack::<(usize, usize, *mut Edge)>::new(vertex_count);
-    stack.push((edge_storage.edges_index(vh(start)), edge_storage.edges_index(vh(start)) + edge_storage.edges_len(vh(start)), (&mut start_edge) as *mut Edge));
+    let mut stack = Stack::<(FatPtrMut<Edge>, *mut Edge)>::new(vertex_count);
+    stack.push((edge_storage.edges_as_mut_ptr(vh(start)), (&mut start_edge) as *mut Edge));
     match pre_order_func(&mut start_edge) {
         ControlFlow::End => {
             return;
@@ -114,21 +115,20 @@ where
     }
 
     while stack.len() > 0 {
-        let (outgoing_offset_iter, end, current_edge) = stack.top_mut().unwrap();
-        let outgoing_offset = *outgoing_offset_iter;
-        if outgoing_offset_iter == end {
+        let (outgoing_offset_iter, current_edge) = stack.top_mut().unwrap();
+        let next = outgoing_offset_iter.next();
+        if next.is_none() {
             post_order_func(unsafe { (*current_edge).as_mut().unwrap() });
             stack.pop();
             continue;
         }
-        *outgoing_offset_iter += 1;
+        let next = next.unwrap();
 
-        let outgoing_edge = &mut edge_storage[outgoing_offset];
-        if is_visited(*outgoing_edge) {
+        if is_visited(*next) {
             continue;
         }
 
-        match pre_order_func(outgoing_edge) {
+        match pre_order_func(next) {
             ControlFlow::End => {
                 break;
             }
@@ -141,18 +141,13 @@ where
             ControlFlow::Resume => {}
         }
 
-        let outgoing_edge_edges_start = edge_storage.edges_index(vh(edge_storage[outgoing_offset]));
-        let outgoing_edge_edges_end = outgoing_edge_edges_start + edge_storage.edges_len(vh(edge_storage[outgoing_offset]));
-        let outgoing_edge = &mut edge_storage[outgoing_offset];
-
-        stack.push((outgoing_edge_edges_start,
-                    outgoing_edge_edges_end,
-                    outgoing_edge as *mut Edge));
+        let next_edges = edge_storage.edges_as_mut_ptr(vh(*next));
+        stack.push((next_edges, next));
     }
 
     // Return back to the src without exploring further
     while stack.len() > 0 {
-        let (ptr, end, packed_edge) = stack.pop().unwrap();
+        let (_, packed_edge) = stack.pop().unwrap();
         post_order_func(unsafe { packed_edge.as_mut().unwrap() });
     }
 }

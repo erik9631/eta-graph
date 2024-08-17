@@ -1,6 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main, black_box};
-use eta_graph::algorithms::general::ControlFlow::Resume;
-use eta_graph::algorithms::general::{bfs, dfs};
+use eta_graph::algorithms::dfs_bfs::ControlFlow::Resume;
+use eta_graph::algorithms::dfs_bfs::{bfs, dfs};
 use eta_graph::graph;
 use eta_graph::handles::{vh_pack};
 fn dfs_bench(c: &mut Criterion) {

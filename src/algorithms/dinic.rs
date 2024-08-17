@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut};
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
 use eta_algorithms::data_structs::stack::Stack;
-use crate::algorithms::general::dfs;
+use crate::algorithms::dfs_bfs::dfs;
 use crate::handles::types::{Edge, VHandle, Weight};
 use crate::handles::{pack, set_wgt, vh, vh_pack, vhu, wgt};
 use crate::traits::{StoreVertex, WeightedEdgeManipulate};

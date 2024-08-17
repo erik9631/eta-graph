@@ -198,7 +198,7 @@ fn entry_as_slice_mut_test() {
     edge_storage.connect_edges(b, &[4, 5, 6]);
     edge_storage.connect_edges(c, &[7, 8, 9]);
 
-    for edge in edge_storage.edges_as_slice_mut(a).iter_mut() {
+    for edge in edge_storage.edges_as_mut_slice(a).iter_mut() {
         *edge = 0;
     }
 
@@ -291,7 +291,7 @@ fn invalid_handle_test_vertex_as_slice(){
 fn invalid_handle_test_vertex_as_slice_mut(){
     let mut edge_storage = EdgeStorage::new();
     let a= edge_storage.create_vertex_entry(3);
-    let slice = edge_storage.edges_as_slice_mut(5);
+    let slice = edge_storage.edges_as_mut_slice(5);
 }
 
 #[test]

@@ -1,5 +1,6 @@
-use std::ops::{Index, IndexMut};
+use std::ops::{Add, Index, IndexMut};
 use eta_algorithms::data_structs::array::Array;
+use eta_algorithms::data_structs::fat_ptr::{FatPtr, FatPtrMut};
 use crate::handles::{pack, vh};
 use crate::handles::types::{VHandle, Weight, Edge, Ci};
 use crate::traits::{EdgeManipulate, EdgeConnect, EdgeStore, WeightedEdgeManipulate, WeightedEdgeConnect};
@@ -141,7 +142,7 @@ impl EdgeConnect for EdgeStorage {
             panic!("Edge size is greater than the allocated size");
         }
 
-        let data = self.edges_as_slice_mut(from);
+        let data = self.edges_as_mut_slice(from);
         data[len..new_size].copy_from_slice(to);
         self.vertex_entries[from as usize].len = new_size as Ci;
     }
@@ -150,15 +151,12 @@ impl EdgeConnect for EdgeStorage {
         let data = self.edges_as_mut_ptr(from);
         let len = &mut self.vertex_entries[from as usize].len;
         unsafe {
-            let mut iter = data;
-            let end = iter.add(*len as usize);
-            while iter != end {
-                if vh(*iter) == to {
-                    *iter = *end.offset(-1); // Swap the last element for the empty one
+            for edge in data {
+                if vh(*edge) == to {
+                    *edge = *data.end.offset(-1); // Swap the last element for the empty one
                     *len -= 1;
                     break;
                 }
-                iter = iter.offset(1);
             }
         }
     }
@@ -189,23 +187,30 @@ impl EdgeStore for EdgeStorage {
         let edge_chunk_meta = self.vertex_entries[vertex as usize];
         &self.edges.as_slice()[edge_chunk_meta.offset as usize..(edge_chunk_meta.offset + edge_chunk_meta.len) as usize]
     }
-
     #[inline(always)]
-    fn edges_as_slice_mut(&mut self, vertex: VHandle) -> &mut [Edge] {
+    fn edges_as_mut_slice(&mut self, vertex: VHandle) -> &mut [Edge] {
         let edge_chunk_meta = self.vertex_entries[vertex as usize];
-        &mut self.edges.as_slice_mut()[ edge_chunk_meta.offset as usize..(edge_chunk_meta.offset + edge_chunk_meta.capacity) as usize]
+        &mut self.edges.as_mut_slice()[ edge_chunk_meta.offset as usize..(edge_chunk_meta.offset + edge_chunk_meta.capacity) as usize]
     }
 
     #[inline(always)]
-    fn edges_as_ptr(&self, vertex: VHandle) -> *const Edge {
+    fn edges_as_ptr(&self, vertex: VHandle) -> FatPtr<Edge> {
         let edge_chunk_meta = self.vertex_entries[vertex as usize];
-        unsafe { self.edges.as_ptr().add(edge_chunk_meta.offset as usize) }
+        unsafe{
+            let start = self.edges.as_ptr().add(edge_chunk_meta.offset as usize);
+            let end = start.add(edge_chunk_meta.len as usize);
+            FatPtr::new(start, end)
+        }
     }
 
     #[inline(always)]
-    fn edges_as_mut_ptr(&mut self, vertex: VHandle) -> *mut Edge {
+    fn edges_as_mut_ptr(&mut self, vertex: VHandle) -> FatPtrMut<Edge> {
         let edge_chunk_meta = self.vertex_entries[vertex as usize];
-        unsafe { self.edges.as_mut_ptr().add(edge_chunk_meta.offset as usize) }
+        unsafe{
+            let start = self.edges.as_mut_ptr().add(edge_chunk_meta.offset as usize);
+            let end = start.add(edge_chunk_meta.len as usize);
+            FatPtrMut::new(start, end)
+        }
     }
 
     #[inline(always)]
@@ -232,12 +237,20 @@ impl EdgeStore for EdgeStorage {
 
     #[inline(always)]
     fn edges_iter(&self, handle: VHandle) -> impl Iterator<Item=&Edge> {
-        self.edges.iter_range(self.edges_index(handle), self.edges_len(handle))
+        let index = self.edges_index(handle);
+        let end = index + self.edges_len(handle);
+        self.edges.iter_range(index, end)
     }
 
     #[inline(always)]
     fn edges_iter_mut(&mut self, handle: VHandle) -> impl Iterator<Item=&mut Edge> {
-        self.edges.iter_range_mut(self.edges_index(handle), self.edges_len(handle))
+        let index = self.edges_index(handle);
+        let end = index + self.edges_len(handle);
+        self.edges.iter_range_mut(index, end)
+    }
+
+    unsafe fn edges_iter_mut_unchecked(&mut self, handle: VHandle) -> impl Iterator<Item=&mut Edge> {
+        self.edges.iter_range_mut_unchecked(self.edges_index(handle), self.edges_len(handle))
     }
 }
 impl Clone for EdgeStorage {

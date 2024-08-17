@@ -1,4 +1,5 @@
 use std::ops::{Index, IndexMut};
+use eta_algorithms::data_structs::fat_ptr::{FatPtr, FatPtrMut};
 use crate::handles::types::{Edge, VHandle, Weight, Ci};
 
 pub trait StoreVertex: Index<VHandle, Output=Self::VertexType> + IndexMut<VHandle, Output=Self::VertexType>{
@@ -24,9 +25,9 @@ pub trait WeightedEdgeConnect {
 pub trait EdgeStore: Index<usize, Output=Edge> + IndexMut<usize, Output=Edge>{
     fn create_vertex_entry(&mut self, size: Ci) -> VHandle;
     fn edges_as_slice(&self, handle: VHandle) -> &[Edge];
-    fn edges_as_slice_mut(&mut self, handle: VHandle) -> &mut [Edge];
-    fn edges_as_ptr(&self, handle: VHandle) -> *const Edge;
-    fn edges_as_mut_ptr(&mut self, handle: VHandle) -> *mut Edge;
+    fn edges_as_mut_slice(&mut self, handle: VHandle) -> &mut [Edge];
+    fn edges_as_ptr(&self, handle: VHandle) -> FatPtr<Edge>;
+    fn edges_as_mut_ptr(&mut self, handle: VHandle) -> FatPtrMut<Edge>;
     fn edges_len(&self, handle: VHandle) -> usize;
     fn edges_capacity(&self, handle: VHandle) -> usize;
     fn edges_index(&self, handle: VHandle) -> usize;
@@ -34,6 +35,7 @@ pub trait EdgeStore: Index<usize, Output=Edge> + IndexMut<usize, Output=Edge>{
     fn iter_mut (&mut self) -> impl Iterator<Item=&mut Edge>;
     fn edges_iter(&self, handle: VHandle) -> impl Iterator<Item=&Edge>;
     fn edges_iter_mut(&mut self, handle: VHandle) -> impl Iterator<Item=&mut Edge>;
+    unsafe fn edges_iter_mut_unchecked(&mut self, handle: VHandle) -> impl Iterator<Item=&mut Edge>;
 }
 pub trait EdgeManipulate: EdgeStore + EdgeConnect + Clone{}
 pub trait WeightedEdgeManipulate: EdgeManipulate + WeightedEdgeConnect {}

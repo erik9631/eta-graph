@@ -1,5 +1,5 @@
-use crate::algorithms::general::ControlFlow::{End, Resume};
-use crate::algorithms::general::dfs;
+use crate::algorithms::dfs_bfs::ControlFlow::{End, Resume};
+use crate::algorithms::dfs_bfs::dfs;
 use crate::graph::Graph;
 use crate::handles::{vh, vh_pack};
 
