@@ -2,7 +2,7 @@ use std::hint::black_box;
 use criterion::{criterion_group, criterion_main, BenchmarkGroup, Criterion};
 use criterion::measurement::WallTime;
 use eta_graph::algorithms::dfs_bfs::ControlFlow::Resume;
-use eta_graph::handles::{vh, vh_pack};
+use eta_graph::handles::{vh_pack};
 use eta_graph::handles::types::Ci;
 
 pub fn bfs_bench_eta(data_size: usize, c: &mut BenchmarkGroup<WallTime>){
@@ -55,7 +55,7 @@ fn bfs_bench_pet(data_size: usize, c: &mut BenchmarkGroup<WallTime>) {
         let mut sum = 0;
         b.iter(|| {
             let mut bfs = Bfs::new(&graph, root);
-            while let Some(_) = bfs.next(&graph) {
+            while bfs.next(&graph).is_some() {
                 sum += 1;
             }
             black_box(sum);

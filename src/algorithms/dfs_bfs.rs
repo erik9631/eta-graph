@@ -44,7 +44,7 @@ where
         ControlFlow::Resume => {}
     }
 
-    while visit_queue.len() != 0 {
+    while !visit_queue.is_empty() {
         let handle = visit_queue.dequeue().unwrap();
 
         for edge in edge_storage.edges_iter_mut(handle) {
@@ -114,7 +114,7 @@ where
         _ => {}
     }
 
-    while stack.len() > 0 {
+    while !stack.is_empty() {
         let (next_edges_ptr, current_edge) = stack.top_mut().unwrap();
         let next = next_edges_ptr.next();
         if next.is_none() {
@@ -146,7 +146,7 @@ where
     }
 
     // Return back to the src without exploring further
-    while stack.len() > 0 {
+    while !stack.is_empty() {
         let (_, packed_edge) = stack.pop().unwrap();
         post_order_func(unsafe { packed_edge.as_mut().unwrap() });
     }

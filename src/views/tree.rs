@@ -30,7 +30,7 @@ where
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn get_children(&self, parent: VHandle) -> &[Edge] {
-        &self.nodes.edges_as_slice(parent)[TREE_HEADER_ELEMENTS as usize..]
+        &self.nodes.edges_as_slice(parent)[TREE_HEADER_ELEMENTS..]
     }
     #[cfg_attr(not(debug_assertions), inline(always))]
     pub fn add_child(&mut self, parent: VHandle, child: VHandle){

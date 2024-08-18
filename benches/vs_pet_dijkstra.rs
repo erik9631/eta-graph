@@ -14,7 +14,7 @@ fn tree_graph_eta_benchmark(children_count: usize, elements_to_generate: usize, 
     let mut graph = WeightedGraph::new();
 
     let root = graph.graph.create((), children_count as Ci);
-    let mut to_expand = Queue::<VHandle>::new_pow2_sized(elements_to_generate as usize);
+    let mut to_expand = Queue::<VHandle>::new_pow2_sized(elements_to_generate);
     let mut generated_elements = 1;
     let mut last_element = 0;
 
@@ -31,7 +31,7 @@ fn tree_graph_eta_benchmark(children_count: usize, elements_to_generate: usize, 
     }
     c.bench_function("tree_graph_eta_benchmark", |b| {
         b.iter(|| {
-            black_box(dijkstra(&mut graph.graph.edge_storage, root, last_element, generated_elements as usize))
+            black_box(dijkstra(&mut graph.graph.edge_storage, root, last_element, generated_elements))
         })
     });
 

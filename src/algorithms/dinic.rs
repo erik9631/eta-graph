@@ -70,7 +70,7 @@ where
                 let mut bottleneck_value = Weight::MAX;
                 let mut current_layer;
 
-                while stack.len() > 0 {
+                while !stack.is_empty() {
                     let (next_edges_ptr, edge_ptr) = stack.top_mut().unwrap();
                     let outgoing_edge_val = unsafe { **edge_ptr };
                     current_layer = self.layer_data[vh(outgoing_edge_val) as usize];
@@ -137,7 +137,7 @@ where
     let mut next_last_sibling_in_layer = 1;
     layer_data[src_handle as usize] = 0;
 
-    while queue.len() > 0 {
+    while !queue.is_empty() {
         let v_handle = queue.dequeue().unwrap();
         if v_handle == sink_handle {
             found_sink = true;

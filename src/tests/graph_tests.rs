@@ -190,35 +190,8 @@ pub fn graph_edges_iter_test(){
     *b = 20;
 
     println!("{} {}", *a, *b);
-
-    // for (index, item) in graph.edge_storage.iter().enumerate_as_index(){
-    //     assert_eq!(*item as usize, counter);
-    //     counter += 1;
-    // }
 }
-//
-// #[test]
-// pub fn graph_transform_bench_async(){
-//     let mut graph = Graph::new_large();
-//     let test_size = min(size_of::<VHandle>(), 10000000) as VHandle;
-//
-//     for i in 0..test_size {
-//         graph.create_leaf(i);
-//     }
-//     let start = Instant::now();
-//     graph.vertices.async_transform(|slice| {
-//         for i in slice{
-//             *i = *i * 10;
-//         }
-//     });
-//     println!("Time taken: {:?}", start.elapsed());
-//
-//     for i in 0..test_size {
-//         assert_eq!(graph.vertices[i], i*10);
-//     }
-//
-//
-// }
+
 #[test]
 pub fn graph_disconnect_test(){
     let mut graph = Graph::new_large();

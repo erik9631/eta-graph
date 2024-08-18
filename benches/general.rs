@@ -12,11 +12,11 @@ fn graph_disconnect_bench(c: &mut criterion::Criterion) {
         for i in 0..data_size {
             handles.push(graph.create_and_connect_0(root, i + 1));
         }
-        return (graph, handles, root);
+        (graph, handles, root)
     }, |handles| {
         let (mut graph, mut handles, root) = handles;
-        while !handles.is_empty() {
-            let handle = handles.pop().unwrap();
+        while let Some(handle) = handles.pop() {
+            
             graph.edge_storage.disconnect(root, handle);
         }
     }, BatchSize::LargeInput));

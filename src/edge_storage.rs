@@ -135,10 +135,10 @@ impl EdgeStorage {
 
 impl EdgeConnect for EdgeStorage {
     fn connect_edges(&mut self, from: VHandle, to: &[Edge]) {
-        let len = self.edges_len(from) as usize;
+        let len = self.edges_len(from);
         let new_size = len + to.len();
 
-        if new_size > self.edges_capacity(from) as usize {
+        if new_size > self.edges_capacity(from) {
             panic!("Edge size is greater than the allocated size");
         }
 
@@ -178,7 +178,7 @@ impl EdgeStore for EdgeStorage {
         self.vertex_entries.push(VertexEntry {
             len: 0,
             capacity: self.reserve + size,
-            offset: offset,
+            offset,
         });
         (self.vertex_entries.len() - 1) as VHandle
     }

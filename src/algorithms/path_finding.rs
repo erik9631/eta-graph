@@ -30,7 +30,7 @@ impl Eq for MinHeapPair {}
 
 impl PartialEq<Self> for MinHeapPair {
     fn eq(&self, other: &Self) -> bool {
-        return self.f_score == other.f_score;
+        self.f_score == other.f_score
     }
 }
 
@@ -55,7 +55,7 @@ fn reconstruct_path(paths: &mut Array<PathVertex>, start: VHandle, goal: VHandle
         path.push(prev);
         current = prev;
     }
-    return path;
+    path
 }
 
 /// A* algorithm
@@ -99,6 +99,6 @@ where
     Edges: EdgeStore
 {
     a_star(edge_storage, start, goal, vertices_count, |_, _| {
-        return 0;
+        0
     })
 }
