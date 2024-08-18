@@ -2,6 +2,8 @@
 name = "eta-graph"
 version = "1.0.0"
 edition = "2021"
+authors = ["erik9631@gmail.com"]
+description = "Low overhead data structures focused on performance"
 build = "build.rs"
 
 [profile.test]
