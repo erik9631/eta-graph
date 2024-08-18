@@ -1,20 +1,17 @@
 use std::collections::HashMap;
-use std::fmt::format;
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
 use crate::algorithms::dfs_bfs::bfs;
 use crate::algorithms::dfs_bfs::ControlFlow::Resume;
 use crate::algorithms::dinic::{mark_levels, DinicGraph};
 use crate::handles::{vh, vh_pack, wgt};
-use crate::handles::types::{Edge, VHandle, Weight};
+use crate::handles::types::{VHandle, Weight};
 use crate::traits::{EdgeStore, StoreVertex, WeightedEdgeConnect};
-use crate::utils::print_graph;
 use crate::weighted_graph::WeightedGraph;
 
 #[test]
 pub fn level_test(){
     let mut weighted_graph = WeightedGraph::new();
-    // Write test for layering
     let a = weighted_graph.graph.create("a", 2);
     let a_a = weighted_graph.create_and_connect_weighted(a, "a_a", 1, 100);
     let a_a_a = weighted_graph.create_and_connect_weighted(a_a, "a_a_a", 1, 20);
@@ -45,7 +42,7 @@ pub fn level_test(){
         ("a".to_string(), 0),
     ];
 
-    bfs(&mut edges_copy, vh_pack(a), weighted_graph.graph.vertices.len(), |v_handle, layer|{
+    bfs(&mut edges_copy, vh_pack(a), weighted_graph.graph.vertices.len(), |v_handle, _|{
         let snap_data = snap.pop().unwrap();
         assert_eq!(weighted_graph.graph.vertices[vh(*v_handle)], snap_data.0);
         assert_eq!(flow_data[vh(*v_handle) as usize], snap_data.1);

@@ -1,5 +1,3 @@
-use crate::edge_storage::EdgeStorage;
-use crate::graph::Graph;
 use crate::handles::types::VHandle;
 use crate::handles::{vh, wgt};
 use crate::traits::{EdgeStore, StoreVertex};

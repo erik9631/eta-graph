@@ -1,14 +1,9 @@
-use std::ops::{Index, IndexMut};
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::queue::Queue;
 use eta_algorithms::data_structs::stack::Stack;
-use crate::algorithms::dfs_bfs::dfs;
 use crate::handles::types::{Edge, VHandle, Weight};
-use crate::handles::{pack, set_wgt, vh, vh_pack, vhu, wgt};
+use crate::handles::{pack, set_wgt, vh, vhu, wgt};
 use crate::traits::{StoreVertex, WeightedEdgeManipulate};
-const DUMMY_WEIGHT: Weight = -1;
-
-
 pub struct DinicGraph<'a, VertexType, VertexStorageType, EdgeStorageType>
 where
     VertexStorageType: StoreVertex<VertexType=VertexType>,
@@ -47,7 +42,7 @@ where
         let zipped_iters = original_edges.iter().zip(self.edge_storage.iter_mut());
         for edges in zipped_iters {
             let (original_edge, dinic_edge) = edges;
-            let original_wgt = unsafe { wgt(*original_edge) };
+            let original_wgt = wgt(*original_edge);
             let current_wgt = wgt(*dinic_edge);
             *dinic_edge = set_wgt(*dinic_edge, original_wgt - current_wgt);
         }
@@ -65,17 +60,15 @@ where
                     break;
                 }
             }
-            let mut dfs_search = 0;
 
             loop {
-                dfs_search += 1;
                 let start_edges = self.edge_storage.edges_as_mut_ptr(src_handle);
                 let mut root_edge = pack(src_handle, Weight::MAX);
                 stack.push((start_edges, (&mut root_edge) as *mut Edge));
 
                 let mut augmented_path_found = false;
                 let mut bottleneck_value = Weight::MAX;
-                let mut current_layer = 0;
+                let mut current_layer;
 
                 while stack.len() > 0 {
                     let (next_edges_ptr, edge_ptr) = stack.top_mut().unwrap();
@@ -113,7 +106,6 @@ where
 
                     // Exploring deeper
                     if wgt(*next) != 0 && next_edge_layer > current_layer {
-                        current_layer = next_edge_layer;
                         stack.push((next_edges, next));
                     }
                 }
@@ -160,10 +152,7 @@ where
             if wgt(*next_edge) == 0 {
                 continue;
             }
-
-            unsafe {
-                layer_data[vh(*next_edge) as usize] = layer + 1;
-            }
+            layer_data[vh(*next_edge) as usize] = layer + 1;
 
             queue.push(vh(*next_edge));
             next_last_sibling_in_layer += 1;

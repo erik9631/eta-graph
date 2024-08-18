@@ -1,4 +1,4 @@
-use std::ops::{Add, Index, IndexMut};
+use std::ops::{Index, IndexMut};
 use eta_algorithms::data_structs::array::Array;
 use eta_algorithms::data_structs::fat_ptr::{FatPtr, FatPtrMut};
 use crate::handles::{pack, vh};

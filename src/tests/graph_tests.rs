@@ -172,7 +172,7 @@ pub fn graph_edges_iter_test(){
     let test_size = 100;
     let mut last = graph.create(0, 5);
     let mut vals = 0;
-    for i in 0..test_size {
+    for _ in 0..test_size {
         graph.create_and_connect_0(last, vals+1);
         graph.create_and_connect_0(last, vals+2);
         graph.create_and_connect_0(last, vals+3);
@@ -180,12 +180,11 @@ pub fn graph_edges_iter_test(){
        last =  graph.create_and_connect(last, vals+5, 5);
         vals += 5;
     }
-    let counter = 1;
 
     let mut iter = graph.edge_storage.iter_mut();
     let a = iter.next().unwrap();
     let b = iter.next().unwrap();
-    let c = iter.next().unwrap();
+    iter.next().unwrap();
 
     *a = 10;
     *b = 20;

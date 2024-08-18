@@ -7,7 +7,7 @@ pub mod handles;
 pub mod weighted_graph;
 pub mod algorithms;
 pub mod vertex_storage;
+pub mod utils;
 
 #[cfg(test)]
 pub mod tests;
-mod utils;

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use crate::edge_storage::EdgeStorage;
-use crate::handles::{vh, vh_pack, pack};
-use crate::handles::types::{VHandle, Edge};
+use crate::handles::{vh, pack};
+use crate::handles::types::{VHandle};
 use crate::traits::{EdgeStore, EdgeConnect, WeightedEdgeConnect};
 
 #[test]
@@ -169,8 +169,8 @@ fn edge_storage_disconnect_test() {
 fn entry_as_slice_test(){
     let mut edge_storage = EdgeStorage::new();
     let a= edge_storage.create_vertex_entry(3);
-    let b= edge_storage.create_vertex_entry(0);
-    let c= edge_storage.create_vertex_entry(0);
+    edge_storage.create_vertex_entry(0);
+    edge_storage.create_vertex_entry(0);
     edge_storage.connect_edges(a, &[1,2,3]);
 
     for (idx, edge) in edge_storage.edges_as_slice(a).iter().enumerate(){
@@ -183,7 +183,7 @@ fn entry_as_slice_test_empty(){
     let mut edge_storage = EdgeStorage::new();
     let a= edge_storage.create_vertex_entry(0);
 
-    for edge in edge_storage.edges_as_slice(a).iter(){
+    for _ in edge_storage.edges_as_slice(a).iter(){
         assert!(false);
     }
 }
@@ -249,7 +249,7 @@ fn edge_storage_iter_test_empty(){
     edge_storage.create_vertex_entry(10);
     edge_storage.create_vertex_entry(10);
 
-    for edge in edge_storage.iter(){
+    for _ in edge_storage.iter(){
         assert!(false);
     }
 }
@@ -258,46 +258,46 @@ fn edge_storage_iter_test_empty(){
 #[should_panic]
 fn invalid_handle_test(){
     let mut edge_storage = EdgeStorage::new();
-    let a= edge_storage.create_vertex_entry(3);
-    let index = edge_storage.edges_index(5);
+    edge_storage.create_vertex_entry(3);
+    edge_storage.edges_index(5);
 }
 
 #[test]
 #[should_panic]
 fn invalid_handle_test_iter(){
     let mut edge_storage = EdgeStorage::new();
-    let a= edge_storage.create_vertex_entry(3);
-    let iter = edge_storage.edges_iter(5);
+    edge_storage.create_vertex_entry(3);
+    let _ = edge_storage.edges_iter(5);
 }
 
 #[test]
 #[should_panic]
 fn invalid_handle_test_iter_mut(){
     let mut edge_storage = EdgeStorage::new();
-    let a= edge_storage.create_vertex_entry(3);
-    let iter = edge_storage.edges_iter_mut(5);
+    edge_storage.create_vertex_entry(3);
+    let _ = edge_storage.edges_iter_mut(5);
 }
 
 #[test]
 #[should_panic]
 fn invalid_handle_test_vertex_as_slice(){
     let mut edge_storage = EdgeStorage::new();
-    let a= edge_storage.create_vertex_entry(3);
-    let slice = edge_storage.edges_as_slice(5);
+    edge_storage.create_vertex_entry(3);
+    let _ = edge_storage.edges_as_slice(5);
 }
 
 #[test]
 #[should_panic]
 fn invalid_handle_test_vertex_as_slice_mut(){
     let mut edge_storage = EdgeStorage::new();
-    let a= edge_storage.create_vertex_entry(3);
-    let slice = edge_storage.edges_as_mut_slice(5);
+    edge_storage.create_vertex_entry(3);
+    let _ = edge_storage.edges_as_mut_slice(5);
 }
 
 #[test]
 #[should_panic]
 fn invalid_handle_test_vertex_as_ptr(){
     let mut edge_storage = EdgeStorage::new();
-    let a= edge_storage.create_vertex_entry(3);
-    let slice = edge_storage.edges_as_ptr(5);
+    edge_storage.create_vertex_entry(3);
+    let _ = edge_storage.edges_as_ptr(5);
 }

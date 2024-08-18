@@ -34,7 +34,7 @@ pub fn dijkstra_test_basic() {
     let t = weighted_graph.create_and_connect_weighted(f, "t", 7, 0);
     weighted_graph.graph.edge_storage.connect_weighted(g,t, 8);
 
-    let mut result = dijkstra(&mut weighted_graph.graph.edge_storage, s, t, weighted_graph.graph.vertices.len());
+    let result = dijkstra(&mut weighted_graph.graph.edge_storage, s, t, weighted_graph.graph.vertices.len());
     if result.is_none(){
         assert!(false, "Path from S to T should exist");
     }
@@ -102,7 +102,7 @@ pub fn dijkstra_test_cyclic(){
         "a".to_string(),
     ];
 
-    let mut result = dijkstra(&mut weighted_graph.graph.edge_storage, a, g, weighted_graph.graph.vertices.len());
+    let result = dijkstra(&mut weighted_graph.graph.edge_storage, a, g, weighted_graph.graph.vertices.len());
     if result.is_none(){
         assert!(false, "Path from A to G should exist");
     }
@@ -162,7 +162,7 @@ pub fn dijkstra_test_directed_acyclic() {
         "A".to_string(),
     ];
 
-    let mut result = dijkstra(&mut weighted_graph.graph.edge_storage, a, f, weighted_graph.graph.vertices.len());
+    let result = dijkstra(&mut weighted_graph.graph.edge_storage, a, f, weighted_graph.graph.vertices.len());
     if result.is_none(){
         assert!(false, "Path from A to F should exist");
     }
@@ -182,7 +182,7 @@ pub fn dijkstra_test_directed_acyclic() {
         "A".to_string(),
     ];
 
-    let mut result = dijkstra(&mut weighted_graph.graph.edge_storage, a, h, weighted_graph.graph.vertices.len());
+    let result = dijkstra(&mut weighted_graph.graph.edge_storage, a, h, weighted_graph.graph.vertices.len());
     if result.is_none(){
         assert!(false);
     }
@@ -225,7 +225,7 @@ pub fn dijkstra_test_with_disconnected_node() {
 
     // Test 1: Path from A to C (should exist)
     let mut expected_path = vec!["C".to_string(), "B".to_string(), "A".to_string()];
-    let mut result = dijkstra(&mut weighted_graph.graph.edge_storage, a, c, weighted_graph.graph.vertices.len());
+    let result = dijkstra(&mut weighted_graph.graph.edge_storage, a, c, weighted_graph.graph.vertices.len());
     if result.is_none(){
         assert!(false, "Path from A to C should exist");
     }
@@ -242,6 +242,6 @@ pub fn dijkstra_test_with_disconnected_node() {
     assert!(result.is_none(), "Path from A to F should not exist");
 
     // Test 3: Path from F to any other node (should not exist)
-    let path = dijkstra(&mut weighted_graph.graph.edge_storage, f, a, weighted_graph.graph.vertices.len());
+    let result = dijkstra(&mut weighted_graph.graph.edge_storage, f, a, weighted_graph.graph.vertices.len());
     assert!(result.is_none(), "Path from F to A should not exist");
 }

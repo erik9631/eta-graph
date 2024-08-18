@@ -1,8 +1,8 @@
-use crate::handles::types::{Ci, Edge, VHandle, Weight};
-use crate::handles::{vh, vh_pack};
+use crate::handles::types::{Edge, VHandle, Weight};
+use crate::handles::{vh};
 use crate::traits::EdgeStore;
 use eta_algorithms::data_structs::array::Array;
-use eta_algorithms::data_structs::fat_ptr::{FatPtr, FatPtrMut};
+use eta_algorithms::data_structs::fat_ptr::{FatPtrMut};
 use eta_algorithms::data_structs::queue::Queue;
 use eta_algorithms::data_structs::stack::Stack;
 

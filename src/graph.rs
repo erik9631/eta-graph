@@ -1,6 +1,6 @@
 use crate::edge_storage::{EdgeStorage};
 use crate::handles::types::{VHandle, Ci};
-use crate::traits::{EdgeConnect, EdgeManipulate, StoreVertex};
+use crate::traits::{EdgeManipulate, StoreVertex};
 use crate::vertex_storage::VertexStorage;
 use crate::views::tree::Tree;
 

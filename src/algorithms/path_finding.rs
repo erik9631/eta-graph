@@ -98,7 +98,7 @@ pub fn dijkstra<Edges>(edge_storage: &mut Edges, start: VHandle, goal: VHandle, 
 where
     Edges: EdgeStore
 {
-    return a_star(edge_storage, start, goal, vertices_count, |from, to| {
+    a_star(edge_storage, start, goal, vertices_count, |_, _| {
         return 0;
     })
 }
