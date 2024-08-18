@@ -4,8 +4,10 @@ version = "1.0.0"
 edition = "2021"
 authors = ["erik9631@gmail.com"]
 description = "Low overhead graph library focused on performance"
-license = "Custom MIT-Based License"
+license-file = "license.txt"
 build = "build.rs"
+readme = "README.MD"
+repository = "https://github.com/erik9631/GraphLib/"
 
 [profile.test]
 inherits = "release"
