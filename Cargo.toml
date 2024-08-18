@@ -1,13 +1,13 @@
 [package]
 name = "eta-graph"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 authors = ["erik9631@gmail.com"]
 description = "Low overhead graph library focused on performance"
 license-file = "license.txt"
 build = "build.rs"
 readme = "README.MD"
-repository = "https://github.com/erik9631/GraphLib/"
+repository = "https://github.com/erik9631/eta-graph/"
 
 [profile.test]
 inherits = "release"
