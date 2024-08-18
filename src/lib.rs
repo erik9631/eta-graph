@@ -1,15 +1,13 @@
+
 pub mod graph;
 pub mod traits;
+pub mod views;
+pub mod edge_storage;
+pub mod handles;
+pub mod weighted_graph;
+pub mod algorithms;
+pub mod vertex_storage;
 pub mod utils;
 
-pub mod views;
-
 #[cfg(test)]
-mod tests;
-#[cfg(test)]
-mod bench;
-mod prelude;
-mod edge_storage;
-mod algorithms;
-mod handles;
-mod weighted_graph;
+pub mod tests;

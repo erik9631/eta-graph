@@ -1,133 +1,96 @@
-use std::cmp::min;
-use std::ops::{Index, IndexMut};
-use std::thread::available_parallelism;
 use crate::edge_storage::{EdgeStorage};
-use crate::handles::Slot;
-use crate::handles::types::{VHandle, Weight};
-use crate::traits;
-use crate::traits::{EdgeOperator, EdgeStore, EdgeStoreMut, TraverseMarker};
-use crate::utils::{split_to_parts_mut};
-use crate::views::tree::TreeView;
+use crate::handles::types::{VHandle, Ci};
+use crate::traits::{EdgeManipulate, StoreVertex};
+use crate::vertex_storage::VertexStorage;
+use crate::views::tree::Tree;
 
 #[derive(Debug)]
 pub enum Error {
     NoHandle,
 }
-
-pub struct Vertices<VertexType> {
-    data: Vec<VertexType>,
+pub struct Graph<VertexType, VertexStorageType, EdgeStorageType>
+where
+    VertexStorageType: StoreVertex<VertexType=VertexType>,
+    EdgeStorageType: EdgeManipulate,
+{
+    pub vertices: VertexStorageType,
+    pub edge_storage: EdgeStorageType,
 }
 
-pub struct Graph<VertexType, EdgeStorageType> {
-    pub vertices: Vertices<VertexType>,
-    pub edges: EdgeStorageType,
+impl<VertexType, VertexStorageType, EdgeStorageType> Clone for Graph<VertexType, VertexStorageType, EdgeStorageType>
+where
+    EdgeStorageType: EdgeManipulate,
+    VertexType: Clone,
+    VertexStorageType: StoreVertex<VertexType=VertexType> + Clone {
+    #[inline(always)]
+    fn clone(&self) -> Self {
+        Graph{
+            vertices: self.vertices.clone(),
+            edge_storage: self.edge_storage.clone(),
+        }
+    }
+    #[inline(always)]
+    fn clone_from(&mut self, source: &Self) {
+        self.vertices.clone_from(&source.vertices);
+        self.edge_storage.clone_from(&source.edge_storage);
+    }
 }
 
+impl<VertexType> Default for Graph<VertexType, VertexStorage<VertexType>, EdgeStorage> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
-impl<VertexType> Graph<VertexType, EdgeStorage> {
+impl<VertexType> Graph<VertexType, VertexStorage<VertexType>, EdgeStorage>
+{
     pub fn new_large() -> Self {
-        return Graph{
-            edges: EdgeStorage::new_large(),
-            vertices: Vertices::new(),
+        Graph{
+            edge_storage: EdgeStorage::new_large(),
+            vertices: VertexStorage::new(),
         }
     }
-    pub fn with_reserve(reserve: Slot) -> Self {
-        return Graph{
-            edges: EdgeStorage::with_reserve(reserve),
-            vertices: Vertices::new(),
-        };
+    pub fn with_reserve(reserve: Ci) -> Self {
+        Graph{
+            edge_storage: EdgeStorage::with_reserve(reserve),
+            vertices: VertexStorage::new(),
+        }
+    }
+    pub fn new() -> Self {
+        Graph{
+            edge_storage: EdgeStorage::new(),
+            vertices: VertexStorage::new(),
+        }
     }
 
-    /// Creates a new graph with the assumption that the graph size is known ahead of time. Small reserve count of 5
-    pub fn new() -> Self {
-        return Graph{
-            edges: EdgeStorage::new(),
-            vertices: Vertices::new(),
-        };
-    }
 
 }
 
-impl<VertexType, EdgeStorageType> Graph<VertexType, EdgeStorageType>
-where EdgeStorageType: EdgeStoreMut+ EdgeOperator + TraverseMarker {
-    pub fn tree_view(&mut self) -> TreeView<VertexType, EdgeStorageType> {
-        return TreeView::new(&mut self.edges, &mut self.vertices);
+impl<VertexType, VertexStorageType, EdgeStorageType> Graph<VertexType, VertexStorageType, EdgeStorageType>
+where
+    EdgeStorageType: EdgeManipulate,
+    VertexStorageType: StoreVertex<VertexType=VertexType>{
+    #[inline(always)]
+    pub fn tree_view(&mut self) -> Tree<VertexType, VertexStorageType, EdgeStorageType> {
+        return Tree::new(&mut self.edge_storage, &mut self.vertices);
     }
 
-    pub fn create_and_connect(&mut self, src_vertex: VHandle, val: VertexType, edge_count: Slot) -> VHandle {
+    pub fn create_and_connect(&mut self, from: VHandle, val: VertexType, edge_count: Ci) -> VHandle {
         let new_vertex = self.create(val, edge_count);
-        self.edges.connect(src_vertex, new_vertex);
-        return new_vertex;
+        self.edge_storage.connect(from, new_vertex);
+        new_vertex
+    }
+    #[inline(always)]
+    pub fn create_and_connect_0(&mut self, from: VHandle, val: VertexType) -> VHandle {
+        self.create_and_connect(from, val, 0)
     }
 
-    // pub fn create_and_connect_weighted(&mut self, src_vertex: VHandle, val: VertexType, weight: Weight, edge_count: Slot) -> VHandle {
-    //     let new_vertex = self.create(val, edge_count);
-    //     self.edges.connect_weighted(src_vertex, new_vertex, weight);
-    //     return new_vertex;
-    // }
-    pub fn create_and_connect_leaf(&mut self, src_vertex: VHandle, val: VertexType) -> VHandle {
-        return self.create_and_connect(src_vertex, val, 0);
-    }
-
-    pub fn create(&mut self, val: VertexType, edge_count: Slot) -> VHandle {
+    pub fn create(&mut self, val: VertexType, edge_count: Ci) -> VHandle {
         self.vertices.push(val);
-        let new_vertex = (self.vertices.len() - 1)  as VHandle;
-        self.edges.extend_edge_storage(edge_count);
-        return new_vertex;
+        self.edge_storage.create_vertex_entry(edge_count)
     }
-    #[cfg_attr(not(debug_assertions), inline(always))]
+    #[inline(always)]
     pub fn create_leaf(&mut self, val: VertexType) -> VHandle {
-        return self.create(val, 0)
-    }
-}
-
-
-impl <T: Send> traits::Transformer<T> for Vertices<T> {
-    fn transform(&mut self, transform_fn: fn(&mut [T])) {
-        transform_fn(self.data.as_mut_slice());
-    }
-    fn async_transform(&mut self, transform_fn: fn(&mut [T])) {
-        let max_parallelism = available_parallelism().ok().unwrap().get();
-        let parallelism_count = min(max_parallelism, self.data.len());
-        let parts = split_to_parts_mut(&mut self.data, parallelism_count);
-
-        std::thread::scope(|scope| {
-            for part in parts {
-                scope.spawn(|| {
-                    transform_fn(part);
-                });
-            }
-        });
-
-
-    }
-
-}
-impl <T> Vertices<T>{
-    pub fn new() -> Self {
-        return Vertices{
-            data: Vec::new(),
-        }
-    }
-
-    #[cfg_attr(not(debug_assertions), inline(always))]
-    pub fn push(&mut self, val: T) {
-        self.data.push(val);
-    }
-    pub fn len(&self) -> usize {
-        return self.data.len();
-    }
-}
-
-impl <T> Index<VHandle> for Vertices<T>{
-    type Output = T;
-    fn index(&self, index: VHandle) -> &Self::Output {
-        return &self.data[index as usize];
-    }
-}
-
-impl <T> IndexMut<VHandle> for Vertices<T>{
-    fn index_mut(&mut self, index: VHandle) -> &mut Self::Output {
-        return &mut self.data[index as usize];
+        self.create(val, 0)
     }
 }

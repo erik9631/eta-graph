@@ -1,17 +1,39 @@
 [package]
-name = "graph"
-version = "0.1.0"
+name = "eta-graph"
+version = "1.0.0"
 edition = "2021"
 build = "build.rs"
-
-#[profile.release-with-debug]
-#inherits = "release"
-#debug = true
 
 [profile.test]
 inherits = "release"
 debug = true
 
 [dependencies]
-firestorm = '0.5.1'
-#firestorm = { version = "0.5.1", features=["enable_system_time"] }
+eta-algorithms = "1.5.1"
+
+[dev-dependencies]
+criterion = { version = "0.5.1", features = ["html_reports"] }
+petgraph = "0.6.5"
+
+[[bench]]
+name = "dfs_bfs"
+harness = false
+
+[[bench]]
+name = "general"
+harness = false
+
+[[bench]]
+path = "benches/dijkstra.rs"
+name = "dijkstra"
+harness = false
+
+[[bench]]
+path = "benches/vs_pet_dijkstra.rs"
+name = "vs_pet_dijkstra"
+harness = false
+
+[[bench]]
+name = "vs_pet_dfs_bfs"
+harness = false
+
