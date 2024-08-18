@@ -3,6 +3,8 @@
 ## What is it?
 Eta-Graph is a low-overhead graph library with strong emphasis on performance and memory usage.
 
+It is still in early stages and further work will be done to improve the library.
+
 ## Why use it?
 * Low overhead
 * Performance
