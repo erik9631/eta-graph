@@ -3,7 +3,8 @@ name = "eta-graph"
 version = "1.0.0"
 edition = "2021"
 authors = ["erik9631@gmail.com"]
-description = "Low overhead data structures focused on performance"
+description = "Low overhead graph library focused on performance"
+license = "Custom MIT-Based License"
 build = "build.rs"
 
 [profile.test]
