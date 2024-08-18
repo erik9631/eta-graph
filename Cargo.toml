@@ -1,12 +1,15 @@
 [package]
 name = "eta-graph"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 build = "build.rs"
 
 [profile.test]
-#inherits = "release"
+inherits = "release"
 debug = true
+
+[dependencies]
+eta-algorithms = "1.5.1"
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }
@@ -34,5 +37,3 @@ harness = false
 name = "vs_pet_dfs_bfs"
 harness = false
 
-[dependencies]
-eta-algorithms = "1.5.1"
