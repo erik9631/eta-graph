@@ -38,6 +38,28 @@ I am yet to make max-flow benchmarks.
 
 I will document the exact numbers and do more detailed benchmarks later.
 
+## Config
+The library is configured with a build.rs script.
+You can change the config by setting the environment variable `MSize` to the size you want.
+The default is `u64`.
+
+This is used to determine the size of the edges. Smaller = better cache performance.
+
+Possible values are:
+* `u16`
+* `u32`
+* `u64`
+
+
+I recommend making .cargo/config.toml in the project root with the following content:\
+
+```toml
+[env]
+MSize = "u64" # Change this to the size you want
+```
+
+This will make the library use u64 for edge sizes.
+
 ## License
 Custom MIT-Based License
 
