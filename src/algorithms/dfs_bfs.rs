@@ -107,11 +107,8 @@ where
     let mut start_edge = start;
     let mut stack = Stack::<(FatPtrMut<Edge>, *mut Edge)>::new(vertex_count);
     stack.push((edge_storage.edges_as_mut_ptr(vh(start)), (&mut start_edge) as *mut Edge));
-    match pre_order_func(&mut start_edge) {
-        ControlFlow::End => {
-            return;
-        }
-        _ => {}
+    if let ControlFlow::End = pre_order_func(&mut start_edge) {
+        return;
     }
 
     while !stack.is_empty() {

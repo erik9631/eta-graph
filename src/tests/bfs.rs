@@ -3,7 +3,7 @@ use crate::algorithms::dfs_bfs::ControlFlow::Resume;
 use crate::graph::Graph;
 use crate::handles::{vh, vh_pack};
 use crate::handles::types::Weight;
-use crate::traits::EdgeConnect;
+use crate::traits::{EdgeConnect, StoreVertex};
 
 #[test]
 pub fn graph_bfs_test(){

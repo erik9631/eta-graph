@@ -39,9 +39,8 @@ macro_rules! edge_storage_iter_impl {
             fn next(&mut self) -> Option<Self::Item> {
                 while self.current == self.end {
                     let result = self.entries_iter.next();
-                    if result.is_none() {
-                        return None;
-                    }
+                    result?;
+
                     let next = result.unwrap();
                     edge_storage_iter_impl!(@get_current self, next $($mut_type)?);
 
@@ -99,6 +98,7 @@ pub struct EdgeStorage {
 }
 
 impl Default for EdgeStorage {
+    #[inline(always)]
     fn default() -> Self {
         Self::new()
     }
@@ -160,7 +160,7 @@ impl EdgeConnect for EdgeStorage {
             }
         }
     }
-    #[cfg_attr(not(debug_assertions), inline(always))]
+    #[inline(always)]
     fn connect(&mut self, from: VHandle, to: VHandle) {
         self.connect_edges(from, &[pack(to, 0)]);
     }
@@ -212,20 +212,24 @@ impl EdgeStore for EdgeStorage {
             FatPtrMut::new(start, end)
         }
     }
+    #[inline(always)]
+    fn edges_is_empty(&self, handle: VHandle) -> bool {
+        self.edges_len(handle) == 0
+    }
 
     #[inline(always)]
     fn edges_len(&self, handle: VHandle) -> usize {
         self.vertex_entries[handle as usize].len as usize
     }
-
+    #[inline(always)]
     fn edges_capacity(&self, handle: VHandle) -> usize {
         self.vertex_entries[handle as usize].capacity as usize
     }
-
+    #[inline(always)]
     fn edges_index(&self, vertex: VHandle) -> usize {
         self.vertex_entries[vertex as usize].offset as usize
     }
-
+    #[inline(always)]
     fn iter(&self) -> impl Iterator<Item=&Edge> {
         EdgeStorageIter::new(self)
     }

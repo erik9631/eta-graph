@@ -36,7 +36,7 @@ impl PartialEq<Self> for MinHeapPair {
 
 impl PartialOrd<Self> for MinHeapPair {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        other.f_score.partial_cmp(&self.f_score)
+        Some(self.cmp(other))
     }
 }
 

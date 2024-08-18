@@ -22,13 +22,14 @@ where
     EdgeStorageType: EdgeManipulate,
     VertexType: Clone,
     VertexStorageType: StoreVertex<VertexType=VertexType> + Clone {
+    #[inline(always)]
     fn clone(&self) -> Self {
         Graph{
             vertices: self.vertices.clone(),
             edge_storage: self.edge_storage.clone(),
         }
     }
-
+    #[inline(always)]
     fn clone_from(&mut self, source: &Self) {
         self.vertices.clone_from(&source.vertices);
         self.edge_storage.clone_from(&source.edge_storage);
@@ -69,6 +70,7 @@ impl<VertexType, VertexStorageType, EdgeStorageType> Graph<VertexType, VertexSto
 where
     EdgeStorageType: EdgeManipulate,
     VertexStorageType: StoreVertex<VertexType=VertexType>{
+    #[inline(always)]
     pub fn tree_view(&mut self) -> Tree<VertexType, VertexStorageType, EdgeStorageType> {
         return Tree::new(&mut self.edge_storage, &mut self.vertices);
     }
@@ -78,7 +80,7 @@ where
         self.edge_storage.connect(from, new_vertex);
         new_vertex
     }
-
+    #[inline(always)]
     pub fn create_and_connect_0(&mut self, from: VHandle, val: VertexType) -> VHandle {
         self.create_and_connect(from, val, 0)
     }
@@ -87,7 +89,7 @@ where
         self.vertices.push(val);
         self.edge_storage.create_vertex_entry(edge_count)
     }
-    #[cfg_attr(not(debug_assertions), inline(always))]
+    #[inline(always)]
     pub fn create_leaf(&mut self, val: VertexType) -> VHandle {
         self.create(val, 0)
     }

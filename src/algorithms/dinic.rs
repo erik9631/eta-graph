@@ -53,14 +53,7 @@ where
         let mut queue = Queue::<VHandle>::new_pow2_sized(self.vertices.len()); // Direct pointer access is faster than offsets
         self.layer_data.fill(Weight::MAX);
 
-        loop {
-            match mark_levels(src_handle, sink_handle, &mut self.edge_storage, &mut queue, &mut self.layer_data) {
-                Ok(_) => {}
-                Err(_) => {
-                    break;
-                }
-            }
-
+        while mark_levels(src_handle, sink_handle, &mut self.edge_storage, &mut queue, &mut self.layer_data).is_ok() {
             loop {
                 let start_edges = self.edge_storage.edges_as_mut_ptr(src_handle);
                 let mut root_edge = pack(src_handle, Weight::MAX);

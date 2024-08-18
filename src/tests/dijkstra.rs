@@ -1,5 +1,5 @@
 use crate::algorithms::path_finding::{dijkstra};
-use crate::traits::{WeightedEdgeConnect};
+use crate::traits::{StoreVertex, WeightedEdgeConnect};
 use crate::weighted_graph::WeightedGraph;
 
 
